@@ -1,0 +1,7 @@
+packages:
+  - payload-multi-tenant
+  - payload-nested-docs
+  - payload-pms
+  - payload-rbac
+  - payload-tenant-theming
+  - payload-utils

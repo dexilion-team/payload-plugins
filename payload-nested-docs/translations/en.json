@@ -1,0 +1,7 @@
+{
+  "plugin-nested-docs": {
+    "urlSlugFormat": "URL slugs can only contain letters, numbers and hyphens.",
+    "pathDescription": "The url of the document, use \"{{slugFieldLabel}}\" to build the path based on the slug field.",
+    "urlSlugDescription": "The slug used in the URL for this document. \"home\" represents the home page."
+  }
+}

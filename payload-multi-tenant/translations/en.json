@@ -1,0 +1,6 @@
+{
+  "plugin-multi-tenant": {
+    "selectorPlaceholder": "Select tenant",
+    "logoFieldDescription": "Logo can't be updated during tenant creation. Save the tenant first, then edit to add a logo."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "plugin-tenant-theming": {
+    "themeFieldLabel": "Theme",
+    "domainFieldLabel": "Domain"
+  }
+}
