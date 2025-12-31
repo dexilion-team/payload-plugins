@@ -16,12 +16,16 @@ export type PageType = {
 export async function Page({ params, searchParams, pagesSlug }: PageType) {
   const { segments } = await params;
 
-  let path;
+  let page;
   try {
-    path = await getPage({
+    page = await getPage({
       segments,
       pagesSlug,
     });
+
+    if (!page) {
+      return notFound();
+    }
   } catch (error) {
     const payload = await getPayload({ config: payloadConfig });
     payload.logger.error(error);

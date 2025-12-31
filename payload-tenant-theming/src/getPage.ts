@@ -25,14 +25,20 @@ export const getPage = async ({
       config: await payloadConfig,
       tenantName,
     });
-  } catch (error) {
-    payload.logger.error(error);
-  }
 
-  if (!theme || !theme.Layout) {
-    throw new Error(
-      `[@dexilion/payload-tenant-theming] No theme or layout found for tenant "${tenantName}".`,
-    );
+    if (!theme || !theme.Layout) {
+      throw new Error(
+        `[@dexilion/payload-tenant-theming] No theme or layout found for tenant "${tenantName}".`,
+      );
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      payload.logger.warn(error.message);
+    } else {
+      payload.logger.warn(
+        "[@dexilion/payload-tenant-theming] Unknown error occurred while fetching theme.",
+      );
+    }
   }
 
   const path = await payload.find({
