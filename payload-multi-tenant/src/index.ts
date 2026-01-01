@@ -203,6 +203,18 @@ export const multiTenantPlugin =
       });
     }
 
+    // Add tenant selector to admin UI
+    config.admin = config.admin || {};
+    config.admin.components = config.admin.components || {};
+    config.admin.components.actions = config.admin.components.actions || [];
+    config.admin.components.actions.push({
+      path: "@dexilion/payload-multi-tenant/TenantSelect",
+      clientProps: {
+        tenantSlug: "tenants",
+        tenantLabelFieldName: "domain",
+      },
+    });
+
     // Add i18n
     config.i18n = {
       ...(config.i18n || {}),

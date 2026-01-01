@@ -2,7 +2,6 @@ import { getTenantName } from "@dexilion/payload-multi-tenant";
 import { PropsWithChildren } from "react";
 import payloadConfig from "@/payload.config";
 import { getTheme } from "../getTheme";
-import { getPayload } from "payload";
 
 export async function Layout({ children }: PropsWithChildren) {
   const tenantName = await getTenantName();
@@ -31,5 +30,8 @@ export async function Layout({ children }: PropsWithChildren) {
     );
   }
 
-  return <theme.Layout>{children}</theme.Layout>;
+  console.warn("Layout must select variant!!!");
+  const Layout = await theme.Layout[0].component();
+
+  return <Layout>{children}</Layout>;
 }

@@ -1,21 +1,23 @@
 "use client";
 
 import { ReactSelect, type Option } from "@payloadcms/ui/elements/ReactSelect";
-import { usePreferences } from "@payloadcms/ui";
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 export default function TenantSelectClient({
   tenants,
   placeholder,
+  setPreference,
+  getPreference,
 }: {
   tenants: Option<string>[];
   placeholder?: string;
+  setPreference: <T>(key: string, value: T) => Promise<void>;
+  getPreference: <T>(key: string) => Promise<T | undefined>;
 }) {
-  const { getPreference, setPreference } = usePreferences();
-  const [selected, _setSelected] = React.useState<Option<string> | null>(null);
-  const [reload, triggerReload] = React.useState(false);
+  const [selected, _setSelected] = useState<Option<string> | null>(null);
+  const [reload, triggerReload] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (reload && selected != null) {
       window?.location.reload();
     }
@@ -26,7 +28,7 @@ export default function TenantSelectClient({
   }, [reload, selected]);
 
   // Load the saved preference
-  React.useEffect(() => {
+  useEffect(() => {
     (async function () {
       const saved = await getPreference<number | undefined>(
         "admin-tenant-select",
@@ -38,12 +40,12 @@ export default function TenantSelectClient({
   }, [getPreference, tenants]);
 
   // Callback to set selected tenant
-  const setSelected = React.useCallback(
+  const setSelected = useCallback(
     (option: Option<string>) => {
       _setSelected(option);
-      setPreference("admin-tenant-select", Number(option.id)).then(() =>
-        triggerReload(true),
-      );
+      setPreference("admin-tenant-select", Number(option.id)).then(() => {
+        triggerReload(true);
+      });
     },
     [setPreference],
   );

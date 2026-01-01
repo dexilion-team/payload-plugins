@@ -2,6 +2,10 @@ import { notFound } from "next/navigation";
 import payloadConfig from "@/payload.config";
 import { getPayload } from "payload";
 import { getPage } from "../getPage.ts";
+import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
+import { getTheme } from "../getTheme.ts";
+import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { Theme } from "../types.ts";
 
 function isNextHttpError(error: unknown, code: number): boolean {
   if (!error || typeof error !== "object") return false;
@@ -22,8 +26,31 @@ export type PageType = {
   pagesSlug: string;
 };
 
-export async function Page({ params, searchParams, pagesSlug }: PageType) {
+export async function Page({
+  params,
+  searchParams,
+  pagesSlug = "pages",
+}: PageType) {
   const { segments } = await params;
+
+  const tenantName = await getTenantName();
+  if (!tenantName) {
+    throw new Error(
+      "[@dexilion/payload-tenant-theming] No tenant found with that name.",
+    );
+  }
+
+  let theme: Theme | null = null;
+  try {
+    theme = await getTheme({
+      config: await payloadConfig,
+      tenantName,
+    });
+  } catch {}
+
+  if (!theme || !theme.Layout) {
+    throw new Error("[@dexilion/payload-tenant-theming] No theme found.");
+  }
 
   let page;
   try {
@@ -46,5 +73,41 @@ export async function Page({ params, searchParams, pagesSlug }: PageType) {
     return notFound();
   }
 
-  return <></>;
+  const content = recursivelySearchForDataByName<
+    {
+      blockType: string;
+    }[]
+  >(page, "content");
+  if (!content || !Array.isArray(content)) {
+    payload.logger.warn(
+      `[@dexilion/payload-tenant-theming] No content found on page with ID "${page.id}".`,
+    );
+    return notFound();
+  }
+
+  return (
+    <>
+      {await Promise.all(
+        content.map(async (block) => {
+          const Widget = theme.Widgets.find(
+            (Widget) => Widget.block.slug === block.blockType,
+          );
+          if (!Widget?.component) {
+            throw new Error(
+              `[@dexilion/payload-tenant-theming] No widget found for block type "${block.blockType}" on page with ID "${page.id}".`,
+            );
+          }
+
+          const Component = await Widget.component();
+          if (!Component) {
+            throw new Error(
+              `[@dexilion/payload-tenant-theming] No component found for block type "${block.blockType}" on page with ID "${page.id}".`,
+            );
+          }
+
+          return <Component block={block} />;
+        }),
+      )}
+    </>
+  );
 }

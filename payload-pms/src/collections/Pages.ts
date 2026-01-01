@@ -1,4 +1,3 @@
-import userHasPermission from "../../../payload-rbac/src/security/userHasPermission";
 import {
   createParentField,
   createPathField,
@@ -6,9 +5,11 @@ import {
 } from "@dexilion/payload-nested-docs";
 import type {
   Access,
+  Block,
   CollectionAfterOperationHook,
   CollectionConfig,
   CollectionSlug,
+  Option,
 } from "payload";
 
 const setDefaultUserPreferences: CollectionAfterOperationHook = async ({
@@ -91,8 +92,10 @@ const read: Access = async ({ req }) => {
 
 export const createPagesCollection = ({
   widgets,
+  layouts,
 }: {
-  widgets: Record<string, any>;
+  widgets: Block[];
+  layouts?: Option[];
 }): CollectionConfig => ({
   slug: "pages",
   admin: {
@@ -159,24 +162,65 @@ export const createPagesCollection = ({
           fields: [
             {
               name: "content",
-              type: "blocks",
+              type: "json",
               required: true,
-              blocks: [
-                {
-                  slug: "container",
-                  imageURL:
-                    "https://fastly.picsum.photos/id/237/536/354.jpg?hmac=i0yVXW1ORpyCZpQ-CknuyV-jbtU7_x9EBQVhvT5aRr0",
-                  imageAltText: "Container Block",
-                  fields: [
-                    {
-                      name: "title",
-                      type: "text",
-                      required: true,
-                    },
-                  ],
+              admin: {
+                components: {
+                  Field: {
+                    path: "@dexilion/payload-pms/ComponentBuilder",
+                  },
                 },
-              ],
+              },
             },
+            // {
+            //   name: "layout",
+            //   type: "text",
+            //   admin: {
+            //     hidden: true,
+            //   },
+            // },
+            // {
+            //   name: "variant",
+            //   type: "select",
+            //   label: ({ t }) => t("plugin-pms:layoutVariantLabel"),
+            //   // admin: {
+            //   //   condition: () => (layouts?.length ?? 0) > 1,
+            //   // },
+            //   required: true,
+            //   virtual: true,
+            //   defaultValue: layouts && layouts.length > 0 ? layouts[0] : "",
+            //   options: layouts ?? [],
+            //   hooks: {
+            //     afterRead: [
+            //       async ({ value, siblingData }) => {
+            //         console.log("afterRead", { value });
+            //         return "base";
+            //       },
+            //     ],
+            //     beforeChange: [
+            //       async ({ value, siblingData }) => {
+            //         if (value) return value;
+            //         return siblingData.layout;
+            //       },
+            //     ],
+            //   },
+            // },
+            // {
+            //   name: "data",
+            //   type: "json",
+            //   admin: {
+            //     hidden: true,
+            //   },
+            // },
+            // {
+            //   name: "content",
+            //   type: "blocks",
+            //   required: true,
+            //   virtual: true,
+            //   hidden: true,
+            //   blocks: widgets,
+            //   hooks: {},
+            // },
           ],
         },
       ],
