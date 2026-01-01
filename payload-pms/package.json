@@ -11,7 +11,7 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./ComponentBuilder": {
+    "./ContentBuilder": {
       "types": "./src/components/ContentBuilder.tsx",
       "import": "./src/components/ContentBuilder.tsx",
       "default": "./src/components/ContentBuilder.tsx"

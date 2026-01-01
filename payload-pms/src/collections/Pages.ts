@@ -167,7 +167,7 @@ export const createPagesCollection = ({
               admin: {
                 components: {
                   Field: {
-                    path: "@dexilion/payload-pms/ComponentBuilder",
+                    path: "@dexilion/payload-pms/ContentBuilder",
                   },
                 },
               },
