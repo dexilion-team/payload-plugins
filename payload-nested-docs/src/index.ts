@@ -1,5 +1,9 @@
-import { recursivelyMergeObjects } from "@dexilion/payload-utils";
-import { CollectionSlug, Config, Field, slugField } from "payload";
+import {
+  CollectionSlug,
+  Config,
+  deepMergeWithSourceArrays,
+  Field,
+} from "payload";
 import translationEn from "../translations/en.json";
 
 export type PayloadNextedDocsPluginOptions = {
@@ -74,11 +78,35 @@ function recursivelySearchForFieldByName(
   return null;
 }
 
+export function recursivelySearchForDataByName<R>(
+  data: Record<string, unknown>,
+  name: string,
+): R | null {
+  for (const key in data) {
+    if (key === name && data.hasOwnProperty(key)) {
+      return data[key] as R;
+    }
+
+    const value = data[key];
+    if (typeof value === "object" && value !== null) {
+      const nestedValue = recursivelySearchForDataByName<R>(
+        value as Record<string, unknown>,
+        name,
+      );
+      if (nestedValue !== null) {
+        return nestedValue;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function createParentField(
   slug: CollectionSlug,
   overrides?: Partial<Field>,
 ): Field {
-  return recursivelyMergeObjects(
+  return deepMergeWithSourceArrays(
     {
       name: "parent",
       label: "Parent",
@@ -91,7 +119,7 @@ export function createParentField(
           "Select the parent document for nesting. Leave empty for top-level documents.",
         placeholder: "",
       },
-      filterOptions: ({ data }) => {
+      filterOptions: ({ data }: { data: any }) => {
         return {
           id: { not_equals: data.id },
         };
@@ -140,8 +168,8 @@ const generatePath =
   }): Promise<string> => {
     const slugFieldName = options?.slugFieldName || "slug";
     const parentFieldName = options?.parentFieldName || "parent";
-    const slug = originalDoc[slugFieldName];
-    const parent = originalDoc[parentFieldName];
+    const slug = recursivelySearchForDataByName(originalDoc, slugFieldName);
+    const parent = recursivelySearchForDataByName(originalDoc, parentFieldName);
 
     if (slug == null || slug === "") {
       return `/${originalDoc.id}`;

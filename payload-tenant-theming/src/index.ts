@@ -6,6 +6,7 @@ import { Theme } from "./types";
 export type { Theme } from "./types";
 export { staticParamsGenerator } from "./staticParamsGenerator";
 export { metadataGenerator } from "./metadataGenerator";
+export { getTheme } from "./getTheme";
 
 export type PayloadTenantThemingPluginOptions = {
   /**

@@ -1,4 +1,5 @@
 import payloadConfig from "@/payload.config";
+import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
 import { CollectionSlug, getPayload } from "payload";
 
 export const staticParamsGenerator =
@@ -19,7 +20,7 @@ export const staticParamsGenerator =
     let params: any[] = [];
     try {
       params = pages.docs.map((page) => {
-        const path = page[pathFieldName as keyof typeof page];
+        const path = recursivelySearchForDataByName(page, pathFieldName);
         if (!path || typeof path !== "string") {
           throw new Error(
             `[@dexilion/payload-tenant-theming] The specified path field "${pathFieldName}" does not exist or is not a string on page with ID "${page.id}".`,

@@ -1,6 +1,6 @@
 import payloadConfig from "@/payload.config";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
-import { CollectionSlug, getPayload } from "payload";
+import { CollectionSlug, Field, getPayload } from "payload";
 import { getTheme } from "./getTheme";
 
 export const getPage = async ({
@@ -41,10 +41,17 @@ export const getPage = async ({
     }
   }
 
+  const pathFieldKey = await getPathFieldKey(pagesSlug);
+  if (!pathFieldKey) {
+    throw new Error(
+      `[@dexilion/payload-tenant-theming] No "path" field found in the "${pagesSlug}" collection.`,
+    );
+  }
+
   const path = await payload.find({
     collection: pagesSlug as CollectionSlug,
     where: {
-      path: {
+      [pathFieldKey]: {
         equals: "/" + (segments ?? []).join("/"),
       },
     },
@@ -52,3 +59,35 @@ export const getPage = async ({
 
   return path.docs[0] || null;
 };
+
+async function getPathFieldKey(pagesSlug: string) {
+  const config = await payloadConfig;
+  const pagesCollection = config.collections.find((c) => c.slug === "pages")!;
+  return recursivelyBuildKey(pagesCollection.fields as any, "path");
+}
+
+function recursivelyBuildKey(
+  data: { name: string; fields?: any[]; tabs?: any[]; blocks?: any[] }[],
+  name: string,
+  prev?: string,
+): string | null {
+  for (const field of data) {
+    if ("name" in field && field.name === name) {
+      return prev ? `${prev}.${field.name}` : field.name;
+    }
+
+    const value = field["fields"] || field["tabs"] || field["blocks"];
+    if (typeof value === "object" && value !== null) {
+      const nestedKey = recursivelyBuildKey(
+        value,
+        name,
+        prev ? `${prev}.${field.name}` : field.name,
+      );
+      if (nestedKey) {
+        return nestedKey;
+      }
+    }
+  }
+
+  return null;
+}

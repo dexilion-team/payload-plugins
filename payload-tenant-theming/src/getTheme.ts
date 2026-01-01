@@ -1,4 +1,4 @@
-import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
+import { CollectionSlug, Config, getPayload, SanitizedConfig } from "payload";
 import payloadConfig from "@/payload.config";
 import { Theme } from "./types";
 
@@ -6,7 +6,7 @@ export type GetThemeParams = {
   tenantsSlug?: string;
   tenantName: string;
   themeFieldName?: string;
-  config: SanitizedConfig;
+  config: Config | SanitizedConfig;
 };
 
 export async function getTheme({

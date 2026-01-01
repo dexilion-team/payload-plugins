@@ -80,36 +80,24 @@ const setDefaultUserPreferences: CollectionAfterOperationHook = async ({
 
 const read: Access = async ({ req }) => {
   const user = req?.user;
-  // if (user?.id === 1) {
-  //   return true;
-  // }
-
   if (!user) {
     return {
       or: [{ _status: { equals: "published" } }],
     };
   }
 
-  // const canReadPages = await userHasPermission({
-  //   req,
-  //   principal: "pages",
-  //   action: "read",
-  // });
-  // if (!canReadPages) {
-  //   return {
-  //     or: [{ _status: { equals: "published" } }],
-  //   };
-  // }
-
   return true;
 };
 
-export const Pages: CollectionConfig = {
+export const createPagesCollection = ({
+  widgets,
+}: {
+  widgets: Record<string, any>;
+}): CollectionConfig => ({
   slug: "pages",
   admin: {
     livePreview: {
       url: ({ data, collectionConfig, locale }) => {
-        //console.log(data);
         return `/${data?.slug}`;
       },
       breakpoints: [
@@ -134,7 +122,7 @@ export const Pages: CollectionConfig = {
       ],
     },
     hideAPIURL: process.env.NODE_ENV === "production",
-    useAsTitle: "title",
+    defaultColumns: ["generalTab.title", "generalTab.path", "updatedAt"],
   },
   versions: {
     drafts: {
@@ -152,6 +140,7 @@ export const Pages: CollectionConfig = {
       type: "tabs",
       tabs: [
         {
+          name: "generalTab",
           label: "General",
           fields: [
             {
@@ -165,6 +154,7 @@ export const Pages: CollectionConfig = {
           ],
         },
         {
+          name: "contentTab",
           label: "Content",
           fields: [
             {
@@ -192,4 +182,4 @@ export const Pages: CollectionConfig = {
       ],
     },
   ],
-};
+});
