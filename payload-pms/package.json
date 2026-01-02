@@ -10,11 +10,6 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
-    },
-    "./ContentBuilder": {
-      "types": "./src/components/ContentBuilder.tsx",
-      "import": "./src/components/ContentBuilder.tsx",
-      "default": "./src/components/ContentBuilder.tsx"
     }
   },
   "main": "./src/index.ts",

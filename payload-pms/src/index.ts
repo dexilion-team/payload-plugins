@@ -1,12 +1,14 @@
-import { Block, CollectionConfig, Config } from "payload";
+import type { Option, Block, CollectionConfig, Config } from "payload";
 import sharp from "sharp";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 
+import translationEn from "../translations/en.json";
 import { Media } from "./collections/Media";
 import { createPagesCollection } from "./collections/Pages";
 
 export type PayloadPMSPluginOptions = {
   blocks: ({ config }: { config: Config }) => Promise<Block[]>;
+  layouts: ({ config }: { config: Config }) => Promise<Option[]>;
   pagesOverride?: (pages: CollectionConfig) => CollectionConfig;
   mediaOverride?: (pages: CollectionConfig) => CollectionConfig;
 };
@@ -20,6 +22,7 @@ export const pmsPlugin =
     // Add Pages collection if it doesn't exist
     const Pages = createPagesCollection({
       widgets: await options.blocks({ config }),
+      layouts: await options.layouts({ config }),
     });
     const pagesCollectionExists = config.collections.some(
       (c) => c.slug === Pages.slug,
@@ -46,6 +49,18 @@ export const pmsPlugin =
 
     config.sharp = config.sharp || sharp;
     config.editor = config.editor || lexicalEditor();
+
+    // Add i18n
+    config.i18n = {
+      ...(config.i18n || {}),
+      translations: {
+        ...(config.i18n?.translations || {}),
+        en: {
+          ...(config.i18n?.translations?.en || {}),
+          ...translationEn,
+        },
+      },
+    };
 
     return config;
   };

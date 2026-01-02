@@ -100,8 +100,16 @@ export const createPagesCollection = ({
   slug: "pages",
   admin: {
     livePreview: {
-      url: ({ data, collectionConfig, locale }) => {
-        return `/${data?.slug}`;
+      url: ({ data, req }) => {
+        if (!data || !data.path) {
+          req.payload.logger.warn(
+            "[@dexilion/payload-pms] Live preview URL could not be generated because no data was provided.",
+          );
+
+          return `/${data.id}`;
+        }
+
+        return data.path;
       },
       breakpoints: [
         {
@@ -161,66 +169,73 @@ export const createPagesCollection = ({
           label: "Content",
           fields: [
             {
-              name: "content",
-              type: "json",
-              required: true,
+              name: "layout",
+              type: "text",
               admin: {
-                components: {
-                  Field: {
-                    path: "@dexilion/payload-pms/ContentBuilder",
-                  },
-                },
+                readOnly: true,
+                hidden: true,
               },
             },
-            // {
-            //   name: "layout",
-            //   type: "text",
-            //   admin: {
-            //     hidden: true,
-            //   },
-            // },
-            // {
-            //   name: "variant",
-            //   type: "select",
-            //   label: ({ t }) => t("plugin-pms:layoutVariantLabel"),
-            //   // admin: {
-            //   //   condition: () => (layouts?.length ?? 0) > 1,
-            //   // },
-            //   required: true,
-            //   virtual: true,
-            //   defaultValue: layouts && layouts.length > 0 ? layouts[0] : "",
-            //   options: layouts ?? [],
-            //   hooks: {
-            //     afterRead: [
-            //       async ({ value, siblingData }) => {
-            //         console.log("afterRead", { value });
-            //         return "base";
-            //       },
-            //     ],
-            //     beforeChange: [
-            //       async ({ value, siblingData }) => {
-            //         if (value) return value;
-            //         return siblingData.layout;
-            //       },
-            //     ],
-            //   },
-            // },
-            // {
-            //   name: "data",
-            //   type: "json",
-            //   admin: {
-            //     hidden: true,
-            //   },
-            // },
-            // {
-            //   name: "content",
-            //   type: "blocks",
-            //   required: true,
-            //   virtual: true,
-            //   hidden: true,
-            //   blocks: widgets,
-            //   hooks: {},
-            // },
+            {
+              name: "layoutVariant",
+              type: "select",
+              label: ({ t }) =>
+                // @ts-ignore
+                t("plugin-pms:layoutVariantLabel"),
+              required: true,
+              virtual: true,
+              defaultValue:
+                layouts && layouts.length > 0
+                  ? typeof layouts[0] === "object" && "value" in layouts[0]
+                    ? layouts[0].value
+                    : layouts[0]
+                  : "",
+              options: layouts ?? [],
+              hooks: {
+                afterRead: [
+                  async ({ value, siblingData }) => {
+                    return siblingData?.layout || undefined;
+                  },
+                ],
+                beforeChange: [
+                  async ({ value, siblingData }) => {
+                    siblingData.layout = value;
+                  },
+                ],
+              },
+            },
+            {
+              name: "content",
+              type: "json",
+              admin: {
+                readOnly: true,
+                hidden: true,
+              },
+            },
+            {
+              name: "widgets",
+              label: ({ t }) =>
+                // @ts-ignore
+                t("plugin-pms:widgetsLabel"),
+              type: "blocks",
+              virtual: true,
+              blocks: widgets,
+              required: true,
+              hooks: {
+                afterRead: [
+                  ({ siblingData }) => {
+                    return siblingData?.content || [];
+                  },
+                ],
+                beforeChange: [
+                  ({ siblingData }) => {
+                    const widgets = siblingData?.widgets || [];
+
+                    siblingData.content = widgets;
+                  },
+                ],
+              },
+            },
           ],
         },
       ],

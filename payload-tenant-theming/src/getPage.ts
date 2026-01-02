@@ -48,7 +48,7 @@ export const getPage = async ({
     );
   }
 
-  const path = await payload.find({
+  let path = await payload.find({
     collection: pagesSlug as CollectionSlug,
     where: {
       [pathFieldKey]: {
@@ -56,6 +56,14 @@ export const getPage = async ({
       },
     },
   });
+  if (!path.totalDocs && segments.length == 1 && !isNaN(Number(segments[0]))) {
+    path = await payload.find({
+      collection: pagesSlug as CollectionSlug,
+      where: {
+        id: { equals: Number(segments[0]) },
+      },
+    });
+  }
 
   return path.docs[0] || null;
 };

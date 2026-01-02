@@ -11,11 +11,6 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./Layout": {
-      "types": "./src/components/Layout.tsx",
-      "import": "./src/components/Layout.tsx",
-      "default": "./src/components/Layout.tsx"
-    },
     "./Page": {
       "types": "./src/components/Page.tsx",
       "import": "./src/components/Page.tsx",

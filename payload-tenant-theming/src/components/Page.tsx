@@ -85,10 +85,25 @@ export async function Page({
     return notFound();
   }
 
+  const layoutKey = recursivelySearchForDataByName<string>(page, "layout");
+  const layout = theme.Layout.find((Layout) => {
+    if (typeof Layout.option === "string") {
+      return Layout.option === layoutKey;
+    }
+    return Layout.option.value === layoutKey;
+  });
+  if (!layout) {
+    throw new Error(
+      `[@dexilion/payload-tenant-theming] No layout found for layout key "${layoutKey}" on page with ID "${page.id}".`,
+    );
+  }
+
+  const Layout = await layout.component();
+
   return (
-    <>
+    <Layout>
       {await Promise.all(
-        content.map(async (block) => {
+        content.map(async (block, index) => {
           const Widget = theme.Widgets.find(
             (Widget) => Widget.block.slug === block.blockType,
           );
@@ -105,9 +120,9 @@ export async function Page({
             );
           }
 
-          return <Component block={block} />;
+          return <Component key={index} block={block} />;
         }),
       )}
-    </>
+    </Layout>
   );
 }
