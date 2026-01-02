@@ -26,6 +26,7 @@ export type PayloadMultiTenantPluginOptions = {
   tenantFieldName?: string;
   tenantFieldLabelOnAuthCollection?: string;
   tenantFieldLabelOnTenantsCollection?: string;
+  tenantLabelFieldName?: string;
 
   /**
    * Collection slug for media uploads.
@@ -48,6 +49,7 @@ const DEFAULT_TENANTS_SLUG = "tenants";
 const DEFAULT_TENANT_FIELD_NAME = "tenant";
 const DEFAULT_TENANT_FIELD_LABEL_ON_AUTH_COLLECTION = "Tenants";
 const DEFAULT_TENANT_FIELD_LABEL_ON_TENANTS_COLLECTION = "Users";
+const DEFAULT_TENANT_LABEL_FIELD_NAME = "domain";
 
 export const multiTenantPlugin =
   (options: PayloadMultiTenantPluginOptions = {}) =>
@@ -210,8 +212,9 @@ export const multiTenantPlugin =
     config.admin.components.actions.push({
       path: "@dexilion/payload-multi-tenant/TenantSelect",
       clientProps: {
-        tenantSlug: "tenants",
-        tenantLabelFieldName: "domain",
+        tenantSlug: tenantsSlug,
+        tenantLabelFieldName:
+          options.tenantLabelFieldName ?? DEFAULT_TENANT_LABEL_FIELD_NAME,
       },
     });
 

@@ -6,6 +6,9 @@ import translationEn from "../translations/en.json";
 import { Media } from "./collections/Media";
 import { createPagesCollection } from "./collections/Pages";
 
+export { sitemapGenerator } from "./sitemapGenerator";
+export { robotsGenerator } from "./robotsGenerator";
+
 export type PayloadPMSPluginOptions = {
   blocks: ({ config }: { config: Config }) => Promise<Block[]>;
   layouts: ({ config }: { config: Config }) => Promise<Option[]>;
