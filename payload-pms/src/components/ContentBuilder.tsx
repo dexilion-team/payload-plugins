@@ -1,9 +1,10 @@
 "use client";
 
-import { useField, BlockSelector } from "@payloadcms/ui";
+import { BlocksField, useField } from "@payloadcms/ui";
 
-export default function ContentBuilder() {
+export default function ContentBuilder(args: any) {
   const { value, setValue } = useField({ path: "contentBuilder" });
+  console.log(Object.keys(args));
 
-  return <>dsfdsfsd</>;
+  return <BlocksField path="content" field={{}} />;
 }

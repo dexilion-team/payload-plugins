@@ -27,9 +27,7 @@
   },
   "devDependencies": {
     "@payloadcms/db-mongodb": "3.69.0",
-    "payload": "3.69.0",
     "@types/react": "19.2.2",
-    "next": "^15.4.10",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
     "mongodb-memory-server": "^10.2.0",

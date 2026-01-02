@@ -1,19 +1,21 @@
 "use client";
 
+import { usePreferences } from "@payloadcms/ui";
 import { ReactSelect, type Option } from "@payloadcms/ui/elements/ReactSelect";
 import React, { useCallback, useEffect, useState } from "react";
 
 export default function TenantSelectClient({
   tenants,
   placeholder,
-  setPreference,
-  getPreference,
+  // setPreference,
+  // getPreference,
 }: {
   tenants: Option<string>[];
   placeholder?: string;
-  setPreference: <T>(key: string, value: T) => Promise<void>;
-  getPreference: <T>(key: string) => Promise<T | undefined>;
+  // setPreference: <T>(key: string, value: T) => Promise<void>;
+  // getPreference: <T>(key: string) => Promise<T | undefined>;
 }) {
+  const { getPreference, setPreference } = usePreferences();
   const [selected, _setSelected] = useState<Option<string> | null>(null);
   const [reload, triggerReload] = useState(false);
 
