@@ -1,4 +1,4 @@
-import type { Option, Block, CollectionConfig, Config } from "payload";
+import type { Option, Block, CollectionConfig, Config, Tab } from "payload";
 import sharp from "sharp";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 
@@ -14,6 +14,7 @@ export type PayloadPMSPluginOptions = {
   layouts: ({ config }: { config: Config }) => Promise<Option[]>;
   pagesOverride?: (pages: CollectionConfig) => CollectionConfig;
   mediaOverride?: (pages: CollectionConfig) => CollectionConfig;
+  extraTabs?: Tab[];
 };
 
 export const pmsPlugin =
@@ -26,6 +27,7 @@ export const pmsPlugin =
     const Pages = createPagesCollection({
       widgets: await options.blocks({ config }),
       layouts: await options.layouts({ config }),
+      tabs: options.extraTabs || [],
     });
     const pagesCollectionExists = config.collections.some(
       (c) => c.slug === Pages.slug,

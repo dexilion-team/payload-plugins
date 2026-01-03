@@ -9,12 +9,6 @@ export async function setPreference({
   key: string;
   value: unknown;
 }) {
-  if (!Object.keys(req).includes("headers")) {
-    throw new Error(
-      "setPreference can only be called with a PayloadRequest instance.",
-    );
-  }
-
   const payload = req.payload;
   const userSlug = req.payload.config.admin.user;
 

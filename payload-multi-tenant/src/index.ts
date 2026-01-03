@@ -259,8 +259,9 @@ const setTenantPreference: FieldHook<any, any, any> = async ({
       req,
       key: "admin-tenant-select",
     });
+    console.log("existingPreference", existingPreference);
     if (existingPreference == null) {
-      setPreference({
+      await setPreference({
         req,
         key: "admin-tenant-select",
         value: 1,

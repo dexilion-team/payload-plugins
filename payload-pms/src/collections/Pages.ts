@@ -10,6 +10,7 @@ import type {
   CollectionConfig,
   CollectionSlug,
   Option,
+  Tab,
 } from "payload";
 
 const setDefaultUserPreferences: CollectionAfterOperationHook = async ({
@@ -93,9 +94,11 @@ const read: Access = async ({ req }) => {
 export const createPagesCollection = ({
   widgets,
   layouts,
+  tabs,
 }: {
   widgets: Block[];
   layouts?: Option[];
+  tabs?: Tab[];
 }): CollectionConfig => ({
   slug: "pages",
   admin: {
@@ -238,6 +241,7 @@ export const createPagesCollection = ({
             },
           ],
         },
+        ...(tabs ?? []),
       ],
     },
   ],
