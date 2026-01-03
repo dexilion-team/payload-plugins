@@ -43,14 +43,6 @@ export const hasNamedField = (
     (field) => isObject(field) && "name" in field && field.name === name,
   );
 
-const mergeWhere = (a: unknown, b: Where): Where => {
-  if (!isWhere(a) || Object.keys(a).length === 0) {
-    return b;
-  }
-
-  return { and: [a, b] };
-};
-
 export const getUserTenantIDsFromReq = (
   req: PayloadRequest | undefined,
   tenantFieldName: string,
@@ -59,9 +51,8 @@ export const getUserTenantIDsFromReq = (
     return [];
   }
 
-  const tenantField = req.user[tenantFieldName as keyof typeof req.user];
-
-  return getRelationshipIDs(tenantField);
+  const tenantField = req.user[tenantFieldName as keyof typeof req.user] as any;
+  return getRelationshipIDs(tenantField?.docs);
 };
 
 export const tenantWhereForReq = (
@@ -69,6 +60,7 @@ export const tenantWhereForReq = (
   tenantFieldName: string,
 ): Where | false => {
   const userTenantIDs = getUserTenantIDsFromReq(req, tenantFieldName);
+
   if (userTenantIDs.length === 0) {
     return false;
   }

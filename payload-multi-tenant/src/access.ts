@@ -177,6 +177,7 @@ export const swizzleTenantFilteringInAccessControl = ({
 
         // Check the tenant for the user
         const tenantWhere = tenantWhereForReq(args.req, tenantFieldName);
+
         return {
           result: mergeWhere(base, tenantWhere),
           reason: "Merging base where clause with tenant where clause.",

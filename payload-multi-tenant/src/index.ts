@@ -83,9 +83,6 @@ export const multiTenantPlugin =
     if (!tenantsCollection) {
       tenantsCollection = {
         slug: tenantsSlug,
-        access: {
-          read: () => true,
-        },
         admin: {
           defaultColumns: ["name"],
           useAsTitle: "name",

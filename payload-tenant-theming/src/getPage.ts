@@ -11,6 +11,7 @@ export const getPage = async ({
   pagesSlug: string;
 }): Promise<any | null> => {
   const payload = await getPayload({ config: payloadConfig });
+
   const tenantName = await getTenantName();
 
   if (!tenantName) {

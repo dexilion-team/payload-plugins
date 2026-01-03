@@ -110,7 +110,7 @@ const resolveModuleImport = async (
   return null;
 };
 
-const loadThemeStyles = async (theme: Theme) => {
+const loadThemeStyles = async (theme: Theme, debug?: boolean) => {
   const styles = theme.styles ?? [];
   if (styles.length === 0) {
     throw new Error(
@@ -152,6 +152,7 @@ const loadThemeStyles = async (theme: Theme) => {
             },
           ],
           style: "expanded",
+          logger: debug ? undefined : sass.Logger.silent,
         });
         return result.css;
       }
@@ -163,32 +164,33 @@ const loadThemeStyles = async (theme: Theme) => {
   return chunks.join("\n");
 };
 
-export async function GET(request: Request) {
-  const tenantName = await getTenantName();
-  if (!tenantName) {
-    return new Response("Tenant name not found.", { status: 400 });
-  }
+export const createGetHandler =
+  (options?: { debug?: boolean }) => async (request: Request) => {
+    const tenantName = await getTenantName();
+    if (!tenantName) {
+      return new Response("Tenant name not found.", { status: 400 });
+    }
 
-  const theme = await getTheme({
-    config: await config,
-    tenantName,
-  });
-  if (!theme) {
-    return new Response("Tenant name not found.", { status: 400 });
-  }
-
-  try {
-    const css = await loadThemeStyles(theme);
-    return new Response(css, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/css; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
-      },
+    const theme = await getTheme({
+      config: await config,
+      tenantName,
     });
-  } catch (error) {
-    console.log(error);
+    if (!theme) {
+      return new Response("Tenant name not found.", { status: 400 });
+    }
 
-    return new Response("Failed to load theme styles.", { status: 500 });
-  }
-}
+    try {
+      const css = await loadThemeStyles(theme, options?.debug);
+      return new Response(css, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/css; charset=utf-8",
+          "Cache-Control": "public, max-age=3600",
+        },
+      });
+    } catch (error) {
+      console.log(error);
+
+      return new Response("Failed to load theme styles.", { status: 500 });
+    }
+  };
