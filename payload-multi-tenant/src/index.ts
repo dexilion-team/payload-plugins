@@ -121,12 +121,11 @@ export const multiTenantPlugin =
       label:
         options.tenantFieldLabelOnAuthCollection ??
         DEFAULT_TENANT_FIELD_LABEL_ON_AUTH_COLLECTION,
-      type: "relationship",
-      relationTo: tenantsSlug,
-      hasMany: true,
-      required: false,
+      type: "join",
+      collection: tenantsCollection.slug as CollectionSlug,
+      on: tenantFieldName,
       admin: {
-        disableListColumn: true,
+        allowCreate: false,
       },
     });
 
@@ -136,16 +135,37 @@ export const multiTenantPlugin =
       label:
         options.tenantFieldLabelOnTenantsCollection ??
         DEFAULT_TENANT_FIELD_LABEL_ON_TENANTS_COLLECTION,
+      type: "relationship",
+      relationTo: authCollection.slug as CollectionSlug,
+      hasMany: true,
+      required: false,
       admin: {
-        allowCreate: false,
+        disableListColumn: true,
       },
-      type: "join",
-      collection: authCollection.slug as CollectionSlug,
-      on: tenantFieldName,
       hooks: {
         afterChange: [setTenantPreference],
       },
     });
+    tenantsCollection.access = {
+      read: ({ req }) => {
+        const domainFieldName =
+          options.tenantLabelFieldName ?? DEFAULT_TENANT_LABEL_FIELD_NAME;
+        const host =
+          req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+        const user = req.user;
+
+        if (!host && !user) {
+          return false;
+        }
+
+        return {
+          or: [
+            //{ [domainFieldName]: { equals: host } },
+            { [tenantFieldName]: { contains: user?.id } },
+          ],
+        };
+      },
+    };
 
     // Add tenantField and access control to tenant-scoped collections
     for (const slug of tenantScopedCollectionSlugs) {
@@ -236,7 +256,6 @@ export const multiTenantPlugin =
 const setTenantPreference: FieldHook<any, any, any> = async ({
   req,
   operation,
-  originalDoc,
 }) => {
   if (operation === "create") {
     const existingPreference = await getPreference<number | undefined>({

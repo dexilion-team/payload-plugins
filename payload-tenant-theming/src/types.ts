@@ -16,4 +16,5 @@ export interface Theme {
   label: string;
   Layout: Layout[];
   Widgets: Widget[];
+  styles?: string[];
 }

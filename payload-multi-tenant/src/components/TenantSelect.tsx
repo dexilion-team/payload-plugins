@@ -15,15 +15,16 @@ const TenantSelect = async ({
   const tenants = await req.payload
     .find({
       collection: tenantSlug,
+      overrideAccess: false,
       pagination: false,
       req,
     })
-    .then((res) =>
-      res.docs.map((tenant) => ({
+    .then((res) => {
+      return res.docs.map((tenant) => ({
         id: String(tenant.id),
         value: String(tenant[tenantLabelFieldName as keyof typeof tenant]),
-      })),
-    );
+      }));
+    });
 
   if (tenants.length === 0) {
     return null;
