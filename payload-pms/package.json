@@ -10,6 +10,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./RichText": {
+      "types": "./src/components/RichText/index.tsx",
+      "import": "./src/components/RichText/index.tsx",
+      "default": "./src/components/RichText/index.tsx"
     }
   },
   "main": "./src/index.ts",
