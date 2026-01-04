@@ -137,6 +137,7 @@ export const createPagesCollection = ({
     },
     hideAPIURL: process.env.NODE_ENV === "production",
     defaultColumns: ["generalTab.title", "generalTab.path", "updatedAt"],
+    useAsTitle: "display",
   },
   versions: {
     drafts: {
@@ -243,6 +244,24 @@ export const createPagesCollection = ({
         },
         ...(tabs ?? []),
       ],
+    },
+    {
+      name: "display",
+      type: "text",
+      admin: {
+        readOnly: true,
+        hidden: true,
+      },
+      hooks: {
+        beforeChange: [
+          async ({ siblingData }) => {
+            const title = siblingData?.generalTab?.title || "";
+            const path = siblingData?.generalTab?.path || "";
+
+            siblingData.display = `${title} [${path}]`;
+          },
+        ],
+      },
     },
   ],
 });

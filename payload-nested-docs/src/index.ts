@@ -199,7 +199,7 @@ const generatePath =
     }
     const path = (doc as any).path;
 
-    return `${path}/${slug}`.replace(/\/\/+/g, "/");
+    return `${path ? path : ""}/${slug}`.replace(/\/\/+/g, "/");
   };
 
 export function createPathField(

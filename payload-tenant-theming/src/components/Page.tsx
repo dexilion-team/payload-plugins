@@ -6,6 +6,8 @@ import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
 import { getTheme } from "../getTheme.ts";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
 import { Theme } from "../types.ts";
+import { RefreshRouteOnSave } from "./RefreshRouteOnSave.tsx";
+import { headers } from "next/headers";
 
 function isNextHttpError(error: unknown, code: number): boolean {
   if (!error || typeof error !== "object") return false;
@@ -99,30 +101,34 @@ export async function Page({
   }
 
   const Layout = await layout.component();
+  const proto = (await headers()).get("x-forwarded-proto");
 
   return (
-    <Layout>
-      {await Promise.all(
-        content.map(async (block, index) => {
-          const Widget = theme.Widgets.find(
-            (Widget) => Widget.block.slug === block.blockType,
-          );
-          if (!Widget?.component) {
-            throw new Error(
-              `[@dexilion/payload-tenant-theming] No widget found for block type "${block.blockType}" on page with ID "${page.id}".`,
+    <>
+      <Layout>
+        {await Promise.all(
+          content.map(async (block, index) => {
+            const Widget = theme.Widgets.find(
+              (Widget) => Widget.block.slug === block.blockType,
             );
-          }
+            if (!Widget?.component) {
+              throw new Error(
+                `[@dexilion/payload-tenant-theming] No widget found for block type "${block.blockType}" on page with ID "${page.id}".`,
+              );
+            }
 
-          const Component = await Widget.component();
-          if (!Component) {
-            throw new Error(
-              `[@dexilion/payload-tenant-theming] No component found for block type "${block.blockType}" on page with ID "${page.id}".`,
-            );
-          }
+            const Component = await Widget.component();
+            if (!Component) {
+              throw new Error(
+                `[@dexilion/payload-tenant-theming] No component found for block type "${block.blockType}" on page with ID "${page.id}".`,
+              );
+            }
 
-          return <Component key={index} block={block} />;
-        }),
-      )}
-    </Layout>
+            return <Component key={index} block={block} />;
+          }),
+        )}
+      </Layout>
+      <RefreshRouteOnSave serverURL={`${proto}://${tenantName}`} />
+    </>
   );
 }
