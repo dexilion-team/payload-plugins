@@ -1,4 +1,5 @@
 packages:
+  - payload-blog
   - payload-multi-tenant
   - payload-nested-docs
   - payload-pms
