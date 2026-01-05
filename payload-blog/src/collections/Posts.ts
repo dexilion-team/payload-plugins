@@ -34,6 +34,26 @@ export const createPostsCollection = ({
       relationTo: mediaSlug,
     },
     {
+      name: "author",
+      type: "text",
+      required: true,
+    },
+    {
+      name: "date",
+      type: "date",
+      required: true,
+    },
+    {
+      name: "excerpt",
+      type: "textarea",
+      required: true,
+    },
+    {
+      name: "link",
+      type: "text",
+      required: true,
+    },
+    {
       name: "tags",
       type: "relationship",
       relationTo: tagsSlug,
