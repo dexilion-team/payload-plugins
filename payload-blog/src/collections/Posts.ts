@@ -34,11 +34,6 @@ export const createPostsCollection = ({
       relationTo: mediaSlug,
     },
     {
-      name: "author",
-      type: "text",
-      required: true,
-    },
-    {
       name: "date",
       type: "date",
       required: true,
@@ -49,15 +44,21 @@ export const createPostsCollection = ({
       required: true,
     },
     {
-      name: "link",
-      type: "text",
-      required: true,
-    },
-    {
       name: "tags",
       type: "relationship",
       relationTo: tagsSlug,
       hasMany: true,
+    },
+    {
+      name: "author",
+      type: "relationship",
+      relationTo: "users",
+      defaultValue: ({ req }) => req.user?.id,
+      required: true,
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
     },
     {
       name: "content",

@@ -17,9 +17,33 @@ export const blogPlugin =
     const config: Config = { ...incomingConfig };
     config.collections = [...(incomingConfig.collections ?? [])];
 
-    const mediaSlug = (options.mediaSlug ?? DEFAULT_MEDIA_SLUG) as CollectionSlug;
+    const mediaSlug = (options.mediaSlug ??
+      DEFAULT_MEDIA_SLUG) as CollectionSlug;
 
-    const tagsCollection = options.tagsOverride ? options.tagsOverride(Tags) : Tags;
+    const authCollection =
+      config.collections.find((c) => c.slug === config.admin?.user) ??
+      config.collections.find((c) => Boolean(c.auth));
+    if (!authCollection) {
+      throw new Error(
+        "[@dexilion/payload-blog] Auth collection not found. Ensure that the admin.user property is set in the Payload config.",
+      );
+    }
+
+    if (
+      !authCollection.fields.find(
+        (field) => "name" in field && field.name === "name",
+      )
+    ) {
+      throw new Error(
+        "[@dexilion/payload-blog] Auth collection must have a 'name' field to associate with posts' authors.",
+      );
+    }
+
+    authCollection?._sanitized;
+
+    const tagsCollection = options.tagsOverride
+      ? options.tagsOverride(Tags)
+      : Tags;
     const tagsCollectionSlug = tagsCollection.slug as CollectionSlug;
     const tagsCollectionExists = config.collections.some(
       (collection) => collection.slug === tagsCollectionSlug,
