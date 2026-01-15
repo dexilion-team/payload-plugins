@@ -56,6 +56,7 @@ export const getPage = async ({
         equals: "/" + (segments ?? []).join("/"),
       },
     },
+    draft: true,
   });
   if (!path.totalDocs && segments.length == 1 && !isNaN(Number(segments[0]))) {
     path = await payload.find({
@@ -63,6 +64,7 @@ export const getPage = async ({
       where: {
         id: { equals: Number(segments[0]) },
       },
+      draft: true,
     });
   }
 
