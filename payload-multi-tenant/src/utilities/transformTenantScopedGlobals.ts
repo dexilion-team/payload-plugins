@@ -61,7 +61,7 @@ export const transformTenantScopedGlobals = (
         ? { singular: globalLabel, plural: globalLabel }
         : undefined,
     };
-    console.log(globalLabel);
+
     globalCollection.admin = globalCollection.admin ?? {};
     globalCollection.admin.components = globalCollection.admin.components ?? {};
     globalCollection.admin.components.views =
