@@ -59,10 +59,6 @@ export const tenantTheming =
       ]),
     ];
 
-    // Add CSS endpoint to the tenants collection
-    // tenantsCollection.endpoints = tenantsCollection.endpoints || [];
-    // tenantsCollection.endpoints.push();
-
     tenantsCollection.fields = tenantsCollection.fields || [];
 
     // Verify if the theme field is already configured

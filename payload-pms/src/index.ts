@@ -1,10 +1,18 @@
-import type { Option, Block, CollectionConfig, Config, Tab } from "payload";
+import type {
+  Option,
+  Block,
+  CollectionConfig,
+  Config,
+  Tab,
+  GlobalConfig,
+} from "payload";
 import sharp from "sharp";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 
 import translationEn from "../translations/en.json";
-import { Media } from "./collections/Media";
+import { createMediaCollection } from "./collections/Media";
 import { createPagesCollection } from "./collections/Pages";
+import { createNavGlobal } from "./collections/Nav";
 
 export { sitemapGenerator } from "./sitemapGenerator";
 export { robotsGenerator } from "./robotsGenerator";
@@ -13,8 +21,12 @@ export type PayloadPMSPluginOptions = {
   blocks: ({ config }: { config: Config }) => Promise<Block[]>;
   layouts: ({ config }: { config: Config }) => Promise<Option[]>;
   pagesOverride?: (pages: CollectionConfig) => CollectionConfig;
-  mediaOverride?: (pages: CollectionConfig) => CollectionConfig;
+  mediaOverride?: (media: CollectionConfig) => CollectionConfig;
+  navOverride?: (nav: GlobalConfig) => GlobalConfig;
   extraTabs?: Tab[];
+  pagesSlug?: string;
+  mediaSlug?: string;
+  navSlug?: string;
 };
 
 export const pmsPlugin =
@@ -22,9 +34,11 @@ export const pmsPlugin =
   async (incomingConfig: Config): Promise<Config> => {
     const config: Config = { ...incomingConfig };
     config.collections = [...(incomingConfig.collections ?? [])];
+    config.globals = [...(incomingConfig.globals ?? [])];
 
     // Add Pages collection if it doesn't exist
     const Pages = createPagesCollection({
+      slug: options.pagesSlug,
       widgets: await options.blocks({ config }),
       layouts: await options.layouts({ config }),
       tabs: options.extraTabs || [],
@@ -41,6 +55,7 @@ export const pmsPlugin =
     }
 
     // Add Media collection if it doesn't exist
+    const Media = createMediaCollection({ slug: options.mediaSlug });
     const mediaCollectionExists = config.collections.some(
       (c) => c.slug === Media.slug,
     );
@@ -49,6 +64,20 @@ export const pmsPlugin =
         config.collections.push(options.mediaOverride(Media));
       } else {
         config.collections.push(Media);
+      }
+    }
+
+    // Add Nav global if it doesn't exist
+    const Nav = createNavGlobal({
+      slug: options.navSlug,
+      pagesSlug: options.pagesSlug,
+    });
+    const navGlobalExists = config.globals.some((c) => c.slug === Nav.slug);
+    if (!navGlobalExists) {
+      if (options.navOverride) {
+        config.globals.push(options.navOverride(Nav));
+      } else {
+        config.globals.push(Nav);
       }
     }
 

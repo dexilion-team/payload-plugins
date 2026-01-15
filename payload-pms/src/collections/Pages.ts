@@ -91,16 +91,20 @@ const read: Access = async ({ req }) => {
   return true;
 };
 
-export const createPagesCollection = ({
-  widgets,
-  layouts,
-  tabs,
-}: {
+export type PagesConfig = {
+  slug?: string;
   widgets: Block[];
   layouts?: Option[];
   tabs?: Tab[];
-}): CollectionConfig => ({
-  slug: "pages",
+};
+
+export const createPagesCollection = ({
+  slug,
+  widgets,
+  layouts,
+  tabs,
+}: PagesConfig): CollectionConfig => ({
+  slug: slug ?? "pages",
   admin: {
     livePreview: {
       url: ({ data, req }) => {
