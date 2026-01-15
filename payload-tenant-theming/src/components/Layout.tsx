@@ -13,7 +13,7 @@ export const Layout = async ({ children }: PropsWithChildren) => {
         config: await payloadConfig,
         tenantName,
       });
-      themeHref = `/theme.css?themename=${encodeURIComponent(theme.name)}`;
+      themeHref = `/api/theme.css?${encodeURIComponent(theme.name)}`;
     }
   } catch {}
 

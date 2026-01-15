@@ -5,6 +5,7 @@ import config from "@/payload.config";
 import { Theme } from "./types";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
 import { getTheme } from "./getTheme";
+import { PayloadRequest } from "payload";
 
 type ResolvedStyle = {
   path: string;
@@ -124,6 +125,7 @@ const loadThemeStyles = async (theme: Theme, debug?: boolean) => {
       const filePath = resolveFilePath(resolved.path);
       const scssDir = path.dirname(filePath);
       const nearestNodeModules = await findNearestNodeModules(scssDir);
+      const outputStyle = debug ? "expanded" : "compressed";
 
       if (resolved.type === "scss") {
         const result = await sass.compileAsync(filePath, {
@@ -151,46 +153,53 @@ const loadThemeStyles = async (theme: Theme, debug?: boolean) => {
               },
             },
           ],
-          style: "expanded",
+          style: outputStyle,
           logger: debug ? undefined : sass.Logger.silent,
         });
         return result.css;
       }
 
-      return readFile(filePath, "utf8");
+      const css = await readFile(filePath, "utf8");
+      if (debug) {
+        return css;
+      }
+
+      return sass.compileString(css, {
+        style: "compressed",
+        syntax: "css",
+      }).css;
     }),
   );
 
-  return chunks.join("\n");
+  return chunks.join(debug ? "\n" : "");
 };
 
-export const createGetHandler =
-  (options?: { debug?: boolean }) => async (request: Request) => {
-    const tenantName = await getTenantName();
-    if (!tenantName) {
-      return new Response("Tenant name not found.", { status: 400 });
-    }
+export const createGetHandler = (options?: { debug?: boolean }) => async () => {
+  const tenantName = await getTenantName();
+  if (!tenantName) {
+    return new Response("Tenant name not found.", { status: 400 });
+  }
 
-    const theme = await getTheme({
-      config: await config,
-      tenantName,
+  const theme = await getTheme({
+    config: await config,
+    tenantName,
+  });
+  if (!theme) {
+    return new Response("Tenant name not found.", { status: 400 });
+  }
+
+  try {
+    const css = await loadThemeStyles(theme, options?.debug);
+    return new Response(css, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/css; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+      },
     });
-    if (!theme) {
-      return new Response("Tenant name not found.", { status: 400 });
-    }
+  } catch (error) {
+    console.log(error);
 
-    try {
-      const css = await loadThemeStyles(theme, options?.debug);
-      return new Response(css, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/css; charset=utf-8",
-          "Cache-Control": "public, max-age=3600",
-        },
-      });
-    } catch (error) {
-      console.log(error);
-
-      return new Response("Failed to load theme styles.", { status: 500 });
-    }
-  };
+    return new Response("Failed to load theme styles.", { status: 500 });
+  }
+};

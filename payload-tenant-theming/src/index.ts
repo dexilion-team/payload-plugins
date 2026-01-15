@@ -2,11 +2,11 @@ import { Config } from "payload";
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
+import { createGetHandler } from "./cssGenerator";
 
 export type { Theme } from "./types";
 export { metadataGenerator } from "./metadataGenerator";
 export { getTheme } from "./getTheme";
-export { createGetHandler } from "./themeCssRoute";
 
 export type PayloadTenantThemingPluginOptions = {
   /**
@@ -46,6 +46,22 @@ export const tenantTheming =
         `[@dexilion/payload-tenant-theming] No tenants collection found with slug "${tenantsSlug}". Is the multi-tenant plugin configured correctly?`,
       );
     }
+
+    config.endpoints = [
+      ...(incomingConfig.endpoints ?? [
+        {
+          path: "/theme.css",
+          method: "get",
+          handler: async (req) => {
+            return createGetHandler()();
+          },
+        },
+      ]),
+    ];
+
+    // Add CSS endpoint to the tenants collection
+    // tenantsCollection.endpoints = tenantsCollection.endpoints || [];
+    // tenantsCollection.endpoints.push();
 
     tenantsCollection.fields = tenantsCollection.fields || [];
 
