@@ -15,6 +15,16 @@
       "types": "./src/components/TenantSelect.tsx",
       "import": "./src/components/TenantSelect.tsx",
       "default": "./src/components/TenantSelect.tsx"
+    },
+    "./GlobalViewRedirect": {
+      "types": "./src/components/GlobalViewRedirect.tsx",
+      "import": "./src/components/GlobalViewRedirect.tsx",
+      "default": "./src/components/GlobalViewRedirect.tsx"
+    },
+    "./GlobalCollectionRedirect": {
+      "types": "./src/components/GlobalCollectionRedirect.tsx",
+      "import": "./src/components/GlobalCollectionRedirect.tsx",
+      "default": "./src/components/GlobalCollectionRedirect.tsx"
     }
   },
   "main": "./src/index.ts",

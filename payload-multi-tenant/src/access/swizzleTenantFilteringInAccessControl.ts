@@ -3,23 +3,8 @@ import {
   getRelationshipID,
   getUserTenantIDsFromReq,
   tenantWhereForReq,
-} from "./utils";
+} from "../utils";
 import { getPreference, isWhere } from "@dexilion/payload-utils";
-
-const mergeWhere = (
-  base: Where | boolean,
-  tenantWhere: Where | false,
-): Where | false => {
-  if (!isWhere(base) || Object.keys(base).length === 0) {
-    return tenantWhere;
-  }
-
-  if (!isWhere(tenantWhere) || Object.keys(tenantWhere).length === 0) {
-    return base;
-  }
-
-  return { and: [base, tenantWhere] };
-};
 
 export const swizzleTenantFilteringInAccessControl = ({
   access,
@@ -226,4 +211,19 @@ export const swizzleTenantFilteringInAccessControl = ({
       return result;
     },
   };
+};
+
+const mergeWhere = (
+  base: Where | boolean,
+  tenantWhere: Where | false,
+): Where | false => {
+  if (!isWhere(base) || Object.keys(base).length === 0) {
+    return tenantWhere;
+  }
+
+  if (!isWhere(tenantWhere) || Object.keys(tenantWhere).length === 0) {
+    return base;
+  }
+
+  return { and: [base, tenantWhere] };
 };

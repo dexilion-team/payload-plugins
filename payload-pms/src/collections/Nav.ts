@@ -8,13 +8,13 @@ export type NavConfig = {
 export const createNavGlobal = (
   options?: Partial<NavConfig>,
 ): GlobalConfig => ({
+  label: "Navigation",
   slug: options?.slug ?? "nav",
   fields: [
     {
       name: "items",
       type: "array",
       required: true,
-      //maxRows: 8,
       fields: [
         {
           name: "page",

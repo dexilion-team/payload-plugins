@@ -1,5 +1,11 @@
-import type { CollectionConfig, PayloadRequest, Where } from "payload";
-import { isObject, isWhere } from "@dexilion/payload-utils";
+import type {
+  CollectionConfig,
+  CollectionSlug,
+  Payload,
+  PayloadRequest,
+  Where,
+} from "payload";
+import { getPreference, isObject, isWhere } from "@dexilion/payload-utils";
 
 type RelationshipID = number | string;
 
@@ -24,7 +30,7 @@ export const getRelationshipID = (value: unknown): RelationshipID | null => {
   return null;
 };
 
-export const getRelationshipIDs = (value: unknown): RelationshipID[] => {
+const getRelationshipIDs = (value: unknown): RelationshipID[] => {
   if (!value) return [];
   if (Array.isArray(value)) {
     return value
@@ -53,6 +59,100 @@ export const getUserTenantIDsFromReq = (
 
   const tenantField = req.user[tenantFieldName as keyof typeof req.user] as any;
   return getRelationshipIDs(tenantField?.docs);
+};
+
+export const getActiveTenantIDFromReq = async (
+  req: PayloadRequest | undefined,
+  tenantFieldName: string,
+  tenantsSlug: CollectionSlug = "tenants",
+): Promise<RelationshipID | null> => {
+  if (!req) {
+    return null;
+  }
+
+  const preference = await getPreference<number | undefined>({
+    req,
+    key: "admin-tenant-select",
+  });
+
+  if (preference != null) {
+    return preference;
+  }
+
+  const userTenantIDs = getUserTenantIDsFromReq(req, tenantFieldName);
+  if (userTenantIDs.length > 0) {
+    return userTenantIDs[0] ?? null;
+  }
+
+  if (!req.user?.id) {
+    return null;
+  }
+
+  const tenantMatch = await req.payload.find({
+    collection: tenantsSlug,
+    limit: 1,
+    pagination: false,
+    overrideAccess: true,
+    req,
+    where: {
+      [tenantFieldName]: {
+        contains: req.user.id,
+      },
+    },
+  });
+
+  return tenantMatch.docs[0]?.id ?? null;
+};
+
+export const getActiveTenantIDFromUser = async ({
+  payload,
+  tenantFieldName,
+  tenantsSlug,
+  user,
+}: {
+  payload: Payload;
+  tenantFieldName: string;
+  tenantsSlug: CollectionSlug;
+  user: PayloadRequest["user"] | undefined;
+}): Promise<RelationshipID | null> => {
+  if (!user?.id) {
+    return null;
+  }
+
+  const userSlug = payload.config.admin.user;
+  const preferenceResult = await payload.find({
+    collection: "payload-preferences" as CollectionSlug,
+    limit: 1,
+    pagination: false,
+    overrideAccess: true,
+    where: {
+      and: [
+        { key: { equals: "admin-tenant-select" } },
+        { "user.value": { equals: user.id } },
+        { "user.relationTo": { equals: userSlug } },
+      ],
+    },
+  });
+
+  const preference = preferenceResult.docs[0] as any;
+  const preferenceValue = getRelationshipID(preference?.value);
+  if (preferenceValue != null) {
+    return preferenceValue;
+  }
+
+  const tenantMatch = await payload.find({
+    collection: tenantsSlug,
+    limit: 1,
+    pagination: false,
+    overrideAccess: true,
+    where: {
+      [tenantFieldName]: {
+        contains: user.id,
+      },
+    },
+  });
+
+  return tenantMatch.docs[0]?.id ?? null;
 };
 
 export const tenantWhereForReq = (
