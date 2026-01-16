@@ -28,11 +28,7 @@ export type PageType = {
   pagesSlug: string;
 };
 
-export async function Page({
-  params,
-  searchParams,
-  pagesSlug = "pages",
-}: PageType) {
+export async function Page({ params, pagesSlug = "pages" }: PageType) {
   const { segments } = await params;
 
   const tenantName = await getTenantName();
@@ -79,7 +75,7 @@ export async function Page({
     {
       blockType: string;
     }[]
-  >(page, "content");
+  >(page, "content", ["parent"]);
   if (!content || !Array.isArray(content)) {
     payload.logger.warn(
       `[@dexilion/payload-tenant-theming] No content found on page with ID "${page.id}".`,
@@ -87,7 +83,9 @@ export async function Page({
     return notFound();
   }
 
-  const layoutKey = recursivelySearchForDataByName<string>(page, "layout");
+  const layoutKey = recursivelySearchForDataByName<string>(page, "layout", [
+    "parent",
+  ]);
   const layout = theme.Layout.find((Layout) => {
     if (typeof Layout.option === "string") {
       return Layout.option === layoutKey;

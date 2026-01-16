@@ -107,17 +107,7 @@ export const createPagesCollection = ({
   slug: slug ?? "pages",
   admin: {
     livePreview: {
-      url: ({ data, req }) => {
-        if (!data || !data.path) {
-          req.payload.logger.warn(
-            "[@dexilion/payload-pms] Live preview URL could not be generated because no data was provided.",
-          );
-
-          return `/${data.id}`;
-        }
-
-        return data.path;
-      },
+      url: ({ data }) => `/${data.id}`,
       breakpoints: [
         {
           label: "Mobile",

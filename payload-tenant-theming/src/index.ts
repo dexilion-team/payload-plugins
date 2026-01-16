@@ -7,6 +7,8 @@ import { createGetHandler } from "./cssGenerator";
 export type { Theme } from "./types";
 export { metadataGenerator } from "./metadataGenerator";
 export { getTheme } from "./getTheme";
+export { getPage } from "./getPage";
+export { getNav } from "./getNav";
 
 export type PayloadTenantThemingPluginOptions = {
   /**

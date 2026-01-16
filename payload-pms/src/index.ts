@@ -28,6 +28,7 @@ export type PayloadPMSPluginOptions = {
   mediaSlug?: string;
   navSlug?: string;
   navDepth?: number;
+  navExtraFields?: GlobalConfig["fields"];
 };
 
 export const pmsPlugin =
@@ -73,6 +74,7 @@ export const pmsPlugin =
       slug: options.navSlug,
       pagesSlug: options.pagesSlug,
       depth: (options.navDepth || 1) - 1,
+      extraFields: options.navExtraFields,
     });
     const navGlobalExists = config.globals.some((c) => c.slug === Nav.slug);
     if (!navGlobalExists) {

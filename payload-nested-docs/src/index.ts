@@ -81,6 +81,7 @@ function recursivelySearchForFieldByName(
 export function recursivelySearchForDataByName<R>(
   data: Record<string, unknown>,
   name: string,
+  blacklist: string[] = [],
 ): R | null {
   for (const key in data) {
     if (key === name && data.hasOwnProperty(key)) {
@@ -88,10 +89,15 @@ export function recursivelySearchForDataByName<R>(
     }
 
     const value = data[key];
-    if (typeof value === "object" && value !== null) {
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      !blacklist.includes(key)
+    ) {
       const nestedValue = recursivelySearchForDataByName<R>(
         value as Record<string, unknown>,
         name,
+        blacklist,
       );
       if (nestedValue !== null) {
         return nestedValue;

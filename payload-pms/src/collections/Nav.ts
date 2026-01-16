@@ -15,7 +15,7 @@ export const createNavGlobal = (
   fields: [
     {
       name: "items",
-      label: "Items",
+      label: "Top Level Items",
       type: "array",
       fields: createFields(
         options?.depth ?? 0,
@@ -57,8 +57,8 @@ const createFields = (
     ...(sub.length > 0
       ? [
           {
-            name: `items${depth}`,
-            label: "Items",
+            name: "sub ".repeat(depth + 1) + "items",
+            label: "Sub ".repeat(depth + 1) + "Items",
             type: "array",
             fields: sub,
           } satisfies Field,

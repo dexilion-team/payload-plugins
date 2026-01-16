@@ -5,16 +5,10 @@ import { getTenantName } from "@dexilion/payload-multi-tenant";
 
 export const metadataGenerator =
   (options?: { tenantsSlug?: string }) =>
-  async ({
-    params,
-    searchParams,
-  }: {
-    params: any;
-    searchParams: any;
-  }): Promise<Metadata> => {
-    const { segments } = await params;
+  async ({ params }: { params: any; searchParams: any }): Promise<Metadata> => {
+    const { segments } = (await params) as { segments?: string[] };
     const page = await getPage({
-      segments,
+      segments: segments ?? [],
       pagesSlug: "pages",
     });
 
@@ -28,7 +22,7 @@ export const metadataGenerator =
     const logo = page.meta?.image?.url ?? page[tenantsSlug]?.logo?.url;
     const title =
       (page.meta.title ||
-        recursivelySearchForDataByName<string>(page, "title")) ??
+        recursivelySearchForDataByName<string>(page, "title", ["parent"])) ??
       "";
 
     return {

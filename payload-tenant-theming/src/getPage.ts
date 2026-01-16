@@ -1,14 +1,16 @@
 import payloadConfig from "@/payload.config";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
-import { CollectionSlug, Field, getPayload } from "payload";
+import { CollectionSlug, getPayload } from "payload";
 import { getTheme } from "./getTheme";
 
 export const getPage = async ({
   segments,
   pagesSlug,
+  tenantFieldKey,
 }: {
   segments: string[];
   pagesSlug: string;
+  tenantFieldKey?: string;
 }): Promise<any | null> => {
   const payload = await getPayload({ config: payloadConfig });
 
@@ -55,6 +57,11 @@ export const getPage = async ({
       [pathFieldKey]: {
         equals: "/" + (segments ?? []).join("/"),
       },
+      tenant: {
+        [tenantFieldKey ?? "domain"]: {
+          equals: tenantName,
+        },
+      },
     },
     draft: true,
   });
@@ -63,6 +70,11 @@ export const getPage = async ({
       collection: pagesSlug as CollectionSlug,
       where: {
         id: { equals: Number(segments[0]) },
+        tenant: {
+          [tenantFieldKey ?? "domain"]: {
+            equals: tenantName,
+          },
+        },
       },
       draft: true,
     });
