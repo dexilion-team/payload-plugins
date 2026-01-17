@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import payloadConfig from "@/payload.config";
-import { getPayload } from "payload";
+import { CollectionSlug, getPayload } from "payload";
 import { getPage } from "../getPage.ts";
 import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
-import { getTheme } from "../getTheme.ts";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
 import { Theme } from "../types.ts";
 import { RefreshRouteOnSave } from "./RefreshRouteOnSave.tsx";
@@ -42,13 +41,44 @@ export async function Page({
     );
   }
 
+  // Get the theme name from the tenant record
+  const payload = await getPayload({ config: payloadConfig });
+  const tenantsSlug = "tenants";
+  const themeFieldName = "theme";
+
+  const res = await payload.find({
+    collection: tenantsSlug as CollectionSlug,
+    where: { domain: { equals: tenantName } },
+    limit: 1,
+  });
+
+  if (res.totalDocs === 0) {
+    throw new Error(
+      `[@dexilion/payload-tenant-theming] No tenant found with name "${tenantName}" in collection "${tenantsSlug}".`,
+    );
+  }
+
+  const tenantDoc = res.docs[0];
+  const themeName = tenantDoc[themeFieldName as keyof typeof tenantDoc] as
+    | string
+    | undefined;
+
+  if (!themeName) {
+    throw new Error(
+      `[@dexilion/payload-tenant-theming] No theme set for tenant "${tenantName}".`,
+    );
+  }
+
+  // Dynamically import the full theme (only loaded here, not during config evaluation)
   let theme: Theme | null = null;
   try {
-    theme = await getTheme({
-      config: await payloadConfig,
-      tenantName,
-    });
-  } catch {}
+    const themeModule = await import(`@/themes/${themeName}/index`);
+    theme = themeModule.default;
+  } catch (e) {
+    payload.logger.error(
+      `[@dexilion/payload-tenant-theming] Failed to load theme "${themeName}": ${e}`,
+    );
+  }
 
   if (!theme || !theme.Layout) {
     throw new Error("[@dexilion/payload-tenant-theming] No theme found.");
@@ -65,8 +95,6 @@ export async function Page({
       return notFound();
     }
   } catch (error) {
-    const payload = await getPayload({ config: payloadConfig });
-
     if (isNextHttpError(error, 404)) {
       return notFound();
     }
