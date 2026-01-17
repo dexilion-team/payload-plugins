@@ -181,7 +181,6 @@ export const createGetHandler = (options?: { debug?: boolean }) => async () => {
   }
 
   const theme = await getTheme({
-    config: await config,
     tenantName,
   });
   if (!theme) {

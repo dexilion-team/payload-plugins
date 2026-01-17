@@ -10,7 +10,6 @@ export const Layout = async ({ children }: PropsWithChildren) => {
     const tenantName = await getTenantName();
     if (tenantName) {
       const theme = await getTheme({
-        config: await payloadConfig,
         tenantName,
       });
       themeHref = `/api/theme.css?${encodeURIComponent(theme.name)}`;

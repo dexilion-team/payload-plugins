@@ -25,7 +25,6 @@ export const getPage = async ({
   let theme;
   try {
     theme = await getTheme({
-      config: await payloadConfig,
       tenantName,
     });
 

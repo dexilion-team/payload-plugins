@@ -6,15 +6,16 @@ export type GetThemeParams = {
   tenantsSlug?: string;
   tenantName: string;
   themeFieldName?: string;
-  config: Config | SanitizedConfig;
+  //config: Config | SanitizedConfig;
 };
 
 export async function getTheme({
-  config,
+  //config,
   tenantsSlug = "tenants",
   tenantName,
   themeFieldName = "theme",
 }: GetThemeParams): Promise<Theme> {
+  const config = await payloadConfig;
   const payload = await getPayload({ config: payloadConfig });
 
   const res = await payload.find({

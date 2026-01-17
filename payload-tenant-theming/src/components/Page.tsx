@@ -39,7 +39,6 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
   let theme: Theme | null = null;
   try {
     theme = await getTheme({
-      config: await payloadConfig,
       tenantName,
     });
   } catch {}
