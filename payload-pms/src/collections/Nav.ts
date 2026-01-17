@@ -44,6 +44,25 @@ const createFields = (
       type: "text",
       required: true,
     },
+    ...(extraFields ?? []),
+    {
+      name: "type",
+      type: "radio",
+      admin: {
+        layout: "horizontal",
+      },
+      defaultValue: "page",
+      options: [
+        {
+          label: "Page",
+          value: "page",
+        },
+        {
+          label: "Link",
+          value: "link",
+        },
+      ],
+    },
     {
       name: "page",
       type: "relationship",
@@ -51,9 +70,17 @@ const createFields = (
       required: true,
       admin: {
         allowCreate: false,
+        condition: (_, siblingData) => siblingData?.type === "page",
       },
     },
-    ...(extraFields ?? []),
+    {
+      name: "link",
+      type: "text",
+      required: true,
+      admin: {
+        condition: (_, siblingData) => siblingData?.type === "link",
+      },
+    },
     ...(sub.length > 0
       ? [
           {
