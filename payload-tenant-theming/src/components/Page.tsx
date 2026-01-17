@@ -33,9 +33,7 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
 
   const tenantName = await getTenantName();
   if (!tenantName) {
-    throw new Error(
-      "[@dexilion/payload-tenant-theming] No tenant found with that name.",
-    );
+    return <UnderConstructionPage />;
   }
 
   let theme: Theme | null = null;
@@ -47,7 +45,7 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
   } catch {}
 
   if (!theme || !theme.Layout) {
-    throw new Error("[@dexilion/payload-tenant-theming] No theme found.");
+    return <UnderConstructionPage />;
   }
 
   let page;
@@ -128,5 +126,52 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
       </Layout>
       <RefreshRouteOnSave serverURL={`${proto}://${tenantName}`} />
     </>
+  );
+}
+
+function UnderConstructionPage() {
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        padding: "3rem 1.5rem",
+        backgroundColor: "#f6f6f4",
+        color: "#1f1f1f",
+        fontFamily:
+          '"Iowan Old Style", "Palatino", "Palatino Linotype", "Book Antiqua", Georgia, serif',
+      }}
+    >
+      <section
+        style={{
+          maxWidth: "36rem",
+          width: "100%",
+          backgroundColor: "#ffffff",
+          border: "1px solid #e2e2dc",
+          borderRadius: "12px",
+          padding: "2.5rem",
+          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.06)",
+        }}
+      >
+        <p
+          style={{
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            fontSize: "0.75rem",
+            margin: 0,
+            color: "#6b6b62",
+          }}
+        >
+          Site status
+        </p>
+        <h1 style={{ margin: "0.75rem 0 0.5rem", fontSize: "2.25rem" }}>
+          Under construction
+        </h1>
+        <p style={{ margin: 0, lineHeight: 1.6, color: "#4a4a45" }}>
+          This site is getting its finishing touches. Please check back soon.
+        </p>
+      </section>
+    </main>
   );
 }
