@@ -31,6 +31,8 @@ export type PageType = {
 export async function Page({ params, pagesSlug = "pages" }: PageType) {
   const { segments } = await params;
 
+  const payload = await getPayload({ config: payloadConfig });
+
   const tenantName = await getTenantName();
   if (!tenantName) {
     return <UnderConstructionPage />;
@@ -58,8 +60,6 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
       return notFound();
     }
   } catch (error) {
-    const payload = await getPayload({ config: payloadConfig });
-
     if (isNextHttpError(error, 404)) {
       return notFound();
     }
@@ -83,16 +83,21 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
   const layoutKey = recursivelySearchForDataByName<string>(page, "layout", [
     "parent",
   ]);
-  const layout = theme.Layout.find((Layout) => {
+
+  if (theme.Layout.length === 0) {
+    throw new Error(
+      `[@dexilion/payload-tenant-theming] No layout found for layout key "${layoutKey}" on page with ID "${page.id}".`,
+    );
+  }
+
+  let layout = theme.Layout.find((Layout) => {
     if (typeof Layout.option === "string") {
       return Layout.option === layoutKey;
     }
     return Layout.option.value === layoutKey;
   });
   if (!layout) {
-    throw new Error(
-      `[@dexilion/payload-tenant-theming] No layout found for layout key "${layoutKey}" on page with ID "${page.id}".`,
-    );
+    layout = theme.Layout[0];
   }
 
   const Layout = await layout.component();

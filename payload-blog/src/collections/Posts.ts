@@ -65,6 +65,9 @@ export const createPostsCollection = ({
       type: "richText",
       required: true,
       editor: lexicalEditor({
+        admin: {
+          hideGutter: false,
+        },
         features: ({ defaultFeatures }) => [
           ...defaultFeatures,
           UploadFeature({}),

@@ -18,8 +18,8 @@ export { sitemapGenerator } from "./sitemapGenerator";
 export { robotsGenerator } from "./robotsGenerator";
 
 export type PayloadPMSPluginOptions = {
-  blocks: () => Promise<Block[]>;
-  layouts: () => Promise<Option[]>;
+  blocks: () => Promise<Record<string, Block[]>>;
+  layouts: () => Promise<Record<string, Option[]>>;
   pagesOverride?: (pages: CollectionConfig) => CollectionConfig;
   mediaOverride?: (media: CollectionConfig) => CollectionConfig;
   navOverride?: (nav: GlobalConfig) => GlobalConfig;
@@ -41,7 +41,7 @@ export const pmsPlugin =
     // Add Pages collection if it doesn't exist
     const Pages = createPagesCollection({
       slug: options.pagesSlug,
-      widgets: await options.blocks(),
+      blocks: await options.blocks(),
       layouts: await options.layouts(),
       tabs: options.extraTabs || [],
     });

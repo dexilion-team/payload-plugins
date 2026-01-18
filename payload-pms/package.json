@@ -15,6 +15,11 @@
       "types": "./src/components/RichText/index.tsx",
       "import": "./src/components/RichText/index.tsx",
       "default": "./src/components/RichText/index.tsx"
+    },
+    "./admin/LayoutVariantSelect": {
+      "types": "./src/components/admin/LayoutVariantSelect.tsx",
+      "import": "./src/components/admin/LayoutVariantSelect.tsx",
+      "default": "./src/components/admin/LayoutVariantSelect.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -30,7 +35,8 @@
     "payload": "3",
     "sharp": "^0.34.5",
     "@payloadcms/ui": "3",
-    "@payloadcms/richtext-lexical": "3.69.0"
+    "@payloadcms/richtext-lexical": "3.69.0",
+    "@dexilion/payload-utils": "3.69.0"
   },
   "devDependencies": {
     "@payloadcms/db-mongodb": "3.69.0",

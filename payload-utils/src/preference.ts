@@ -37,7 +37,10 @@ export async function getPreference<P = unknown>({
   req,
   key,
 }: {
-  req: PayloadRequest;
+  req: {
+    payload: PayloadRequest["payload"];
+    user: PayloadRequest["user"];
+  };
   key: string;
 }): Promise<P | undefined> {
   if (!Object.keys(req).includes("headers")) {

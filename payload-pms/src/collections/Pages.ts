@@ -3,105 +3,30 @@ import {
   createPathField,
   createSlugField,
 } from "@dexilion/payload-nested-docs";
+//import { getPreference } from "@dexilion/payload-utils";
 import type {
-  Access,
   Block,
-  CollectionAfterOperationHook,
   CollectionConfig,
-  CollectionSlug,
   Option,
+  PayloadRequest,
   Tab,
 } from "payload";
-
-const setDefaultUserPreferences: CollectionAfterOperationHook = async ({
-  req,
-  req: { payload, user },
-  operation,
-}) => {
-  // HACK: Trigger as soon as possible so by the time the page editor is loaded
-  // the default preference is already changed. The "find" operation necessarily
-  // happens before the page editor UI loads.
-  if (operation !== "find" || !user) {
-    return;
-  }
-
-  try {
-    const authCollectionSlug = payload.config.admin.user;
-
-    const existing = await payload.db.findOne<{
-      id: number;
-      value: {
-        editViewType: "default" | "live-preview";
-      };
-    }>({
-      collection: "payload-preferences" as CollectionSlug,
-      where: {
-        and: [
-          { key: { equals: "collection-pages" } },
-          { "user.value": { equals: user.id } },
-          { "user.relationTo": { equals: authCollectionSlug } },
-        ],
-      },
-      req,
-    });
-
-    // If the preference is already set by the user, do not overwrite it
-    if (
-      existing?.value?.editViewType &&
-      existing?.value?.editViewType !== "default"
-    ) {
-      return;
-    }
-
-    await req.payload.db.upsert({
-      collection: "payload-preferences" as CollectionSlug,
-      data: {
-        key: "collection-pages",
-        user: {
-          relationTo: authCollectionSlug,
-          value: user.id,
-        },
-        value: {
-          ...(existing?.value ?? {}),
-          editViewType: "live-preview",
-        },
-        req,
-      },
-      where: {
-        and: [
-          { key: { equals: "collection-pages" } },
-          { "user.value": { equals: user.id } },
-          { "user.relationTo": { equals: authCollectionSlug } },
-        ],
-      },
-    });
-  } catch {
-    /* do nothing as existing preferences shouldn't be overwritten */
-  }
-};
-
-const read: Access = async ({ req }) => {
-  const user = req?.user;
-  if (!user) {
-    return {
-      or: [{ _status: { equals: "published" } }],
-    };
-  }
-
-  return true;
-};
+import pageRead from "../access/pageRead";
+import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
+import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
+import getThemeName from "../utils/getThemeName";
 
 export type PagesConfig = {
   slug?: string;
-  widgets: Block[];
-  layouts?: Option[];
+  layouts: Record<string, Option[]>;
+  blocks: Record<string, Block[]>;
   tabs?: Tab[];
 };
 
 export const createPagesCollection = ({
   slug,
-  widgets,
   layouts,
+  blocks,
   tabs,
 }: PagesConfig): CollectionConfig => ({
   slug: slug ?? "pages",
@@ -139,7 +64,7 @@ export const createPagesCollection = ({
     },
   },
   access: {
-    read,
+    read: pageRead,
   },
   hooks: {
     afterOperation: [setDefaultUserPreferences],
@@ -182,22 +107,50 @@ export const createPagesCollection = ({
                 t("plugin-pms:layoutVariantLabel"),
               required: true,
               virtual: true,
-              defaultValue:
-                layouts && layouts.length > 0
-                  ? typeof layouts[0] === "object" && "value" in layouts[0]
-                    ? layouts[0].value
-                    : layouts[0]
-                  : "",
-              options: layouts ?? [],
+              options: Object.keys(layouts).reduce((acc, key) => {
+                return [
+                  ...acc,
+                  ...layouts[key].map((option) => {
+                    const label =
+                      typeof option === "string" ? option : option.label;
+                    const value =
+                      typeof option === "string" ? option : option.value;
+
+                    return {
+                      label,
+                      value: `${key}-${value}`,
+                    };
+                  }),
+                ];
+              }, [] as Option[]),
+              admin: {
+                components: {
+                  Field: "@dexilion/payload-pms/admin/LayoutVariantSelect",
+                },
+              },
               hooks: {
                 afterRead: [
-                  async ({ value, siblingData }) => {
-                    return siblingData?.layout || undefined;
+                  async ({ siblingData, req }) => {
+                    if (!req.user) {
+                      return undefined;
+                    }
+
+                    const themeName = await getThemeName({ req });
+                    const layout = siblingData?.layout;
+                    return layout ? `${themeName}-${layout}` : undefined;
                   },
                 ],
                 beforeChange: [
-                  async ({ value, siblingData }) => {
-                    siblingData.layout = value;
+                  async ({ value, siblingData, req }) => {
+                    if (!req.user) {
+                      console.error(
+                        "[@dexilion/payload-pms] Unable to set layout beforeChange: no user in request",
+                      );
+                      return;
+                    }
+
+                    const themeName = await getThemeName({ req });
+                    siblingData.layout = value?.replace(`${themeName}-`, "");
                   },
                 ],
               },
@@ -217,19 +170,57 @@ export const createPagesCollection = ({
                 t("plugin-pms:widgetsLabel"),
               type: "blocks",
               virtual: true,
-              blocks: widgets,
+              blocks: Object.keys(blocks).reduce(
+                (acc, key) => [
+                  ...acc,
+                  ...blocks[key].map((block) => ({
+                    ...block,
+                    slug: `${key}-${block.slug}`,
+                  })),
+                ],
+                [] as Block[],
+              ),
               required: true,
+              filterOptions: async ({ req }) => {
+                const themeName = await getThemeName({ req });
+                if (!themeName) {
+                  return [];
+                }
+
+                return blocks[themeName].map(
+                  (block) => `${themeName}-${block.slug}`,
+                );
+              },
               hooks: {
                 afterRead: [
-                  ({ siblingData }) => {
-                    return siblingData?.content || [];
+                  async ({ siblingData, req }) => {
+                    if (!req.user) {
+                      return [];
+                    }
+
+                    const themeName = await getThemeName({ req });
+                    return (siblingData?.content || []).map((block: any) => ({
+                      ...block,
+                      blockType: `${themeName}-${block.blockType}`,
+                    }));
                   },
                 ],
                 beforeChange: [
-                  ({ siblingData }) => {
+                  async ({ siblingData, req }) => {
+                    if (!req.user) {
+                      console.error(
+                        "[@dexilion/payload-pms] Unable to set widgets content beforeChange: no user in request",
+                      );
+                      return;
+                    }
+
+                    const themeName = await getThemeName({ req });
                     const widgets = siblingData?.widgets || [];
 
-                    siblingData.content = widgets;
+                    siblingData.content = widgets.map((widget: any) => ({
+                      ...widget,
+                      blockType: widget.blockType.replace(`${themeName}-`, ""),
+                    }));
                   },
                 ],
               },
@@ -252,7 +243,7 @@ export const createPagesCollection = ({
             const title = siblingData?.generalTab?.title || "";
             const path = siblingData?.generalTab?.path || "";
 
-            siblingData.display = `${title} [${path}]`;
+            siblingData.display = title ? `${title} [${path}]` : "<New Page>";
           },
         ],
       },
