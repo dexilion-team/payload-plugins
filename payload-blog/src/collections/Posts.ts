@@ -28,16 +28,25 @@ export const createPostsCollection = ({
       name: "slug",
       type: "text",
       required: true,
-    },
-    {
-      name: "titleImage",
-      type: "upload",
-      relationTo: mediaSlug,
+      admin: {
+        position: "sidebar",
+      }
     },
     {
       name: "date",
       type: "date",
       required: true,
+      admin: {
+        position: "sidebar",
+      }
+    },
+    {
+      name: "titleImage",
+      type: "upload",
+      relationTo: mediaSlug,
+      admin: {
+        position: "sidebar",
+      }
     },
     {
       name: "excerpt",
@@ -49,6 +58,9 @@ export const createPostsCollection = ({
       type: "relationship",
       relationTo: tagsSlug,
       hasMany: true,
+      admin: {
+        position: "sidebar",
+      }
     },
     {
       name: "author",
