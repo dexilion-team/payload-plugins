@@ -48,6 +48,24 @@ export const scopeCollectionToTenant = (
     );
   }
 
+  // Hide collection from admin UI if user has no tenants
+  collection.admin = collection.admin ?? {};
+  const originalHidden = collection.admin.hidden;
+  collection.admin.hidden = ({ user }) => {
+    // If there's already a hidden function/value, respect it
+    if (typeof originalHidden === "function") {
+      return originalHidden({ user });
+    } else if (originalHidden === true) {
+      return true;
+    }
+
+    // Hide if user has no tenants
+    const tenantsDocs = user?.[tenantFieldName as keyof typeof user] as any;
+    const tenants = tenantsDocs?.docs ?? [];
+    
+    return !tenants || (Array.isArray(tenants) && tenants.length === 0);
+  };
+
   // Wrap existing access control with tenant scoping
   const originalAccess = collection.access ?? {};
   collection.access = swizzleTenantFilteringInAccessControl({

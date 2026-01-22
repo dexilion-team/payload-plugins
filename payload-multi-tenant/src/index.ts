@@ -1,10 +1,8 @@
-import type { CollectionConfig, CollectionSlug, Config } from "payload";
+import type { CollectionSlug, Config } from "payload";
 import translationEn from "../translations/en.json";
 import { scopeCollectionToTenant } from "./utilities/scopeCollectionToTenant";
-import { addSingletonPerTenantCreateAccess } from "./utilities/addSingletonPerTenantCreateAccess";
-import { addSingletonPerTenantHook } from "./utilities/addSingletonPerTenantHook";
 import { setTenantPreference } from "./utilities/setTenantPreference";
-import { createDefaultTenantsCollection } from "./utilities/createDefaultTenantsCollection";
+import { createDefaultTenantsCollection } from "./collections/Tenant";
 import { transformTenantScopedGlobals } from "./utilities/transformTenantScopedGlobals";
 
 export { isUserInTenant } from "./isUserInTenant";
@@ -54,7 +52,6 @@ export const multiTenantPlugin =
     // Set defaults
     const tenantsSlug = (options.tenantsSlug ?? "tenants") as CollectionSlug;
     const tenantFieldName = options.tenantFieldName ?? "tenant";
-    //const tenantScopedCollectionSlugs = options.collections ?? [];
     const tenantScopedGlobalSlugs = options.globals ?? [];
 
     const config: Config = { ...incomingConfig };
@@ -128,13 +125,16 @@ export const multiTenantPlugin =
     };
 
     // Transform tenant-scoped globals into collections
-    const tenantScopedCollectionSlugs = transformTenantScopedGlobals(
+    const tenantScopedGlobalCollectionSlugs = [
+      ...(options.collections ?? []),
+      ...transformTenantScopedGlobals(
       tenantScopedGlobalSlugs,
       config.globals,
       config.collections,
       tenantFieldName,
       tenantsSlug,
-    );
+    )
+    ];
 
     // Remove tenant-scoped globals from config.globals
     if (tenantScopedGlobalSlugs.length > 0) {
@@ -144,7 +144,7 @@ export const multiTenantPlugin =
     }
 
     // Add tenantField and access control to tenant-scoped collections
-    for (const slug of tenantScopedCollectionSlugs) {
+    for (const slug of tenantScopedGlobalCollectionSlugs) {
       const collection = config.collections.find((c) => c.slug === slug);
       if (!collection) {
         throw new Error(
