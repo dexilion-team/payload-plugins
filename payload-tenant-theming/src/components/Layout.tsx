@@ -23,9 +23,9 @@ export const Layout = async ({
 
   return (
     <html>
-      <Head>
+      <head>
         {themeHref ? <link rel="stylesheet" href={themeHref} /> : null}
-      </Head>
+      </head>
       <body>{children}</body>
     </html>
   );
