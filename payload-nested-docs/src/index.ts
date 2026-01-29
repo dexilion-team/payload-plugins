@@ -3,6 +3,7 @@ import {
   Config,
   deepMergeWithSourceArrays,
   Field,
+  PayloadRequest,
 } from "payload";
 import translationEn from "../translations/en.json";
 
@@ -11,6 +12,11 @@ export type PayloadNextedDocsPluginOptions = {
    * Collection slugs that should have nested docs functionality.
    */
   collections: string[];
+
+  /**
+   * Override where to find the slug field for the pages collection.
+   */
+  pagesSlugPath?: string;
 };
 
 export const nestedDocsPlugin =
@@ -30,7 +36,12 @@ export const nestedDocsPlugin =
 
       // Only add the parent field if it doesn't already exist
       if (!recursivelySearchForFieldByName(collection.fields, "parent")) {
-        collection.fields.unshift(createParentField(slug as CollectionSlug));
+        collection.fields.unshift(
+          createParentField(
+            slug as CollectionSlug,
+            options.pagesSlugPath ?? "slug",
+          ),
+        );
       }
     }
 
@@ -110,6 +121,7 @@ export function recursivelySearchForDataByName<R>(
 
 export function createParentField(
   slug: CollectionSlug,
+  pagesSlugPath: string,
   overrides?: Partial<Field>,
 ): Field {
   return deepMergeWithSourceArrays(
@@ -125,6 +137,50 @@ export function createParentField(
           "Select the parent document for nesting. Leave empty for top-level documents.",
         placeholder: "",
       },
+      defaultValue: async ({
+        req,
+        data,
+      }: {
+        req: PayloadRequest;
+        data: Record<string, unknown>;
+      }) => {
+        // Don't set default for the home page itself
+        const currentSlug = recursivelySearchForDataByName(data, "slug");
+        if (currentSlug === "home") {
+          return undefined;
+        }
+
+        // Find the home page within the same tenant
+        const tenant = recursivelySearchForDataByName(data, "tenant");
+
+        const query: Record<string, any> = {
+          [pagesSlugPath]: { equals: "home" },
+        };
+
+        // Filter by tenant if tenant field exists
+        if (tenant !== null) {
+          query.tenant = { equals: tenant };
+        }
+
+        try {
+          const homePage = await req.payload.find({
+            collection: slug as CollectionSlug,
+            where: query,
+            limit: 1,
+          });
+
+          if (homePage.docs.length > 0) {
+            return homePage.docs[0].id;
+          }
+        } catch (error) {
+          console.error(
+            "[@dexilion/payload-nested-docs] Error finding home page:",
+            error,
+          );
+        }
+
+        return undefined;
+      },
       filterOptions: ({ data }: { data: any }) => {
         return {
           id: { not_equals: data.id },
@@ -135,7 +191,10 @@ export function createParentField(
   );
 }
 
-export function createSlugField(): Field {
+export function createSlugField(
+  collection: CollectionSlug,
+  pagesSlugPath: string,
+): Field {
   return {
     name: "slug",
     type: "text",
@@ -146,10 +205,52 @@ export function createSlugField(): Field {
     },
     required: true,
     hasMany: false,
-    validate: async (value, { req: { t } }) =>
-      Boolean(value?.match(/^[a-z0-9-]+$/)) ||
-      // @ts-ignore
-      t("validation:pages:urlSlugFormat"),
+    validate: async (value, { req: { t, payload }, data, id }) => {
+      // Check format
+      if (!Boolean(value?.match(/^[a-z0-9-]+$/))) {
+        // @ts-ignore
+        return t("validation:pages:urlSlugFormat");
+      }
+
+      // Check uniqueness within parent and tenant
+      if (collection && value) {
+        const tenant = recursivelySearchForDataByName(data, "tenant");
+
+        const query: Record<string, any> = {
+          [pagesSlugPath]: { equals: value },
+        };
+
+        // Exclude current document from the query
+        if (id) {
+          query.id = { not_equals: id };
+        }
+
+        // Check within the same tenant if tenant field exists
+        if (tenant !== null) {
+          query.tenant = { equals: tenant };
+        }
+        console.log("Validation query:", query);
+        try {
+          const existingDocs = await payload.find({
+            collection: collection as CollectionSlug,
+            where: query,
+            limit: 1,
+          });
+
+          if (existingDocs.docs.length > 0) {
+            // @ts-ignore
+            return t("plugin-nested-docs:slugMustBeUnique");
+          }
+        } catch (error) {
+          console.error(
+            "[@dexilion/payload-nested-docs] Error validating slug uniqueness:",
+            error,
+          );
+        }
+      }
+
+      return true;
+    },
   };
 }
 

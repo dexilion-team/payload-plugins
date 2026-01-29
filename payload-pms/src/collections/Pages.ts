@@ -7,6 +7,7 @@ import {
 import type {
   Block,
   CollectionConfig,
+  CollectionSlug,
   Option,
   PayloadRequest,
   Tab,
@@ -82,9 +83,15 @@ export const createPagesCollection = ({
               type: "text",
               required: true,
             },
-            createSlugField(),
-            createParentField("pages"),
-            createPathField("pages"),
+            createSlugField(
+              (slug ?? "pages") as CollectionSlug,
+              "generalTab.slug",
+            ),
+            createParentField(
+              (slug ?? "pages") as CollectionSlug,
+              "generalTab.slug",
+            ),
+            createPathField((slug ?? "pages") as CollectionSlug),
           ],
         },
         {
