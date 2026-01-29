@@ -71,7 +71,7 @@ export const getGlobalViewRedirect = async ({
   const basePath = `${adminRoute}/collections/${collectionSlug}`;
   const suffix = buildQueryString(searchParams);
 
-  if (existing.docs.length > 0) {
+  if (existing.docs[0]) {
     const docID = String(existing.docs[0].id);
     return `${basePath}/${docID}${suffix}`;
   }

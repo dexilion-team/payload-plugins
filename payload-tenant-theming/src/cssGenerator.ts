@@ -1,11 +1,10 @@
 import path from "path";
 import { readFile, access } from "fs/promises";
 import * as sass from "sass";
-import config from "@/payload.config";
 import { Theme } from "./types";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
 import { getTheme } from "./getTheme";
-import { PayloadRequest } from "payload";
+import { PayloadRequest, SanitizedConfig } from "payload";
 
 type ResolvedStyle = {
   path: string;
@@ -62,6 +61,10 @@ const buildModuleCandidates = (
     ? parts.slice(2)
     : parts.slice(1);
   const subPath = subPathParts.join("/");
+
+  if (!moduleName) {
+    return [];
+  }
 
   const base = path.join(nodeModulesPath, moduleName);
   const candidates: string[] = [];
@@ -174,31 +177,34 @@ const loadThemeStyles = async (theme: Theme, debug?: boolean) => {
   return chunks.join(debug ? "\n" : "");
 };
 
-export const createGetHandler = (options?: { debug?: boolean }) => async () => {
-  const tenantName = await getTenantName();
-  if (!tenantName) {
-    return new Response("Tenant name not found.", { status: 400 });
-  }
+export const createGetHandler =
+  (payloadConfig: Promise<SanitizedConfig>, options?: { debug?: boolean }) =>
+  async () => {
+    const tenantName = await getTenantName();
+    if (!tenantName) {
+      return new Response("Tenant name not found.", { status: 400 });
+    }
 
-  const theme = await getTheme({
-    tenantName,
-  });
-  if (!theme) {
-    return new Response("Tenant name not found.", { status: 400 });
-  }
-
-  try {
-    const css = await loadThemeStyles(theme, options?.debug);
-    return new Response(css, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/css; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
-      },
+    const theme = await getTheme({
+      tenantName,
+      payloadConfig,
     });
-  } catch (error) {
-    console.log(error);
+    if (!theme) {
+      return new Response("Tenant name not found.", { status: 400 });
+    }
 
-    return new Response("Failed to load theme styles.", { status: 500 });
-  }
-};
+    try {
+      const css = await loadThemeStyles(theme, options?.debug);
+      return new Response(css, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/css; charset=utf-8",
+          "Cache-Control": "public, max-age=3600",
+        },
+      });
+    } catch (error) {
+      console.log(error);
+
+      return new Response("Failed to load theme styles.", { status: 500 });
+    }
+  };

@@ -1,15 +1,19 @@
 import type { PropsWithChildren } from "react";
-import payloadConfig from "@/payload.config";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
 import { getTheme } from "../getTheme";
+import { SanitizedConfig } from "payload";
 
-export const Layout = async ({ children }: PropsWithChildren) => {
+export const Layout = async ({
+  payloadConfig,
+  children,
+}: PropsWithChildren<{ payloadConfig: Promise<SanitizedConfig> }>) => {
   let themeHref: string | null = null;
 
   try {
     const tenantName = await getTenantName();
     if (tenantName) {
       const theme = await getTheme({
+        payloadConfig,
         tenantName,
       });
       themeHref = `/api/theme.css?${encodeURIComponent(theme.name)}`;

@@ -1,16 +1,17 @@
-import payloadConfig from "@/payload.config";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
-import { CollectionSlug, getPayload } from "payload";
+import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getTheme } from "./getTheme";
 
 export const getPage = async ({
   segments,
   pagesSlug,
   tenantFieldKey,
+  payloadConfig,
 }: {
   segments: string[];
   pagesSlug: string;
   tenantFieldKey?: string;
+  payloadConfig: Promise<SanitizedConfig>;
 }): Promise<any | null> => {
   const payload = await getPayload({ config: payloadConfig });
 
@@ -26,6 +27,7 @@ export const getPage = async ({
   try {
     theme = await getTheme({
       tenantName,
+      payloadConfig,
     });
 
     if (!theme || !theme.Layout) {
@@ -43,7 +45,7 @@ export const getPage = async ({
     }
   }
 
-  const pathFieldKey = await getPathFieldKey(pagesSlug);
+  const pathFieldKey = await getPathFieldKey(payloadConfig);
   if (!pathFieldKey) {
     throw new Error(
       `[@dexilion/payload-tenant-theming] No "path" field found in the "${pagesSlug}" collection.`,
@@ -82,7 +84,7 @@ export const getPage = async ({
   return path.docs[0] || null;
 };
 
-async function getPathFieldKey(pagesSlug: string) {
+async function getPathFieldKey(payloadConfig: Promise<SanitizedConfig>) {
   const config = await payloadConfig;
   const pagesCollection = config.collections.find((c) => c.slug === "pages")!;
   return recursivelyBuildKey(pagesCollection.fields as any, "path");

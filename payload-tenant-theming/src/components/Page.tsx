@@ -1,12 +1,11 @@
 import { notFound } from "next/navigation";
-import payloadConfig from "@/payload.config";
-import { getPayload } from "payload";
-import { getPage } from "../getPage.ts";
+import { getPayload, SanitizedConfig } from "payload";
+import { getPage } from "../getPage";
 import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
-import { getTheme } from "../getTheme.ts";
+import { getTheme } from "../getTheme";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
-import { Theme } from "../types.ts";
-import { RefreshRouteOnSave } from "./RefreshRouteOnSave.tsx";
+import { Theme } from "../types";
+import { RefreshRouteOnSave } from "./RefreshRouteOnSave";
 import { headers } from "next/headers";
 
 function isNextHttpError(error: unknown, code: number): boolean {
@@ -26,9 +25,14 @@ export type PageType = {
     [key: string]: string | string[];
   }>;
   pagesSlug: string;
+  payloadConfig: Promise<SanitizedConfig>;
 };
 
-export async function Page({ params, pagesSlug = "pages" }: PageType) {
+export async function Page({
+  params,
+  pagesSlug = "pages",
+  payloadConfig,
+}: PageType) {
   const { segments } = await params;
 
   const payload = await getPayload({ config: payloadConfig });
@@ -42,6 +46,7 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
   try {
     theme = await getTheme({
       tenantName,
+      payloadConfig,
     });
   } catch {}
 
@@ -54,6 +59,7 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
     page = await getPage({
       segments,
       pagesSlug,
+      payloadConfig,
     });
 
     if (!page) {
@@ -98,6 +104,11 @@ export async function Page({ params, pagesSlug = "pages" }: PageType) {
   });
   if (!layout) {
     layout = theme.Layout[0];
+  }
+  if (!layout?.component) {
+    throw new Error(
+      `[@dexilion/payload-tenant-theming] No layout component found for layout key "${layoutKey}" on page with ID "${page.id}".`,
+    );
   }
 
   const Layout = await layout.component();

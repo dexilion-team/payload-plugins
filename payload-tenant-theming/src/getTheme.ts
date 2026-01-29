@@ -1,16 +1,15 @@
 import { CollectionSlug, Config, getPayload, SanitizedConfig } from "payload";
-import payloadConfig from "@/payload.config";
 import { Theme } from "./types";
 
 export type GetThemeParams = {
   tenantsSlug?: string;
   tenantName: string;
   themeFieldName?: string;
-  //config: Config | SanitizedConfig;
+  payloadConfig: Promise<SanitizedConfig>;
 };
 
 export async function getTheme({
-  //config,
+  payloadConfig,
   tenantsSlug = "tenants",
   tenantName,
   themeFieldName = "theme",
@@ -31,6 +30,11 @@ export async function getTheme({
   }
 
   const doc = res.docs[0];
+  if (!doc) {
+    throw new Error(
+      `[@dexilion/payload-tenant-theming] Tenant document is undefined for tenant "${tenantName}" in collection "${tenantsSlug}".`,
+    );
+  }
   if (!(themeFieldName in doc)) {
     throw new Error(
       `[@dexilion/payload-tenant-theming] The theme field "${themeFieldName}" does not exist on the tenants collection "${tenantsSlug}".`,

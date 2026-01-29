@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-tenant-theming",
-  "version": "3.69.0",
+  "version": "3.69.2",
   "description": "A Payload CMS plugin to provide theming capabilities for multi-tenant setups.",
   "author": "Dexilion",
   "license": "MIT",
@@ -28,11 +28,9 @@
     "*.scss",
     "*.css"
   ],
-  "dependencies": {
-    "@dexilion/payload-multi-tenant": "workspace:*",
-    "@dexilion/payload-nested-docs": "workspace:*"
-  },
   "peerDependencies": {
+    "@dexilion/payload-multi-tenant": "3.69.2",
+    "@dexilion/payload-nested-docs": "3.69.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "next": "^15.4",
@@ -41,9 +39,44 @@
     "@payloadcms/live-preview-react": "3.69.0"
   },
   "devDependencies": {
+    "@swc/cli": "^0.7.10",
+    "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
+    "payload": "3",
     "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "pnpm build:types && pnpm build:swc",
+    "build:swc": "swc ./src -d ./dist --config-file .swcrc --strip-leading-paths",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "clean": "rimraf -g {dist,*.tsbuildinfo}",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./Page": {
+        "types": "./dist/components/Page.d.ts",
+        "import": "./dist/components/Page.js",
+        "default": "./dist/components/Page.js"
+      },
+      "./Layout": {
+        "types": "./dist/components/Layout.d.ts",
+        "import": "./dist/components/Layout.js",
+        "default": "./dist/components/Layout.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "registry": "https://registry.npmjs.org/",
+    "types": "./dist/index.d.ts"
   }
 }

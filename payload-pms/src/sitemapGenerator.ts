@@ -1,17 +1,17 @@
 import type { MetadataRoute } from "next";
-import { CollectionSlug, getPayload } from "payload";
-import config from "@payload-config";
+import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
 
 export type SitemapGeneratorOptions = {
+  config: Promise<SanitizedConfig>;
   pageSlug?: string;
   domainFieldName?: string;
 };
 
 export const sitemapGenerator =
-  (options?: SitemapGeneratorOptions) =>
+  (options: SitemapGeneratorOptions) =>
   async (): Promise<MetadataRoute.Sitemap> => {
-    const payload = await getPayload({ config });
+    const payload = await getPayload({ config: options.config });
 
     const tenantName = await getTenantName();
     if (!tenantName) {
@@ -37,7 +37,7 @@ export const sitemapGenerator =
     const pages = await payload.find({
       collection: (options?.pageSlug || "pages") as CollectionSlug,
       where: {
-        tenant: { equals: tenant.docs[0].id },
+        tenant: { equals: tenant.docs[0]!.id },
       },
       pagination: false,
     });

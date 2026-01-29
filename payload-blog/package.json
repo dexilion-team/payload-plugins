@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-blog",
-  "version": "3.69.0",
+  "version": "3.69.2",
   "description": "A Payload CMS blog plugin with posts and tags.",
   "author": "Dexilion",
   "license": "MIT",
@@ -28,6 +28,8 @@
   },
   "devDependencies": {
     "@payloadcms/db-mongodb": "3.69.0",
+    "@swc/cli": "^0.7.10",
+    "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
@@ -36,7 +38,25 @@
     "vitest": "^4.0.16"
   },
   "scripts": {
+    "build": "pnpm build:types && pnpm build:swc",
+    "build:swc": "swc ./src -d ./dist --config-file .swcrc --strip-leading-paths",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "clean": "rimraf -g {dist,*.tsbuildinfo}",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "registry": "https://registry.npmjs.org/",
+    "types": "./dist/index.d.ts"
   }
 }

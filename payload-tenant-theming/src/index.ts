@@ -1,4 +1,4 @@
-import { Config } from "payload";
+import { Config, SanitizedConfig } from "payload";
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
@@ -55,7 +55,9 @@ export const tenantTheming =
           path: "/theme.css",
           method: "get",
           handler: async (req) => {
-            return createGetHandler()();
+            return createGetHandler(
+              Promise.resolve(config as SanitizedConfig),
+            )();
           },
         },
       ]),

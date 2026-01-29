@@ -115,9 +115,10 @@ export const createPagesCollection = ({
               required: true,
               virtual: true,
               options: Object.keys(layouts).reduce((acc, key) => {
+                const layoutOptions = layouts[key] || [];
                 return [
                   ...acc,
-                  ...layouts[key].map((option) => {
+                  ...layoutOptions.map((option) => {
                     const label =
                       typeof option === "string" ? option : option.label;
                     const value =
@@ -177,16 +178,16 @@ export const createPagesCollection = ({
                 t("plugin-pms:widgetsLabel"),
               type: "blocks",
               virtual: true,
-              blocks: Object.keys(blocks).reduce(
-                (acc, key) => [
+              blocks: Object.keys(blocks).reduce((acc, key) => {
+                const blockOptions = blocks[key] || [];
+                return [
                   ...acc,
-                  ...blocks[key].map((block) => ({
+                  ...blockOptions.map((block) => ({
                     ...block,
                     slug: `${key}-${block.slug}`,
                   })),
-                ],
-                [] as Block[],
-              ),
+                ];
+              }, [] as Block[]),
               required: true,
               filterOptions: async ({ req }) => {
                 const themeName = await getThemeName({ req });
@@ -194,7 +195,9 @@ export const createPagesCollection = ({
                   return [];
                 }
 
-                return blocks[themeName].map(
+                const blockOptions = blocks[themeName] || [];
+
+                return blockOptions.map(
                   (block) => `${themeName}-${block.slug}`,
                 );
               },

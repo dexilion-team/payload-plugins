@@ -4,12 +4,13 @@ const setDefaultUserPreferences: CollectionAfterOperationHook = async ({
   req,
   req: { payload, user },
   operation,
+  result,
 }) => {
   // HACK: Trigger as soon as possible so by the time the page editor is loaded
   // the default preference is already changed. The "find" operation necessarily
   // happens before the page editor UI loads.
   if (operation !== "find" || !user) {
-    return;
+    return result;
   }
 
   try {
@@ -37,7 +38,7 @@ const setDefaultUserPreferences: CollectionAfterOperationHook = async ({
       existing?.value?.editViewType &&
       existing?.value?.editViewType !== "default"
     ) {
-      return;
+      return result;
     }
 
     await req.payload.db.upsert({
@@ -65,6 +66,8 @@ const setDefaultUserPreferences: CollectionAfterOperationHook = async ({
   } catch {
     /* do nothing as existing preferences shouldn't be overwritten */
   }
+
+  return result;
 };
 
 export default setDefaultUserPreferences;

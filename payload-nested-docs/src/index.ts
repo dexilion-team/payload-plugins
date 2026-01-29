@@ -169,7 +169,7 @@ export function createParentField(
             limit: 1,
           });
 
-          if (homePage.docs.length > 0) {
+          if (homePage.docs[0]) {
             return homePage.docs[0].id;
           }
         } catch (error) {

@@ -1,15 +1,19 @@
 import { Metadata } from "next";
 import { getPage } from "./getPage";
 import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
-import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { SanitizedConfig } from "payload";
 
 export const metadataGenerator =
-  (options?: { tenantsSlug?: string }) =>
+  (
+    payloadConfig: Promise<SanitizedConfig>,
+    options?: { tenantsSlug?: string },
+  ) =>
   async ({ params }: { params: any; searchParams: any }): Promise<Metadata> => {
     const { segments } = (await params) as { segments?: string[] };
     const page = await getPage({
       segments: segments ?? [],
       pagesSlug: "pages",
+      payloadConfig,
     });
 
     if (!page) {

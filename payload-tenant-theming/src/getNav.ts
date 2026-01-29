@@ -1,13 +1,13 @@
 import { getTenantName } from "@dexilion/payload-multi-tenant";
-import payloadConfig from "@/payload.config";
-import { CollectionSlug, getPayload } from "payload";
+import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 
 export const getNav = async (params: {
   tenantFieldKey?: string;
   slug?: CollectionSlug;
+  payloadConfig: Promise<SanitizedConfig>;
 }) => {
   const { slug, tenantFieldKey } = params;
-  const payload = await getPayload({ config: payloadConfig });
+  const payload = await getPayload({ config: params.payloadConfig });
 
   const tenantName = await getTenantName();
   if (!tenantName) {

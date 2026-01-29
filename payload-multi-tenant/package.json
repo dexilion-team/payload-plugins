@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-multi-tenant",
-  "version": "3.69.0",
+  "version": "3.69.2",
   "description": "A Payload CMS plugin to enable multi-tenant functionality.",
   "author": "Dexilion",
   "license": "MIT",
@@ -39,10 +39,12 @@
     "next": "^15.4",
     "payload": "3",
     "@payloadcms/ui": "3",
-    "@dexilion/payload-utils": "3.69.0"
+    "@dexilion/payload-utils": "3.69.2"
   },
   "devDependencies": {
     "@payloadcms/db-mongodb": "3.69.0",
+    "@swc/cli": "^0.7.10",
+    "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",
@@ -51,7 +53,40 @@
     "vitest": "^4.0.16"
   },
   "scripts": {
+    "build": "pnpm build:types && pnpm build:swc",
+    "build:swc": "swc ./src -d ./dist --config-file .swcrc --strip-leading-paths",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "clean": "rimraf -g {dist,*.tsbuildinfo}",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./TenantSelect": {
+        "types": "./dist/components/TenantSelect.d.ts",
+        "import": "./dist/components/TenantSelect.js",
+        "default": "./dist/components/TenantSelect.js"
+      },
+      "./GlobalViewRedirect": {
+        "types": "./dist/components/GlobalViewRedirect.d.ts",
+        "import": "./dist/components/GlobalViewRedirect.js",
+        "default": "./dist/components/GlobalViewRedirect.js"
+      },
+      "./GlobalCollectionRedirect": {
+        "types": "./dist/components/GlobalCollectionRedirect.d.ts",
+        "import": "./dist/components/GlobalCollectionRedirect.js",
+        "default": "./dist/components/GlobalCollectionRedirect.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "registry": "https://registry.npmjs.org/",
+    "types": "./dist/index.d.ts"
   }
 }
