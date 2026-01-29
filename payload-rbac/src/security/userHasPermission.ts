@@ -36,6 +36,7 @@ export default async function userHasPermission({
   });
 
   for (const role of userRoles.docs) {
+    // @ts-ignore
     const permissions = role.permissions || {};
 
     for (const principalSlug of principals) {

@@ -2,8 +2,8 @@ import type { Config } from "payload";
 import globalPayload, { buildConfig } from "payload";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, beforeAll } from "vitest";
-import payloadMultiTenant from "../src";
 import { mongooseAdapter } from "@payloadcms/db-mongodb";
+import { multiTenantPlugin } from "../src/index";
 
 let mongo: MongoMemoryServer | null = await MongoMemoryServer.create();
 let payload: Awaited<ReturnType<(typeof globalPayload)["init"]>> | null = null;
@@ -50,7 +50,7 @@ beforeAll(async () => {
         },
       ],
       plugins: [
-        payloadMultiTenant({
+        multiTenantPlugin({
           collections: ["pages"],
         }),
       ],

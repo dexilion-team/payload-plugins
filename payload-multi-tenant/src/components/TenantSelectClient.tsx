@@ -21,6 +21,7 @@ export default function TenantSelectClient({
     }
 
     if (reload) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       triggerReload(false);
     }
   }, [reload, selected]);
