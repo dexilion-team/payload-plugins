@@ -17,7 +17,10 @@ export const Layout = async ({
         payloadConfig,
         tenantName,
       });
-      themeHref = `/api/theme.css?${encodeURIComponent(theme.name)}`;
+      themeHref =
+        process.env.NODE_ENV === "production"
+          ? `/${encodeURIComponent(theme.name)}/global.css`
+          : `/api/theme.css?${encodeURIComponent(theme.name)}`;
     }
   } catch {}
 
