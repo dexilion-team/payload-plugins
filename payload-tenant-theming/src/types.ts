@@ -11,10 +11,16 @@ export type Layout = {
   component: () => Promise<React.ElementType<PropsWithChildren>>;
 };
 
+export type Blog = {
+  listingComponent: () => Promise<React.ElementType>;
+  postComponent: () => Promise<React.ElementType>;
+};
+
 export interface Theme {
   name: string;
   label: string;
   Layout: Layout[];
   Widgets: Widget[];
+  Blog?: Blog;
   styles?: string[];
 }
