@@ -6,7 +6,7 @@ import { PayloadRequest } from "payload";
 
 type TenantOrID = number | { id: number };
 type UserWithTenants = {
-  id: number;
+  id: string | number;
   email: string;
   tenant?: {
     docs?: TenantOrID[];
@@ -32,7 +32,21 @@ const getThemeName = async ({ req }: { req: PayloadRequest }) => {
   let tenantId = preference?.value;
 
   if (!tenantId) {
-    const user = req.user as UserWithTenants;
+    let user: UserWithTenants | null = null;
+    if (typeof req.user === "number") {
+      user = (await req.payload.findByID({
+        collection: "users",
+        id: req.user,
+        depth: 1,
+      })) as UserWithTenants | null;
+    } else {
+      user = req.user as UserWithTenants;
+    }
+
+    if (!user) {
+      return null;
+    }
+
     const firstTenant = user.tenant?.docs?.[0];
     if (firstTenant) {
       tenantId =

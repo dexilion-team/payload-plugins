@@ -229,7 +229,7 @@ export function createSlugField(
         if (tenant !== null) {
           query.tenant = { equals: tenant };
         }
-        console.log("Validation query:", query);
+
         try {
           const existingDocs = await payload.find({
             collection: collection as CollectionSlug,

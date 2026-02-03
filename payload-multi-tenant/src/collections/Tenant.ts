@@ -20,13 +20,13 @@ export const createDefaultTenantsCollection = (
       name: "logo",
       type: "upload",
       relationTo: (mediaSlug ?? "media") as CollectionSlug,
-      access: {
-        create: () => false,
-      },
       admin: {
-        description: ({ t }) =>
-          // @ts-ignore
-          t("plugin-multi-tenant:logoFieldDescription"),
+        condition: (props) => {
+          if (typeof props.id === "number") {
+            return true;
+          }
+          return false;
+        },
       },
     },
   ],
