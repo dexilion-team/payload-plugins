@@ -13,6 +13,7 @@ import type {
 } from "@payloadcms/richtext-lexical/lexical/list";
 import type { SerializedHeadingNode } from "@payloadcms/richtext-lexical/lexical/rich-text";
 import type { JSX } from "react";
+import Image from "next/image";
 
 import React, { Fragment } from "react";
 
@@ -29,9 +30,12 @@ import Link from "next/link";
 
 interface Props {
   nodes: SerializedLexicalNode[];
+  opts?: {
+    uploadCaption?: boolean;
+  };
 }
 
-export function serializeLexical({ nodes }: Props): JSX.Element {
+export function serializeLexical({ nodes, opts }: Props): JSX.Element {
   return (
     <Fragment>
       {nodes?.map((_node, index): JSX.Element | null => {
@@ -172,6 +176,42 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
           }
           case "quote": {
             return <blockquote key={index}>{serializedChildren}</blockquote>;
+          }
+          case "upload": {
+            const upload = _node as any;
+            const mediaUrl = upload.value?.url || "";
+            const altText = upload.value?.alt || "";
+            const mimeType = upload.value?.mimeType || "";
+            const width = upload.value?.width || 0;
+            const height = upload.value?.height || 0;
+
+            if (
+              !["image/png", "image/jpg", "image/jpeg", "image/gif"].includes(
+                mimeType,
+              )
+            ) {
+              return <></>;
+            }
+
+            const img = (
+              <Image
+                src={mediaUrl}
+                alt={altText}
+                width={width}
+                height={height}
+              />
+            );
+
+            return opts?.uploadCaption ? (
+              <figure key={index}>
+                {img}
+                <figcaption>
+                  <em>{altText}</em>
+                </figcaption>
+              </figure>
+            ) : (
+              img
+            );
           }
 
           default:

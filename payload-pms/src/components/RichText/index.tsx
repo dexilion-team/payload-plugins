@@ -6,7 +6,10 @@ const RichText: React.FC<{
   className?: string;
   content: any;
   enableGutter?: boolean;
-}> = ({ className, content }) => {
+  opts?: {
+    uploadCaption?: boolean;
+  };
+}> = ({ className, content, opts }) => {
   if (!content) {
     return null;
   }
@@ -17,7 +20,7 @@ const RichText: React.FC<{
         !Array.isArray(content) &&
         typeof content === "object" &&
         "root" in content &&
-        serializeLexical({ nodes: content?.root?.children })}
+        serializeLexical({ nodes: content?.root?.children, opts })}
     </div>
   );
 };
