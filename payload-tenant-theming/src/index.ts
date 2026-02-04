@@ -1,4 +1,4 @@
-import { Config, SanitizedConfig } from "payload";
+import { Config, SanitizedConfig, Plugin } from "payload";
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
@@ -34,7 +34,7 @@ export const tenantTheming =
     tenantsSlug = "tenants",
     themeFieldName = "theme",
     domainFieldName = "domain",
-  }: PayloadTenantThemingPluginOptions = {}) =>
+  }: PayloadTenantThemingPluginOptions = {}): Plugin =>
   (incomingConfig: Config): Config => {
     const config: Config = { ...incomingConfig };
     config.collections = [...(incomingConfig.collections ?? [])];

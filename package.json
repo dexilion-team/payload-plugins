@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-plugins",
-  "version": "3.69.2",
+  "version": "3.74.0",
   "private": true,
   "scripts": {
     "build": "pnpm -r run build",
