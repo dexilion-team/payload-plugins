@@ -128,10 +128,17 @@ const PermissionsField: FieldClientComponent = (props) => {
     (collectionSlug: string, action: PermissionAction, enabled: boolean) => {
       if (readOnly || disabled) return;
 
+      const currentRow = matrix[collectionSlug] || {
+        read: false,
+        create: false,
+        update: false,
+        delete: false,
+      };
+
       const next: PermissionsMatrix = {
         ...matrix,
         [collectionSlug]: {
-          ...matrix[collectionSlug],
+          ...currentRow,
           [action]: enabled,
         },
       };

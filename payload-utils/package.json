@@ -42,6 +42,12 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "!**/*.tsbuildinfo"
+  ],
   "publishConfig": {
     "exports": {
       ".": {

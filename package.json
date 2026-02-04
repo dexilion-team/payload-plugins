@@ -1,5 +1,14 @@
 {
   "name": "@dexilion/payload-plugins",
   "version": "3.69.2",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r run build",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "publish": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.8"
+  }
 }
