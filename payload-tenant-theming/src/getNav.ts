@@ -16,13 +16,12 @@ export const getNav = async (params: {
     );
   }
 
+  const tenantKey = `tenant.${tenantFieldKey ?? "domain"}`;
   const nav = await payload.find({
     collection: slug ?? ("nav" as CollectionSlug),
     where: {
-      tenant: {
-        [tenantFieldKey ?? "domain"]: {
-          equals: tenantName,
-        },
+      [tenantKey]: {
+        equals: tenantName,
       },
     },
     limit: 1,

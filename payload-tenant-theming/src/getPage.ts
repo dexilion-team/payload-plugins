@@ -51,31 +51,26 @@ export const getPage = async ({
       `[@dexilion/payload-tenant-theming] No "path" field found in the "${pagesSlug}" collection.`,
     );
   }
-
+  const tenantKey = `tenant.${tenantFieldKey ?? "domain"}`;
   let path = await payload.find({
     collection: pagesSlug as CollectionSlug,
     where: {
       [pathFieldKey]: {
         equals: "/" + (segments ?? []).join("/"),
       },
-      tenant: {
-        [tenantFieldKey ?? "domain"]: {
-          equals: tenantName,
-        },
+      [tenantKey]: {
+        equals: tenantName,
       },
     },
     draft: true,
   });
+
   if (!path.totalDocs && segments.length == 1 && !isNaN(Number(segments[0]))) {
     path = await payload.find({
       collection: pagesSlug as CollectionSlug,
       where: {
         id: { equals: Number(segments[0]) },
-        tenant: {
-          [tenantFieldKey ?? "domain"]: {
-            equals: tenantName,
-          },
-        },
+        [tenantKey]: { equals: tenantName },
       },
       draft: true,
     });
