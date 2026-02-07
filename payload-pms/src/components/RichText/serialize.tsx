@@ -18,6 +18,10 @@ import Image from "next/image";
 import React, { Fragment } from "react";
 
 import {
+  IS_ALIGN_CENTER,
+  IS_ALIGN_END,
+  IS_ALIGN_JUSTIFY,
+  IS_ALIGN_RIGHT,
   IS_BOLD,
   IS_CODE,
   IS_ITALIC,
@@ -42,6 +46,7 @@ export function serializeLexical({ nodes, opts }: Props): JSX.Element {
         if (_node.type === "text") {
           const node = _node as SerializedTextNode;
           let text = <React.Fragment key={index}>{node.text}</React.Fragment>;
+
           if (node.format & IS_BOLD) {
             text = <strong key={index}>{text}</strong>;
           }
@@ -114,13 +119,30 @@ export function serializeLexical({ nodes, opts }: Props): JSX.Element {
         switch (_node.type) {
           case "heading": {
             const node = _node as SerializedHeadingNode;
+            const params: Record<string, any> = {};
+            // @ts-ignore
+            if (node.format === "center") {
+              params.style = { textAlign: "center" };
+            }
+            // @ts-ignore
+            if (node.format === "right" || node.format === "end") {
+              params.style = { textAlign: "right" };
+            }
+            // @ts-ignore
+            if (node.format === "justify") {
+              params.style = { textAlign: "justify" };
+            }
 
             type Heading = Extract<
               keyof JSX.IntrinsicElements,
               "h1" | "h2" | "h3" | "h4" | "h5"
             >;
             const Tag = node?.tag as Heading;
-            return <Tag key={index}>{serializedChildren}</Tag>;
+            return (
+              <Tag key={index} {...params}>
+                {serializedChildren}
+              </Tag>
+            );
           }
           case "linebreak": {
             return <br key={index} />;
@@ -172,7 +194,24 @@ export function serializeLexical({ nodes, opts }: Props): JSX.Element {
             }
           }
           case "paragraph": {
-            return <p key={index}>{serializedChildren}</p>;
+            const params: Record<string, any> = {};
+            // @ts-ignore
+            if (_node.format === "center") {
+              params.style = { textAlign: "center" };
+            }
+            // @ts-ignore
+            if (_node.format === "right" || _node.format === "end") {
+              params.style = { textAlign: "right" };
+            }
+            // @ts-ignore
+            if (_node.format === "justify") {
+              params.style = { textAlign: "justify" };
+            }
+            return (
+              <p key={index} {...params}>
+                {serializedChildren}
+              </p>
+            );
           }
           case "quote": {
             return <blockquote key={index}>{serializedChildren}</blockquote>;
