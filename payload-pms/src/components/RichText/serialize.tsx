@@ -18,10 +18,6 @@ import Image from "next/image";
 import React, { Fragment } from "react";
 
 import {
-  IS_ALIGN_CENTER,
-  IS_ALIGN_END,
-  IS_ALIGN_JUSTIFY,
-  IS_ALIGN_RIGHT,
   IS_BOLD,
   IS_CODE,
   IS_ITALIC,
@@ -218,6 +214,14 @@ export function serializeLexical({ nodes, opts }: Props): JSX.Element {
           }
           case "upload": {
             const upload = _node as any;
+            if (typeof upload.value === "number") {
+              console.warn(
+                "Upload node has numeric value, cannot render",
+                upload.value,
+              );
+              return <Fragment key={index}></Fragment>;
+            }
+
             const mediaUrl = upload.value?.url || "";
             const altText = upload.value?.alt || "";
             const mimeType = upload.value?.mimeType || "";
@@ -229,11 +233,12 @@ export function serializeLexical({ nodes, opts }: Props): JSX.Element {
                 mimeType,
               )
             ) {
-              return <></>;
+              return <Fragment key={index}></Fragment>;
             }
 
             const img = (
               <Image
+                key={index}
                 src={mediaUrl}
                 alt={altText}
                 width={width}

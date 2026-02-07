@@ -76,7 +76,13 @@ export const getPage = async ({
     });
   }
 
-  return path.docs[0] || null;
+  const page = path.docs[0] || null;
+
+  if (page) {
+    await processBlockFields(page, payload);
+  }
+
+  return page;
 };
 
 async function getPathFieldKey(payloadConfig: Promise<SanitizedConfig>) {
@@ -109,4 +115,63 @@ function recursivelyBuildKey(
   }
 
   return null;
+}
+
+async function processBlockFields(obj: any, payload: any): Promise<void> {
+  if (!obj || typeof obj !== "object") {
+    return;
+  }
+
+  for (const key in obj) {
+    const value = obj[key];
+
+    if (value && typeof value === "object") {
+      // Check if this field has a 'root' property (hierarchical structure)
+      if ("root" in value && value.root) {
+        await processHierarchicalNode(value.root, payload);
+      } else if (Array.isArray(value)) {
+        // Process arrays
+        for (const item of value) {
+          await processBlockFields(item, payload);
+        }
+      } else {
+        // Process nested objects
+        await processBlockFields(value, payload);
+      }
+    }
+  }
+}
+
+async function processHierarchicalNode(node: any, payload: any): Promise<void> {
+  if (!node || typeof node !== "object") {
+    return;
+  }
+
+  // Check if this node is an upload reference
+  if (
+    node.type === "upload" &&
+    typeof node.value === "number" &&
+    node.relationTo
+  ) {
+    try {
+      const uploadData = await payload.findByID({
+        collection: node.relationTo as CollectionSlug,
+        id: node.value,
+      });
+
+      // Replace the value with the fetched upload data
+      node.value = uploadData;
+    } catch (error) {
+      payload.logger.warn(
+        `[@dexilion/payload-tenant-theming] Failed to fetch upload ${node.value} from ${node.relationTo}`,
+      );
+    }
+  }
+
+  // Recursively process children if they exist
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      await processHierarchicalNode(child, payload);
+    }
+  }
 }
