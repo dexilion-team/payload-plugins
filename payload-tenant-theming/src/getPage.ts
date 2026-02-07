@@ -52,6 +52,7 @@ export const getPage = async ({
     );
   }
   const tenantKey = `tenant.${tenantFieldKey ?? "domain"}`;
+
   let path = await payload.find({
     collection: pagesSlug as CollectionSlug,
     where: {

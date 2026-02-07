@@ -289,7 +289,7 @@ const generatePath =
     if (parent == null) {
       return `/${slug ?? ""}`;
     }
-
+    //console.log({ parent, slug });
     let doc = await payload.findByID({
       collection: collection as CollectionSlug,
       id: parent,
@@ -304,7 +304,7 @@ const generatePath =
         draft: true,
       });
     }
-    const path = (doc as any).path;
+    const path = recursivelySearchForDataByName(doc, "path");
 
     return `${path ? path : ""}/${slug}`.replace(/\/\/+/g, "/");
   };
