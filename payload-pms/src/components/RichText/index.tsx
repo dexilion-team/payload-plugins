@@ -65,13 +65,13 @@ export const RichText = ({ content }: { content: SerializedEditorState }) => {
         converters: ({ defaultConverters }) => {
           return {
             ...defaultConverters,
-            "custom-heading": customConverter,
-            "custom-paragraph": customConverter,
+            // "custom-heading": customConverter,
+            // "custom-paragraph": customConverter,
             vimeo: async ({ node }) =>
               `<iframe
                 src="https://player.vimeo.com/video/${node.id}"
+                style="aspect-ratio: 16/9"
                 width="100%"
-                style={ aspect-ratio: "16/9" }
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
@@ -80,7 +80,7 @@ export const RichText = ({ content }: { content: SerializedEditorState }) => {
               `<iframe
                 src="https://www.youtube-nocookie.com/embed/${node.id}?modestbranding=1&rel=0"
                 width="100%"
-                style={{ aspect-ratio: "16/9" }}
+                style="aspect-ratio: 16/9"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>`,

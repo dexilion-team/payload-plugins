@@ -1,0 +1,84 @@
+{
+  "name": "@dexilion/payload-lexical-ext",
+  "version": "3.74.0",
+  "description": "Extended lexical editor features for Payload CMS (Text color, highlight, block background, embeds)",
+  "author": "Dexilion",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "import": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./client.css": {
+      "import": "./src/color/components/ColorPicker.css"
+    }
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "sideEffects": [
+    "*.scss",
+    "*.css"
+  ],
+  "peerDependencies": {
+    "@payloadcms/richtext-lexical": "3",
+    "@payloadcms/ui": "3",
+    "escape-html": "^1.0.3",
+    "next": "^16",
+    "payload": "3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "dependencies": {
+    "lucide-react": "^0.469.0",
+    "react-colorful": "^5.6.1"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.7.10",
+    "@swc/core": "^1.15.11",
+    "@types/escape-html": "^1.0.4",
+    "@types/node": "^22.10.2",
+    "@types/react": "19.2.2",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "pnpm build:types && pnpm build:swc",
+    "build:swc": "swc ./src -d ./dist --config-file .swcrc --strip-leading-paths",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "clean": "rimraf -g {dist,*.tsbuildinfo}",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "!**/*.tsbuildinfo"
+  ],
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./client": {
+        "types": "./dist/client.d.ts",
+        "import": "./dist/client.js",
+        "default": "./dist/client.js"
+      },
+      "./client.css": {
+        "import": "./dist/color/components/ColorPicker.css"
+      }
+    },
+    "main": "./dist/index.js",
+    "registry": "https://registry.npmjs.org/",
+    "types": "./dist/index.d.ts"
+  }
+}
