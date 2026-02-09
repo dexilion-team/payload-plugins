@@ -37,22 +37,22 @@ export const createPagesCollection = ({
     livePreview: {
       url: async ({ req, data }) => {
         const { payload } = req;
-        const tenantId = await getPreference({
+        const tenantId = (await getPreference({
           req,
           key: "admin-tenant-select",
-        });
+        })) as number;
         if (!tenantId) {
           console.warn(
             "[@dexilion/payload-pms] No tenant selected for live preview. Please set the 'admin-tenant-select' preference.",
           );
           return undefined;
         }
-        const tenant = await payload.findByID({
+        const tenant = (await payload.findByID({
           collection: "tenants" as CollectionSlug,
-          id: tenantId as string,
+          id: `${tenantId}`,
           req,
-        });
-        const domain = tenant?.[tenantDomainFieldKey || "domain"];
+        })) as { [tenantDomainFieldKey: string]: string };
+        const domain = tenant?.[tenantDomainFieldKey || "domain"] as string;
 
         return `http://${domain}/${data.id}`;
       },
