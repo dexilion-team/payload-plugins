@@ -9,13 +9,31 @@ import type {
   CollectionConfig,
   CollectionSlug,
   Option,
-  PayloadRequest,
   Tab,
 } from "payload";
 import pageRead from "../access/pageRead";
 import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
 //import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import getThemeName from "../utils/getThemeName";
+
+const httpsProbeTimeoutMs = 500;
+
+const supportsHttps = async (domain: string): Promise<boolean> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), httpsProbeTimeoutMs);
+
+  try {
+    await fetch(`https://${domain}`, {
+      method: "HEAD",
+      signal: controller.signal,
+    });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
 
 export type PagesConfig = {
   slug?: string;
@@ -53,8 +71,9 @@ export const createPagesCollection = ({
           req,
         })) as { [tenantDomainFieldKey: string]: string };
         const domain = tenant?.[tenantDomainFieldKey || "domain"] as string;
+        const protocol = (await supportsHttps(domain)) ? "https" : "http";
 
-        return `${req.protocol}//${domain}/${data.id}`;
+        return `${protocol}://${domain}/${data.id}`;
       },
       breakpoints: [
         {
