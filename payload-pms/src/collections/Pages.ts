@@ -54,7 +54,7 @@ export const createPagesCollection = ({
         })) as { [tenantDomainFieldKey: string]: string };
         const domain = tenant?.[tenantDomainFieldKey || "domain"] as string;
 
-        return `http://${domain}/${data.id}`;
+        return `${req.protocol}//${domain}/${data.id}`;
       },
       breakpoints: [
         {
