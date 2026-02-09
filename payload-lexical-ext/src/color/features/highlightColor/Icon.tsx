@@ -35,11 +35,16 @@ export default function Icon() {
           }
         } else {
           let found = false;
-          $forEachSelectedTextNode((textNode) => {
+          selection.getNodes().forEach((node) => {
             if (found) {
               return;
             }
 
+            if (!$isTextNode(node)) {
+              return;
+            }
+
+            const textNode = node;
             const style = textNode.getStyle?.() || "";
             const match = style.match(/(?:^|;)\s*background-color:\s*([^;]+)/);
             if (match?.[1]) {
@@ -80,10 +85,9 @@ export default function Icon() {
               delete (newStyles as Record<string, string>)["background-color"];
             }
 
-            const styleString =
-              Object.entries(newStyles)
-                .map(([key, val]) => `${key}: ${val}`)
-                .join("; ");
+            const styleString = Object.entries(newStyles)
+              .map(([key, val]) => `${key}: ${val}`)
+              .join("; ");
 
             textNode.setStyle(styleString ? `${styleString};` : "");
           });

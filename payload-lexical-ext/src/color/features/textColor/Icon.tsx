@@ -35,11 +35,16 @@ export default function Icon() {
           }
         } else {
           let found = false;
-          $forEachSelectedTextNode((textNode) => {
+          selection.getNodes().forEach((node) => {
             if (found) {
               return;
             }
 
+            if (!$isTextNode(node)) {
+              return;
+            }
+
+            const textNode = node;
             const style = textNode.getStyle?.() || "";
             const match = style.match(/(?:^|;)\s*color:\s*([^;]+)/);
             if (match?.[1]) {
