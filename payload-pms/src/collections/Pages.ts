@@ -3,7 +3,7 @@ import {
   createPathField,
   createSlugField,
 } from "@dexilion/payload-nested-docs";
-//import { getPreference } from "@dexilion/payload-utils";
+import { getPreference } from "@dexilion/payload-utils";
 import type {
   Block,
   CollectionConfig,
@@ -14,7 +14,7 @@ import type {
 } from "payload";
 import pageRead from "../access/pageRead";
 import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
-import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
+//import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import getThemeName from "../utils/getThemeName";
 
 export type PagesConfig = {
@@ -22,6 +22,7 @@ export type PagesConfig = {
   layouts: Record<string, Option[]>;
   blocks: Record<string, Block[]>;
   tabs?: Tab[];
+  tenantDomainFieldKey?: string;
 };
 
 export const createPagesCollection = ({
@@ -29,11 +30,32 @@ export const createPagesCollection = ({
   layouts,
   blocks,
   tabs,
+  tenantDomainFieldKey,
 }: PagesConfig): CollectionConfig => ({
   slug: slug ?? "pages",
   admin: {
     livePreview: {
-      url: ({ data }) => `/${data.id}`,
+      url: async ({ req, data }) => {
+        const { payload } = req;
+        const tenantId = await getPreference({
+          req,
+          key: "admin-tenant-select",
+        });
+        if (!tenantId) {
+          console.warn(
+            "[@dexilion/payload-pms] No tenant selected for live preview. Please set the 'admin-tenant-select' preference.",
+          );
+          return undefined;
+        }
+        const tenant = await payload.findByID({
+          collection: "tenants" as CollectionSlug,
+          id: tenantId as string,
+          req,
+        });
+        const domain = tenant?.[tenantDomainFieldKey || "domain"];
+
+        return `http://${domain}/${data.id}`;
+      },
       breakpoints: [
         {
           label: "Mobile",
