@@ -16,18 +16,25 @@ import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
 //import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import getThemeName from "../utils/getThemeName";
 
-const httpsProbeTimeoutMs = 500;
+const httpsProbeTimeoutMs = 1000;
 
 const supportsHttps = async (domain: string): Promise<boolean> => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), httpsProbeTimeoutMs);
 
   try {
-    await fetch(`https://${domain}`, {
-      method: "HEAD",
-      signal: controller.signal,
-    });
-    return true;
+    const result = await Promise.any([
+      fetch(`https://${domain}`, {
+        method: "HEAD",
+        signal: controller.signal,
+      }),
+      fetch(`http://${domain}`, {
+        method: "HEAD",
+        signal: controller.signal,
+      }),
+    ]);
+
+    return result.url.startsWith("https://") ? true : false;
   } catch {
     return false;
   } finally {
