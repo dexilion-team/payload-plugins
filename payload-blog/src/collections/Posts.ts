@@ -30,7 +30,7 @@ export const createPostsCollection = ({
       required: true,
       admin: {
         position: "sidebar",
-      }
+      },
     },
     {
       name: "date",
@@ -38,7 +38,7 @@ export const createPostsCollection = ({
       required: true,
       admin: {
         position: "sidebar",
-      }
+      },
     },
     {
       name: "titleImage",
@@ -46,7 +46,7 @@ export const createPostsCollection = ({
       relationTo: mediaSlug,
       admin: {
         position: "sidebar",
-      }
+      },
     },
     {
       name: "excerpt",
@@ -60,7 +60,7 @@ export const createPostsCollection = ({
       hasMany: true,
       admin: {
         position: "sidebar",
-      }
+      },
     },
     {
       name: "author",
@@ -69,8 +69,7 @@ export const createPostsCollection = ({
       defaultValue: ({ req }) => req.user?.id,
       required: true,
       admin: {
-        hidden: true,
-        readOnly: true,
+        position: "sidebar",
       },
     },
     {
