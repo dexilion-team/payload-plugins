@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect, RedirectType } from "next/navigation";
 import { getPayload, SanitizedConfig } from "payload";
 import { getPage } from "../getPage";
 import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
@@ -25,12 +25,14 @@ export type PageType = {
     [key: string]: string | string[];
   }>;
   pagesSlug: string;
+  redirectSlug?: string;
   payloadConfig: Promise<SanitizedConfig>;
 };
 
 export async function Page({
   params,
   pagesSlug = "pages",
+  redirectSlug,
   payloadConfig,
 }: PageType) {
   const { segments } = await params;
@@ -55,23 +57,42 @@ export async function Page({
   }
 
   let page;
-  try {
-    page = await getPage({
-      segments,
-      pagesSlug,
-      payloadConfig,
+  page = await getPage({
+    segments,
+    pagesSlug,
+    payloadConfig,
+  });
+
+  if (!page && !redirectSlug) {
+    notFound();
+  } else if (!page && redirectSlug) {
+    const payload = await getPayload({ config: payloadConfig });
+
+    const { docs: redirects } = await payload.find({
+      collection: redirectSlug,
+      depth: 2,
+      limit: 1,
+      pagination: false,
+      where: {
+        from: { equals: `/${segments.join("/")}` },
+        ["tenant.domain"]: { equals: tenantName },
+      },
     });
 
-    if (!page) {
-      return notFound();
-    }
-  } catch (error) {
-    if (isNextHttpError(error, 404)) {
-      return notFound();
+    if (redirects?.[0]) {
+      const ref = redirects[0].to?.reference;
+      if (ref) {
+        const result = await payload.findByID({
+          collection: ref.relationTo,
+          id: ref.value.id,
+        });
+        redirect(result?.generalTab.path || "/", RedirectType.replace);
+      }
+
+      redirect(redirects[0].to.url, RedirectType.replace);
     }
 
-    payload.logger.error(error);
-    return notFound();
+    notFound();
   }
 
   const content = recursivelySearchForDataByName<
