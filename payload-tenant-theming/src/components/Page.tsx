@@ -1,5 +1,5 @@
 import { notFound, redirect, RedirectType } from "next/navigation";
-import { getPayload, SanitizedConfig } from "payload";
+import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getPage } from "../getPage";
 import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
 import { getTheme } from "../getTheme";
@@ -69,7 +69,7 @@ export async function Page({
     const payload = await getPayload({ config: payloadConfig });
 
     const { docs: redirects } = await payload.find({
-      collection: redirectSlug,
+      collection: redirectSlug as CollectionSlug,
       depth: 2,
       limit: 1,
       pagination: false,
@@ -79,8 +79,9 @@ export async function Page({
       },
     });
 
-    if (redirects?.[0]) {
-      const ref = redirects[0].to?.reference;
+    const value = redirects?.[0] as any;
+    if (value) {
+      const ref = value.to.reference;
       if (ref) {
         const result = await payload.findByID({
           collection: ref.relationTo,
@@ -89,7 +90,7 @@ export async function Page({
         redirect(result?.generalTab.path || "/", RedirectType.replace);
       }
 
-      redirect(redirects[0].to.url, RedirectType.replace);
+      redirect(value.to.url, RedirectType.replace);
     }
 
     notFound();
