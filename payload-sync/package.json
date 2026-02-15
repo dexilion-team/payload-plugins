@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-sync",
-  "version": "3.74.0",
+  "version": "3.74.0-alpha.0",
   "type": "module",
   "license": "MIT",
   "description": "A plugin to sync content between two Payload CMS instances.",
@@ -22,8 +22,11 @@
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "peerDependencies": {
+  "optionalDependencies": {
     "commander": "^14.0",
+    "dotenv": "^17.3.1"
+  },
+  "peerDependencies": {
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "next": "^16",
@@ -35,6 +38,7 @@
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
+    "@types/pg": "^8.6.6",
     "commander": "^14.0",
     "eslint": "^9.38.0",
     "eslint-config-next": "^16.0.0",

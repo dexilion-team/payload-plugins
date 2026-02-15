@@ -10,7 +10,7 @@ export const setTenantPreference: FieldHook<any, any, any> = async ({
       req,
       key: "admin-tenant-select",
     });
-    console.log("existingPreference", existingPreference);
+
     if (existingPreference == null) {
       await setPreference({
         req,

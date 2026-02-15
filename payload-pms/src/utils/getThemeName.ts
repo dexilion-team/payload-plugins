@@ -56,7 +56,8 @@ const getThemeName = async ({ req }: { req: PayloadRequest }) => {
       await upsertPreferences({
         key: "admin-tenant-select",
         req,
-        value: tenantId,
+        // @ts-ignore
+        value: Number(tenantId),
       });
     }
   }

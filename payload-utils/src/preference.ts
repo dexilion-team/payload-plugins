@@ -25,7 +25,7 @@ export async function setPreference({
     },
     where: {
       and: [
-        { key: { equals: "admin-tenant-select" } },
+        { key: { equals: key } },
         { "user.value": { equals: req.user?.id } },
         { "user.relationTo": { equals: userSlug } },
       ],
