@@ -2,7 +2,7 @@ import path from "path";
 import { pathToFileURL } from "url";
 import { Command, CommanderError } from "commander";
 import { config as loadDotenv } from "dotenv";
-import { getPayload, type SanitizedConfig } from "payload";
+import { CollectionSlug, getPayload, type SanitizedConfig } from "payload";
 import { syncRemotePayload } from "./sync";
 
 type ValidatedCLIArgs = {
@@ -123,7 +123,7 @@ const ensureLocalAPIKeyCollectionUser = async (
   }
 
   await payload.create({
-    collection: args.remoteAPIKeyCollection,
+    collection: args.remoteAPIKeyCollection as CollectionSlug,
     data: JSON.parse(data),
     overrideAccess: true,
     showHiddenFields: true,
