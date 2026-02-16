@@ -59,7 +59,11 @@ const parseCollections = (value: string): string[] => {
 const getValidatedArgs = (): ValidatedCLIArgs => {
   const program = new Command()
     .name("payload-sync")
-    .description("Sync content from a remote Payload CMS instance.")
+    .description(
+      "Sync content from a remote Payload CMS instance. If you require a " +
+        "local user created, provide the document definition in the " +
+        "PAYLOAD_SYNC_LOCAL_AUTH_USER_DATA environment variable.",
+    )
     .requiredOption("--url <url>", "Remote Payload API base URL")
     .requiredOption("--api-key <key>", "Remote API key")
     .requiredOption(
@@ -109,6 +113,27 @@ const getValidatedArgs = (): ValidatedCLIArgs => {
   };
 };
 
+const ensureLocalAPIKeyCollectionUser = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  args: ValidatedCLIArgs,
+): Promise<void> => {
+  const data = process.env.PAYLOAD_SYNC_LOCAL_AUTH_USER_DATA;
+  if (!data) {
+    return;
+  }
+
+  await payload.create({
+    collection: args.remoteAPIKeyCollection,
+    data: JSON.parse(data),
+    overrideAccess: true,
+    showHiddenFields: true,
+    draft: false,
+  });
+  console.log(
+    `[@dexilion/payload-sync] Created local auth user in "${args.remoteAPIKeyCollection}".`,
+  );
+};
+
 const resolveConfig = async (configPath: string): Promise<SanitizedConfig> => {
   const absolutePath = path.isAbsolute(configPath)
     ? configPath
@@ -144,6 +169,8 @@ const run = async () => {
   const payload = await getPayload({ config });
 
   try {
+    await ensureLocalAPIKeyCollectionUser(payload, validated);
+
     await syncRemotePayload(
       {
         collections: validated.collections,

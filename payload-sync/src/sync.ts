@@ -600,34 +600,19 @@ const getRemoteCollectionPage = async (
   );
 };
 
-const getRemoteCollectionVersionPage = async (
+const getLastRemoteCollectionVersionForDoc = async (
   options: SyncRemotePayloadOptions,
   slug: string,
-  page: number,
-): Promise<CollectionDocumentsResponse> => {
+  docID: number | string,
+): Promise<Record<string, unknown> | null> => {
   const syncBaseURL = getRemoteApiURL(options);
-  const limit = options.limit ?? DEFAULT_LIMIT;
-  const url = `${syncBaseURL}/${encodeURIComponent(slug)}/versions?page=${page}&limit=${limit}&pagination=true&sort=-createdAt&where[latest][equals]=true`;
-
-  return fetchJSON<CollectionDocumentsResponse>(
+  const url = `${syncBaseURL}/${encodeURIComponent(slug)}/versions?where[latest][equals]=true&where[parent][equals]=${encodeURIComponent(stringifyID(docID))}`;
+  const remotePage = await fetchJSON<CollectionDocumentsResponse>(
     url,
     getRemoteHeaders(options.remote),
   );
-};
 
-const getVersionParentID = (
-  versionDoc: Record<string, unknown>,
-): null | number | string => {
-  const parentID = asIDValue(versionDoc.parent);
-  if (parentID !== null) {
-    return parentID;
-  }
-
-  if (isRecord(versionDoc.parent)) {
-    return asIDValue(versionDoc.parent.id);
-  }
-
-  return null;
+  return remotePage.docs[0] ?? null;
 };
 
 const splitDocumentForPasses = (
@@ -907,6 +892,78 @@ const mapRelationIDs = async (
   return data;
 };
 
+const syncLatestRemoteVersionForDoc = async (
+  options: SyncRemotePayloadOptions,
+  metadata: PayloadSyncCollectionMetadata,
+  syncState: SyncState,
+  remoteID: number | string,
+  localID: number | string,
+): Promise<void> => {
+  if (!metadata.versions) {
+    return;
+  }
+
+  const latestRemoteVersion = await getLastRemoteCollectionVersionForDoc(
+    options,
+    metadata.slug,
+    remoteID,
+  );
+
+  if (!latestRemoteVersion) {
+    return;
+  }
+
+  if (!isRecord(latestRemoteVersion.version)) {
+    throw new Error(
+      `[@dexilion/payload-sync] Remote version in "${metadata.slug}" has invalid version payload.`,
+    );
+  }
+
+  const createdAt = latestRemoteVersion.createdAt;
+  if (typeof createdAt !== "string" || createdAt.length === 0) {
+    throw new Error(
+      `[@dexilion/payload-sync] Remote version in "${metadata.slug}" is missing createdAt.`,
+    );
+  }
+
+  const updatedAt =
+    typeof latestRemoteVersion.updatedAt === "string" &&
+    latestRemoteVersion.updatedAt.length > 0
+      ? latestRemoteVersion.updatedAt
+      : createdAt;
+
+  const sourceVersionData = stripHardFilteredSourceFields(
+    metadata.upload
+      ? stripGeneratedUploadFields(latestRemoteVersion.version)
+      : latestRemoteVersion.version,
+    metadata.auth,
+  );
+  sourceVersionData.id = localID;
+
+  const mappedVersionData = await mapRelationIDs(
+    sourceVersionData,
+    metadata,
+    syncState,
+    true,
+  );
+
+  await options.localPayload.db.createVersion({
+    autosave:
+      typeof latestRemoteVersion.autosave === "boolean"
+        ? latestRemoteVersion.autosave
+        : false,
+    collectionSlug: metadata.slug as CollectionSlug,
+    createdAt,
+    parent: localID,
+    ...(typeof latestRemoteVersion.publishedLocale === "string"
+      ? { publishedLocale: latestRemoteVersion.publishedLocale }
+      : {}),
+    ...(latestRemoteVersion.snapshot === true ? { snapshot: true } : {}),
+    updatedAt,
+    versionData: mappedVersionData,
+  });
+};
+
 const syncCollection = async (
   options: SyncRemotePayloadOptions,
   metadata: PayloadSyncCollectionMetadata,
@@ -949,7 +1006,8 @@ const syncCollection = async (
           continue;
         }
 
-        if (Object.keys(optionalData).length === 0) {
+        const hasOptionalData = Object.keys(optionalData).length > 0;
+        if (!hasOptionalData && !metadata.versions) {
           continue;
         }
 
@@ -960,45 +1018,55 @@ const syncCollection = async (
           );
         }
 
-        const mappedOptionalData = await mapRelationIDs(
-          optionalData,
-          metadata,
-          syncState,
-          false,
-        );
-
-        const existingLocalDoc = await options.localPayload.db.findOne<
-          {
-            id: number | string;
-          } & Record<string, unknown>
-        >({
-          collection: collection as CollectionSlug,
-          where: {
-            id: {
-              equals: localID,
-            },
-          },
-        });
-
-        if (!existingLocalDoc) {
-          throw new Error(
-            `[@dexilion/payload-sync] Missing local document for ${collection}/${String(localID)}.`,
+        if (hasOptionalData) {
+          const mappedOptionalData = await mapRelationIDs(
+            optionalData,
+            metadata,
+            syncState,
+            false,
           );
+
+          const existingLocalDoc = await options.localPayload.db.findOne<
+            {
+              id: number | string;
+            } & Record<string, unknown>
+          >({
+            collection: collection as CollectionSlug,
+            where: {
+              id: {
+                equals: localID,
+              },
+            },
+          });
+
+          if (!existingLocalDoc) {
+            throw new Error(
+              `[@dexilion/payload-sync] Missing local document for ${collection}/${String(localID)}.`,
+            );
+          }
+
+          await options.localPayload.db.updateOne({
+            id: localID,
+            collection: collection as CollectionSlug,
+            data: deepMergeForUpdate(
+              existingLocalDoc,
+              mappedOptionalData,
+            ) as Record<string, unknown>,
+            returning: false,
+          });
         }
 
-        await options.localPayload.db.updateOne({
-          id: localID,
-          collection: collection as CollectionSlug,
-          data: deepMergeForUpdate(
-            existingLocalDoc,
-            mappedOptionalData,
-          ) as Record<string, unknown>,
-          returning: false,
-        });
+        await syncLatestRemoteVersionForDoc(
+          options,
+          metadata,
+          syncState,
+          remoteID,
+          localID,
+        );
 
         processed += 1;
         logger.log(
-          `[@dexilion/payload-sync] ${collection}: synced optional fields for document ${processed}`,
+          `[@dexilion/payload-sync] ${collection}: synced optional pass for document ${processed}`,
         );
         continue;
       }
@@ -1121,124 +1189,6 @@ const syncCollection = async (
   return processed;
 };
 
-const syncCollectionVersions = async (
-  options: SyncRemotePayloadOptions,
-  metadata: PayloadSyncCollectionMetadata,
-  syncState: SyncState,
-): Promise<number> => {
-  const logger = options.logger ?? console;
-  const collection = metadata.slug;
-  let page = 1;
-  let processed = 0;
-  let skippedMissingParents = 0;
-  const seenRemoteParents = new Set<string>();
-
-  while (true) {
-    const remotePage = await getRemoteCollectionVersionPage(
-      options,
-      collection,
-      page,
-    );
-
-    for (const versionDoc of remotePage.docs) {
-      const remoteParentID = getVersionParentID(versionDoc);
-      if (remoteParentID === null) {
-        throw new Error(
-          `[@dexilion/payload-sync] Remote version in "${collection}" is missing parent id.`,
-        );
-      }
-      const remoteParentKey = stringifyID(remoteParentID);
-      if (seenRemoteParents.has(remoteParentKey)) {
-        continue;
-      }
-      // We fetch versions sorted by newest first, so the first seen parent is
-      // the latest created version for that document.
-      seenRemoteParents.add(remoteParentKey);
-
-      const localParentID = await lookupLocalID(
-        syncState,
-        collection,
-        remoteParentID,
-      );
-      if (localParentID === undefined) {
-        skippedMissingParents += 1;
-        logger.warn(
-          `[@dexilion/payload-sync] ${collection}: skipping version for missing parent mapping ${collection}/${String(remoteParentID)}`,
-        );
-        continue;
-      }
-
-      if (!isRecord(versionDoc.version)) {
-        throw new Error(
-          `[@dexilion/payload-sync] Remote version in "${collection}" has invalid version payload.`,
-        );
-      }
-
-      const createdAt = versionDoc.createdAt;
-      if (typeof createdAt !== "string" || createdAt.length === 0) {
-        throw new Error(
-          `[@dexilion/payload-sync] Remote version in "${collection}" is missing createdAt.`,
-        );
-      }
-      const updatedAt =
-        typeof versionDoc.updatedAt === "string" &&
-        versionDoc.updatedAt.length > 0
-          ? versionDoc.updatedAt
-          : createdAt;
-
-      const sourceVersionData = stripHardFilteredSourceFields(
-        metadata.upload
-          ? stripGeneratedUploadFields(versionDoc.version)
-          : versionDoc.version,
-        metadata.auth,
-      );
-      sourceVersionData.id = localParentID;
-
-      const mappedVersionData = await mapRelationIDs(
-        sourceVersionData,
-        metadata,
-        syncState,
-        true,
-      );
-
-      await options.localPayload.db.createVersion({
-        autosave:
-          typeof versionDoc.autosave === "boolean"
-            ? versionDoc.autosave
-            : false,
-        collectionSlug: collection as CollectionSlug,
-        createdAt,
-        parent: localParentID,
-        ...(typeof versionDoc.publishedLocale === "string"
-          ? { publishedLocale: versionDoc.publishedLocale }
-          : {}),
-        ...(versionDoc.snapshot === true ? { snapshot: true } : {}),
-        updatedAt,
-        versionData: mappedVersionData,
-      });
-
-      processed += 1;
-      logger.log(
-        `[@dexilion/payload-sync] ${collection}: synced version ${processed}`,
-      );
-    }
-
-    if (!remotePage.hasNextPage) {
-      break;
-    }
-
-    page += 1;
-  }
-
-  if (skippedMissingParents > 0) {
-    logger.warn(
-      `[@dexilion/payload-sync] ${collection}: skipped ${skippedMissingParents} version(s) because parent documents were not synced.`,
-    );
-  }
-
-  return processed;
-};
-
 export const syncRemotePayload = async (
   options: SyncRemotePayloadOptions,
   localConfig: SanitizedConfig,
@@ -1287,25 +1237,6 @@ export const syncRemotePayload = async (
       );
       logger.log(
         `[@dexilion/payload-sync] Optional-field pass complete: ${collection.slug} (${count} documents).`,
-      );
-    }
-
-    // Sync explicit versions for collections that enable `versions`.
-    for (const collection of collections) {
-      if (!collection.versions) {
-        continue;
-      }
-
-      logger.log(
-        `[@dexilion/payload-sync] Syncing versions for collection: ${collection.slug}`,
-      );
-      const count = await syncCollectionVersions(
-        options,
-        collection,
-        syncState,
-      );
-      logger.log(
-        `[@dexilion/payload-sync] Versions pass complete: ${collection.slug} (${count} versions).`,
       );
     }
 

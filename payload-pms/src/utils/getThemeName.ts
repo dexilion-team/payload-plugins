@@ -1,7 +1,5 @@
-import {
-  getPreferences,
-  upsertPreferences,
-} from "@payloadcms/ui/utilities/upsertPreferences";
+import { setPreference } from "@dexilion/payload-utils";
+import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import { PayloadRequest } from "payload";
 
 type TenantOrID = number | { id: number };
@@ -53,12 +51,6 @@ const getThemeName = async ({ req }: { req: PayloadRequest }) => {
         typeof firstTenant === "number"
           ? String(firstTenant)
           : String(firstTenant.id);
-      await upsertPreferences({
-        key: "admin-tenant-select",
-        req,
-        // @ts-ignore
-        value: Number(tenantId),
-      });
     }
   }
 
