@@ -1156,7 +1156,20 @@ const syncCollection = async (
         } else {
           createdDoc = await options.localPayload.db.create({
             collection: collection as CollectionSlug,
-            data: mappedRequiredData,
+            data: {
+              ...mappedRequiredData,
+              filename: filename,
+              filesize: doc.filesize,
+              mimeType: doc.mimeType,
+              thumbnailURL: doc.thumbnailURL,
+              url: doc.url,
+              width: doc.width,
+              height: doc.height,
+              focalX: doc.focalX,
+              focalY: doc.focalY,
+              sizes: doc.sizes,
+              alt: doc.alt,
+            },
           });
         }
       } else {
