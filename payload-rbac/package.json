@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-rbac",
-  "version": "3.74.0",
+  "version": "3.74.0-alpha.1",
   "description": "A Payload CMS plugin to implement role-based access control (RBAC).",
   "author": "Dexilion",
   "license": "MIT",

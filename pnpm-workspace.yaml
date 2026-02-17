@@ -1,8 +1,12 @@
 packages:
+  - payload-utils
   - payload-blog
   - payload-multi-tenant
   - payload-nested-docs
   - payload-pms
   - payload-rbac
   - payload-tenant-theming
-  - payload-utils
+  - payload-lexical-ext
+  - payload-sync
+
+autoInstallPeers: false

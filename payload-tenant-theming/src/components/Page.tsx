@@ -7,15 +7,7 @@ import { getTenantName } from "@dexilion/payload-multi-tenant";
 import { Theme } from "../types";
 import { RefreshRouteOnSave } from "./RefreshRouteOnSave";
 import { headers } from "next/headers";
-
-function isNextHttpError(error: unknown, code: number): boolean {
-  if (!error || typeof error !== "object") return false;
-  const maybeDigest = (error as { digest?: unknown }).digest;
-  return (
-    typeof maybeDigest === "string" &&
-    maybeDigest.startsWith("NEXT_HTTP_ERROR_FALLBACK;" + code)
-  );
-}
+import type React from "react";
 
 export type PageType = {
   params: Promise<{
