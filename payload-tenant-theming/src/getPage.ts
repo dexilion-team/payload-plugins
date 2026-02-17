@@ -57,7 +57,7 @@ export const getPage = async ({
     collection: pagesSlug as CollectionSlug,
     where: {
       [pathFieldKey]: {
-        equals: "/" + (segments ?? []).join("/"),
+        equals: "/" + (segments ?? []).join("/").toLowerCase(),
       },
       [tenantKey]: {
         equals: tenantName,

@@ -13,7 +13,6 @@ import type {
 } from "payload";
 import pageRead from "../access/pageRead";
 import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
-//import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import getThemeName from "../utils/getThemeName";
 
 const httpsProbeTimeoutMs = 1000;

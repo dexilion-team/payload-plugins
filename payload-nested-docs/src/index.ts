@@ -205,6 +205,13 @@ export function createSlugField(
     },
     required: true,
     hasMany: false,
+    hooks: {
+      beforeValidate: [
+        async ({ value }) => {
+          return value?.toLowerCase();
+        },
+      ],
+    },
     validate: async (value, { req: { t, payload }, data, id }) => {
       // Check format
       if (!Boolean(value?.match(/^[a-z0-9-]+$/))) {
