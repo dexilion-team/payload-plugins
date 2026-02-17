@@ -8,7 +8,6 @@ export default function ({ id }: EmbedComponentProps): React.JSX.Element {
         width="100%"
         src={`https://player.vimeo.com/video/${id}`}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
         title="Play video"
         style={{ aspectRatio: "16/9", pointerEvents: "none" }}
         tabIndex={-1}

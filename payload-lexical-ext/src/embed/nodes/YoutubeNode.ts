@@ -38,7 +38,6 @@ export class YouTubeNode extends EmbedNode {
       "allow",
       "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture",
     );
-    element.setAttribute("allowfullscreen", "true");
 
     return { element };
   }

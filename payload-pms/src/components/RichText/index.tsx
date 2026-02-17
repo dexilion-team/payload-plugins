@@ -27,8 +27,7 @@ export const RichText = ({ content }: { content: SerializedEditorState }) => {
                 src="https://player.vimeo.com/video/${node.id}"
                 style="aspect-ratio: 16/9"
                 width="100%"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"                
               ></iframe>
               `,
             youtube: async ({ node }) =>
@@ -37,7 +36,6 @@ export const RichText = ({ content }: { content: SerializedEditorState }) => {
                 width="100%"
                 style="aspect-ratio: 16/9"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
               ></iframe>`,
           };
         },

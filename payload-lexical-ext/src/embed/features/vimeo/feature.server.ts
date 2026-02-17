@@ -20,8 +20,7 @@ export const VimeoFeature = createEmbedServerFeature({
 								src="https://player.vimeo.com/video/${node.id}"
 								width="100%"
 								style="aspect-ratio: 16/9"
-								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-								allowfullscreen
+								allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"								
 							></iframe>
 						</div>
 					`;
