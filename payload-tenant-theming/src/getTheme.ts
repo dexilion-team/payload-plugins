@@ -47,7 +47,7 @@ export async function getTheme({
       `[@dexilion/payload-tenant-theming] No themes found in the Payload config under "custom.themes".`,
     );
   }
-  const theme = themes.find((t) => t.name === themeName);
+  const theme = themes.find((t: any) => t.name === themeName);
   if (!theme) {
     throw new Error(
       `[@dexilion/payload-tenant-theming] Theme "${themeName}" not found in the Payload config under "custom.themes".`,

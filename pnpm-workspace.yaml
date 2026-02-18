@@ -8,5 +8,6 @@ packages:
   - payload-tenant-theming
   - payload-lexical-ext
   - payload-sync
+  - payload-auditlog
 
 autoInstallPeers: false

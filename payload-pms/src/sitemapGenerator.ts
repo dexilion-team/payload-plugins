@@ -51,9 +51,9 @@ export const sitemapGenerator =
       return [];
     }
 
-    return pages.docs.map((page) => {
+    return pages.docs.map((page: any) => {
       const path = recursivelySearchForDataByName(page, "path");
-      const { updatedAt } = page as any;
+      const { updatedAt } = page;
       return {
         url: `https://${tenantName}${path}`,
         lastModified: new Date(updatedAt),

@@ -20,6 +20,7 @@
     "@dexilion/payload-tenant-theming": "workspace:*",
     "@dexilion/payload-sync": "workspace:*",
     "@dexilion/payload-utils": "workspace:*",
-    "@dexilion/payload-rbac": "workspace:*"
+    "@dexilion/payload-rbac": "workspace:*",
+    "@dexilion/payload-auditlog": "workspace:*"
   }
 }
