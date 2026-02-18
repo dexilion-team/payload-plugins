@@ -13,19 +13,22 @@ export const uploadConverter: HTMLConvertersAsync["upload"] = async (
     return "";
   }
 
-  let { width, height } = node.fields;
+  let { width, height } = node?.fields || {};
   const format = node.format;
   const payload = await getPayload({ config: payloadConfig });
-  const image = (await payload.findByID({
-    id: node.value as string,
-    collection: node.relationTo,
-  })) as unknown as {
-    url: string;
-    src: string;
-    alt?: string;
-    width: number;
-    height: number;
-  };
+  let image: any = node?.value;
+  if (typeof image === "number" || typeof image === "string") {
+    image = (await payload.findByID({
+      id: node.value as string,
+      collection: node.relationTo,
+    })) as unknown as {
+      url: string;
+      src: string;
+      alt?: string;
+      width: number;
+      height: number;
+    };
+  }
 
   if (!image) {
     return "";
