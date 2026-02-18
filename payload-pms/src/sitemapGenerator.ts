@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
 
 export type SitemapGeneratorOptions = {
   config: Promise<SanitizedConfig>;
@@ -40,6 +41,7 @@ export const sitemapGenerator =
         tenant: { equals: tenant.docs[0]!.id },
       },
       pagination: false,
+      depth: 0,
     });
 
     if (!pages?.docs?.length) {
@@ -50,12 +52,11 @@ export const sitemapGenerator =
     }
 
     return pages.docs.map((page) => {
-      const { path, updatedAt } = page as any;
+      const path = recursivelySearchForDataByName(page, "path");
+      const { updatedAt } = page as any;
       return {
         url: `https://${tenantName}${path}`,
         lastModified: new Date(updatedAt),
-        // changeFrequency: "monthly",
-        // priority: 0.8,
       };
     });
   };
