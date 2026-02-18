@@ -26,6 +26,9 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@payload-config": ["./external.d.ts"]
+    }
   }
 }

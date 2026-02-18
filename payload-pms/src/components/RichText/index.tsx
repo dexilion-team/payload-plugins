@@ -1,15 +1,24 @@
 "use client";
 
 import type { SerializedEditorState } from "@payloadcms/richtext-lexical/lexical";
-import { convertLexicalToHTMLAsync } from "@payloadcms/richtext-lexical/html-async";
+import {
+  convertLexicalToHTMLAsync,
+  HTMLConvertersAsync,
+} from "@payloadcms/richtext-lexical/html-async";
 import {
   getRestPopulateFn,
   NodeFormat,
 } from "@payloadcms/richtext-lexical/client";
 
 import React, { useEffect, useState } from "react";
+import { uploadConverter } from "./uploadConverter";
 
-export const RichText = ({ content }: { content: SerializedEditorState }) => {
+export const RichText = ({
+  content,
+  ...rest
+}: {
+  content: SerializedEditorState;
+}) => {
   const [html, setHTML] = useState<null | string>(null);
   useEffect(() => {
     async function convert() {
@@ -21,6 +30,7 @@ export const RichText = ({ content }: { content: SerializedEditorState }) => {
         converters: ({ defaultConverters }) => {
           return {
             ...defaultConverters,
+            upload: uploadConverter,
             text: convertTextNode,
             vimeo: async ({ node }) =>
               `<iframe
