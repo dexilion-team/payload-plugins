@@ -77,8 +77,11 @@ export class YouTubeNode extends EmbedNode {
   }
 }
 
-export function $createYouTubeNode(videoID: string): YouTubeNode {
-  return new YouTubeNode(videoID);
+export function $createYouTubeNode(
+  videoID: string,
+  width?: string,
+): YouTubeNode {
+  return new YouTubeNode(videoID, width);
 }
 
 export function $isYouTubeNode(

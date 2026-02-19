@@ -5,12 +5,14 @@ type Spread<T, U> = Omit<U, keyof T> & T;
 
 export type EmbedComponentProps = Readonly<{
   id: string;
+  width?: string;
   className?: string;
 }>;
 
 export type SerializedEmbedNode = Spread<
   {
     id: string;
+    width?: string;
   },
   SerializedDecoratorBlockNode
 >;

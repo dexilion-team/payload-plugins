@@ -32,21 +32,28 @@ export const RichText = ({
             ...defaultConverters,
             upload: uploadConverter,
             text: convertTextNode,
-            vimeo: async ({ node }) =>
-              `<iframe
+            vimeo: async ({ node }) => {
+              const style = node.format
+                ? ` style="text-align:${node.format}"`
+                : "";
+              return `<div${style}><iframe
                 src="https://player.vimeo.com/video/${node.id}"
                 style="aspect-ratio: 16/9"
-                width="100%"
+                width="${node.width || "100%"}"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"                
-              ></iframe>
-              `,
-            youtube: async ({ node }) =>
-              `<iframe
+              ></iframe></div>`;
+            },
+            youtube: async ({ node }) => {
+              const style = node.format
+                ? ` style="text-align:${node.format}"`
+                : "";
+              return `<div${style}><iframe
                 src="https://www.youtube-nocookie.com/embed/${node.id}?modestbranding=1&rel=0"
-                width="100%"
+                width="${node.width || "100%"}"
                 style="aspect-ratio: 16/9"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              ></iframe>`,
+              ></iframe></div>`;
+            },
           };
         },
       });

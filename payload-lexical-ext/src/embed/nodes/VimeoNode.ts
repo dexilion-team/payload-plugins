@@ -28,7 +28,7 @@ export class VimeoNode extends EmbedNode {
 
     element.style.aspectRatio = "16/9";
     element.setAttribute("data-lexical-vimeo", this.__id);
-    element.setAttribute("width", "100%");
+    element.setAttribute("width", this.__width ? String(this.__width) : "100%");
     element.setAttribute("src", `https://player.vimeo.com/video/${this.__id}`);
     element.setAttribute("frameborder", "0");
     element.setAttribute(
@@ -49,7 +49,9 @@ export class VimeoNode extends EmbedNode {
 
         if (match && match[1]) {
           return {
-            conversion: () => ({ node: $createVimeoNode(match[1]!) }),
+            conversion: () => ({
+              node: $createVimeoNode(match[1]!, undefined),
+            }),
             priority: 1,
           };
         }
@@ -66,7 +68,7 @@ export class VimeoNode extends EmbedNode {
   override decorate(_editor: LexicalEditor, config: EditorConfig): JSX.Element {
     const className = config.theme.embedBlock?.base ?? undefined;
 
-    return VimeoComponent({ id: this.__id, className });
+    return VimeoComponent({ id: this.__id, width: this.__width, className });
   }
 
   override exportJSON(): SerializedEmbedNode {
@@ -74,8 +76,8 @@ export class VimeoNode extends EmbedNode {
   }
 }
 
-export function $createVimeoNode(videoID: string): VimeoNode {
-  return new VimeoNode(videoID);
+export function $createVimeoNode(videoID: string, width?: string): VimeoNode {
+  return new VimeoNode(videoID, width);
 }
 
 export function $isVimeoNode(

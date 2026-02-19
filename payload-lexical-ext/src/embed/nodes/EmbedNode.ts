@@ -10,13 +10,14 @@ export type { SerializedEmbedNode };
 
 export class EmbedNode extends DecoratorBlockNode {
   __id: string;
+  __width?: string;
 
   static override getType(): string {
     return "embed";
   }
 
   static override clone(node: EmbedNode): EmbedNode {
-    return new this(node.__id, node.__format, node.__key);
+    return new this(node.__id, node.__width, node.__format, node.__key);
   }
 
   static override importJSON(serializedNode: SerializedEmbedNode): EmbedNode {
@@ -27,9 +28,15 @@ export class EmbedNode extends DecoratorBlockNode {
     return node;
   }
 
-  constructor(id: string, format?: ElementFormatType, key?: NodeKey) {
+  constructor(
+    id: string,
+    width?: string,
+    format?: ElementFormatType,
+    key?: NodeKey,
+  ) {
     super(format, key);
     this.__id = id;
+    this.__width = width;
   }
 
   getId(): string {
@@ -42,6 +49,7 @@ export class EmbedNode extends DecoratorBlockNode {
       type: this.getType(),
       version: 1,
       id: this.__id,
+      width: this.__width,
     };
   }
 }

@@ -94,6 +94,7 @@ export const createPlugin = ({
     const handleDrawerSubmit = useCallback(
       (_fields: unknown, data: any) => {
         const input = data?.video as string;
+        const width = data?.width as string | undefined;
 
         if (!input) {
           return;
@@ -112,12 +113,12 @@ export const createPlugin = ({
 
           let embedNode: EmbedNode;
           if (nodeType === "youtube") {
-            embedNode = $createYouTubeNode(videoId);
+            embedNode = $createYouTubeNode(videoId, width);
           } else if (nodeType === "vimeo") {
-            embedNode = $createVimeoNode(videoId);
+            embedNode = $createVimeoNode(videoId, width);
           } else {
             // Fallback for custom embed types
-            embedNode = new node(videoId);
+            embedNode = new node(videoId, undefined);
           }
 
           // Drawer interactions can temporarily clear lexical selection.

@@ -30,13 +30,19 @@ export const createEmbedServerFeature = ({
         ...(Object.keys(fieldAdmin).length > 0 ? { admin: fieldAdmin } : {}),
       } as const;
 
+      const widthField = {
+        name: "width",
+        type: "text",
+        label: "Width (optional)",
+      } as const;
+
       return {
         ClientFeature,
         generateSchemaMap: () => {
           const map = new Map();
 
           map.set("fields", {
-            fields: [videoField],
+            fields: [videoField, widthField],
           });
 
           return map;
