@@ -18,16 +18,23 @@ export const uploadConverter: HTMLConvertersAsync["upload"] = async (
   const payload = await getPayload({ config: payloadConfig });
   let image: any = node?.value;
   if (typeof image === "number" || typeof image === "string") {
-    image = (await payload.findByID({
-      id: node.value as string,
-      collection: node.relationTo,
-    })) as unknown as {
-      url: string;
-      src: string;
-      alt?: string;
-      width: number;
-      height: number;
-    };
+    try {
+      image = (await payload.findByID({
+        id: node.value as string,
+        collection: node.relationTo,
+      })) as unknown as {
+        url: string;
+        src: string;
+        alt?: string;
+        width: number;
+        height: number;
+      };
+    } catch (error) {
+      payload.logger.error(
+        `Error fetching upload data for ID ${node.value}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return "";
+    }
   }
 
   if (!image) {
