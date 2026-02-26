@@ -22,5 +22,4 @@ export interface Theme {
   Layout: Layout[];
   Widgets: Widget[];
   Blog?: Blog;
-  styles?: string[];
 }

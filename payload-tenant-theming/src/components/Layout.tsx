@@ -6,8 +6,12 @@ import Head from "next/head";
 
 export const Layout = async ({
   payloadConfig,
+  themeCssHrefTemplate = `/themes/{{themeName}}/theme.generated.css`,
   children,
-}: PropsWithChildren<{ payloadConfig: Promise<SanitizedConfig> }>) => {
+}: PropsWithChildren<{
+  payloadConfig: Promise<SanitizedConfig>;
+  themeCssHrefTemplate?: string;
+}>) => {
   let themeHref: string | null = null;
 
   try {
@@ -17,10 +21,10 @@ export const Layout = async ({
         payloadConfig,
         tenantName,
       });
-      themeHref =
-        process.env.NODE_ENV === "production"
-          ? `/${encodeURIComponent(theme.name)}/global.css`
-          : `/api/theme.css?${encodeURIComponent(theme.name)}`;
+      themeHref = themeCssHrefTemplate.replace(
+        "{{themeName}}",
+        encodeURIComponent(theme.name),
+      );
     }
   } catch {}
 
