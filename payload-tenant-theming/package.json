@@ -11,6 +11,11 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./themeStyleLoader": {
+      "types": "./src/themeStyleLoader.ts",
+      "import": "./src/themeStyleLoader.ts",
+      "default": "./src/themeStyleLoader.ts"
+    },
     "./Page": {
       "types": "./src/components/Page.tsx",
       "import": "./src/components/Page.tsx",
@@ -69,6 +74,11 @@
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
+      },
+      "./themeStyleLoader": {
+        "types": "./dist/themeStyleLoader.d.ts",
+        "import": "./dist/themeStyleLoader.js",
+        "default": "./dist/themeStyleLoader.js"
       },
       "./Page": {
         "types": "./dist/components/Page.d.ts",

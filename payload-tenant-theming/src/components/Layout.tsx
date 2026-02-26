@@ -6,10 +6,13 @@ import Head from "next/head";
 
 export const Layout = async ({
   payloadConfig,
+  themeCssHrefTemplate = `/themes/{{themeName}}/theme.generated.css`,
   children,
-}: PropsWithChildren<{ payloadConfig: Promise<SanitizedConfig> }>) => {
+}: PropsWithChildren<{
+  payloadConfig: Promise<SanitizedConfig>;
+  themeCssHrefTemplate?: string;
+}>) => {
   let themeHref: string | null = null;
-  let themeCss: string | null = null;
 
   try {
     const tenantName = await getTenantName();
@@ -18,19 +21,16 @@ export const Layout = async ({
         payloadConfig,
         tenantName,
       });
-      themeHref = `/themes/${encodeURIComponent(theme.name)}/theme.generated.css`;
-      themeCss = `/api/theme.css?${encodeURIComponent(theme.name)}`;
-      // themeHref =
-      //   process.env.NODE_ENV === "production"
-      //     ? `/${encodeURIComponent(theme.name)}/global.css`
-      //     : `/api/theme.css?${encodeURIComponent(theme.name)}`;
+      themeHref = themeCssHrefTemplate.replace(
+        "{{themeName}}",
+        encodeURIComponent(theme.name),
+      );
     }
   } catch {}
 
   return (
     <html>
       <head>
-        {themeCss ? <link rel="stylesheet" href={themeCss} /> : null}
         {themeHref ? <link rel="stylesheet" href={themeHref} /> : null}
       </head>
       <body>{children}</body>

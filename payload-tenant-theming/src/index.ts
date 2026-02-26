@@ -2,7 +2,6 @@ import { Config, SanitizedConfig, Plugin } from "payload";
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
-import { createGetHandler } from "./cssGenerator";
 
 export type { Theme } from "./types";
 export { metadataGenerator } from "./metadataGenerator";
@@ -48,20 +47,6 @@ export const tenantTheming =
         `[@dexilion/payload-tenant-theming] No tenants collection found with slug "${tenantsSlug}". Is the multi-tenant plugin configured correctly?`,
       );
     }
-
-    config.endpoints = [
-      ...(incomingConfig.endpoints ?? [
-        {
-          path: "/theme.css",
-          method: "get",
-          handler: async (req) => {
-            return createGetHandler(
-              Promise.resolve(config as SanitizedConfig),
-            )();
-          },
-        },
-      ]),
-    ];
 
     tenantsCollection.fields = tenantsCollection.fields || [];
 
