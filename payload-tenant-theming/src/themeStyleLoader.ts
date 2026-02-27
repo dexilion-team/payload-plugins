@@ -68,6 +68,17 @@ interface ThemeCssLoaderOptions {
   bufferedWrite?: boolean;
   /** Discard cached data for all themes other than the current one. Default: `false`. */
   evictOtherThemes?: boolean;
+  /**
+   * Subdirectory (relative to each theme's output directory) where referenced
+   * assets (fonts, images, SVGs) are copied. Default: `"assets"`.
+   *
+   * Example: with outputDir="public/themes" and assetsSubdir="assets", a
+   * font-awesome font ends up at
+   *   public/themes/ci/assets/vendor/font-awesome/fonts/fontawesome-webfont.woff2
+   * and the URL in the generated CSS becomes
+   *   /themes/ci/assets/vendor/font-awesome/fonts/fontawesome-webfont.woff2
+   */
+  assetsSubdir?: string;
 }
 
 /** Minimal webpack/Turbopack loader `this` context. */
@@ -137,6 +148,15 @@ const compilationCache = new Map<string, Map<string, ThemeCacheEntry>>();
  */
 const themeLastRebuild = new Map<string, number>();
 
+/**
+ * absPath → mtime (ms) at the time the asset was last copied.
+ *
+ * Persists across HMR cycles. An asset is only re-copied when its mtime
+ * has advanced beyond the recorded value, avoiding redundant disk I/O on
+ * warm rebuilds where only SCSS/TSX files changed.
+ */
+const assetMtimeCache = new Map<string, number>();
+
 // ---------------------------------------------------------------------------
 // Source map helpers
 // ---------------------------------------------------------------------------
@@ -172,6 +192,219 @@ function vlqDecodeSegment(seg: string): number[] {
     vals.push(v & 1 ? -(v >> 1) : v >> 1);
   }
   return vals;
+}
+
+/**
+ * Builds a mapping from 1-based output CSS line number to the absolute path of
+ * the first source .scss file that contributed to that line, according to the
+ * Sass source map.
+ *
+ * This is used by rewriteAndCopyAssets to resolve relative url() paths in the
+ * compiled CSS back to the .scss file that originally contained them — which
+ * may be a deep vendor file (e.g. node_modules/font-awesome/scss/_path.scss)
+ * rather than the top-level entry point.
+ *
+ * @param map  The SassSourceMap returned by compileSass.
+ * @returns    Map from 1-based line number → absolute source file path.
+ *             Lines with no source mapping are absent from the map.
+ */
+function buildLineSourceMap(map: SassSourceMap): Map<number, string> {
+  // Resolve each source entry to an absolute path.
+  const sources = (map.sources ?? []).map((src) => {
+    if (src.startsWith("file://")) return new URL(src).pathname;
+    if (path.isAbsolute(src)) return src;
+    // Sass may emit paths relative to the .scss file's directory; resolve from
+    // CWD as a safe fallback (the caller falls back gracefully when absent).
+    return path.resolve(CWD, src);
+  });
+
+  const result = new Map<number, string>();
+  let lineNo = 1; // 1-based output line counter
+
+  // Delta state carried across ALL segments across ALL lines.
+  // genCol resets to 0 at each new line; srcIdx/srcLine/srcCol carry over.
+  let srcIdx = 0,
+    srcLine = 0,
+    srcCol = 0;
+
+  for (const lineStr of (map.mappings ?? "").split(";")) {
+    let firstOriginThisLine: string | undefined;
+
+    for (const seg of lineStr.split(",")) {
+      if (!seg) continue;
+      const v = vlqDecodeSegment(seg);
+      // v[0] = genCol delta (always present); v[1..3] = src index/line/col deltas
+      if (v.length >= 4) {
+        srcIdx += v[1]!;
+        srcLine += v[2]!;
+        srcCol += v[3]!;
+        // Only record the FIRST source origin encountered on this output line.
+        if (firstOriginThisLine === undefined) {
+          const absOrigin = sources[srcIdx];
+          if (absOrigin) firstOriginThisLine = absOrigin;
+        }
+      }
+    }
+
+    if (firstOriginThisLine !== undefined) {
+      result.set(lineNo, firstOriginThisLine);
+    }
+    lineNo++;
+  }
+
+  return result;
+}
+
+/**
+ * Rewrites relative url() references in a compiled CSS string so that assets
+ * are served from their copied location under the theme's public output
+ * directory, and copies those assets to disk.
+ *
+ * - Absolute or protocol-relative URLs (/..., https://, data:, etc.) are left
+ *   unchanged.
+ * - Relative URLs are resolved against the origin .scss file (from the source
+ *   map), copied to
+ *     <absOutputDir>/<themeName>/<assetsSubdir>/vendor/<rel-from-node_modules>
+ *   or
+ *     <absOutputDir>/<themeName>/<assetsSubdir>/src/<rel-from-cwd>
+ *   and rewritten to the corresponding absolute web path:
+ *     /<outputDirBasename>/<themeName>/<assetsSubdir>/vendor/...
+ *
+ * Assets whose mtime has not changed since the last copy are skipped (the
+ * existing copy on disk is still valid). The assetMtimeCache map is mutated
+ * in place.
+ *
+ * @param css             Compiled CSS string for one SCSS file.
+ * @param map             Source map produced by compileSass for that file.
+ * @param absOutputDir    Absolute path to the themes output root.
+ * @param outputDirBase   Basename of absOutputDir (e.g. "public"), used as the
+ *                        first segment of the rewritten web URL so that the
+ *                        path is rooted in the URL space correctly. Actually
+ *                        we use the *relative* URL from the webroot which is
+ *                        determined by which directory Next.js serves static
+ *                        files from — for public/ that is «/».
+ * @param themeName       Current theme name, used in destination paths.
+ * @param assetsSubdir    Subdirectory name under the theme output dir.
+ * @param localAssetMtimeCache  Persistent mtime cache (mutated).
+ * @returns               CSS string with url() values rewritten.
+ */
+function rewriteAndCopyAssets(
+  css: string,
+  map: SassSourceMap,
+  absOutputDir: string,
+  themeName: string,
+  assetsSubdir: string,
+  localAssetMtimeCache: Map<string, number>,
+): string {
+  const lineSourceMap = buildLineSourceMap(map);
+  const themeOutDir = path.join(absOutputDir, themeName);
+
+  // The web path prefix for rewritten URLs.
+  // public/themes/ci/assets/... → /themes/ci/assets/...
+  // We derive this by taking the path of themeOutDir relative to CWD/public
+  // i.e., strip the leading "public" segment and prepend "/".
+  const publicDir = path.join(CWD, "public");
+  const themeWebBase =
+    "/" + path.relative(publicDir, themeOutDir).split(path.sep).join("/");
+
+  // Regex that matches url(...) with any quoting style.
+  // Groups: [1] single-quoted value | [2] double-quoted value | [3] unquoted value
+  const URL_RE = /url\(\s*(?:'([^']*)'|"([^"]*)"|([^'"\s)]+))\s*\)/g;
+
+  let lineNo = 1;
+  let pos = 0; // current character index in `css`
+  let result = "";
+  let lastReplace = 0; // end of the last replacement in css
+
+  for (const m of css.matchAll(URL_RE)) {
+    const fullMatch = m[0]!;
+    const matchIndex = m.index!;
+
+    // Advance lineNo to the line that contains this match.
+    while (pos <= matchIndex) {
+      if (css[pos] === "\n") lineNo++;
+      pos++;
+    }
+
+    const rawUrl = (m[1] ?? m[2] ?? m[3] ?? "").trim();
+
+    // Skip data URIs, protocol-relative, absolute web paths, and empty.
+    if (
+      !rawUrl ||
+      rawUrl.startsWith("data:") ||
+      rawUrl.startsWith("//") ||
+      rawUrl.startsWith("/") ||
+      /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(rawUrl)
+    ) {
+      continue;
+    }
+
+    // Strip query string and fragment for file resolution; preserve them for
+    // the rewritten URL.
+    const qIdx = rawUrl.indexOf("?");
+    const hIdx = rawUrl.indexOf("#");
+    const splitIdx =
+      qIdx !== -1 && (hIdx === -1 || qIdx < hIdx)
+        ? qIdx
+        : hIdx !== -1
+          ? hIdx
+          : rawUrl.length;
+    const filePart = rawUrl.slice(0, splitIdx);
+    const suffix = rawUrl.slice(splitIdx); // "?v=4.7.0" or "#anchor" or ""
+
+    if (!filePart) continue;
+
+    // Find the origin .scss file for this CSS line.
+    const originScss = lineSourceMap.get(lineNo);
+    if (!originScss) continue;
+
+    // Resolve the asset path relative to the origin .scss file's directory.
+    const absAsset = path.resolve(path.dirname(originScss), filePart);
+
+    // Check the file exists before doing anything.
+    let mtime: number;
+    try {
+      mtime = fs.statSync(absAsset).mtimeMs;
+    } catch {
+      continue; // File not found — leave URL unchanged.
+    }
+
+    // Determine destination relative path.
+    let destRel: string;
+    if (absAsset.startsWith(NODE_MODULES + path.sep)) {
+      destRel = path.join(
+        assetsSubdir,
+        "vendor",
+        path.relative(NODE_MODULES, absAsset),
+      );
+    } else {
+      destRel = path.join(assetsSubdir, "src", path.relative(CWD, absAsset));
+    }
+
+    const fullDest = path.join(themeOutDir, destRel);
+
+    // Copy only when mtime changed.
+    if (localAssetMtimeCache.get(absAsset) !== mtime) {
+      try {
+        fs.mkdirSync(path.dirname(fullDest), { recursive: true });
+        fs.copyFileSync(absAsset, fullDest);
+        localAssetMtimeCache.set(absAsset, mtime);
+      } catch {
+        continue; // Copy failed — leave URL unchanged.
+      }
+    }
+
+    // Build the rewritten URL: absolute web path.
+    const webPath =
+      themeWebBase + "/" + destRel.split(path.sep).join("/") + suffix;
+
+    // Splice the rewritten url() into the result.
+    result += css.slice(lastReplace, matchIndex) + `url('${webPath}')`;
+    lastReplace = matchIndex + fullMatch.length;
+  }
+
+  result += css.slice(lastReplace);
+  return result;
 }
 
 /**
@@ -327,8 +560,12 @@ function compileSass(absPath: string): {
     loadPaths: [path.dirname(absPath), NODE_MODULES],
     // Use compressed output in production to minify the generated CSS bundle.
     style: IS_PRODUCTION ? "compressed" : "expanded",
-    // Source maps are only generated in development.
-    sourceMap: !IS_PRODUCTION,
+    // Source maps are always generated so that rewriteAndCopyAssets can
+    // resolve relative url() paths back to their origin .scss file regardless
+    // of environment.  In production, sourcesContent is omitted to keep the
+    // map small; it is used transiently for URL resolution and never written
+    // to disk in production.
+    sourceMap: true,
     sourceMapIncludeSources: !IS_PRODUCTION,
     logger: sass.Logger.silent,
     silenceDeprecations: [
@@ -367,7 +604,53 @@ function applyClassMap(
       skip !== undefined ? skip : `.${classMap[cls ?? ""] ?? cls ?? ""}`,
   );
 }
+/**
+ * Strips CSS Modules `:global(...)` and `:local(...)` wrappers from compiled
+ * CSS, replacing them with their inner selector content.
+ *
+ * Sass compiles `.Foo { :global(footer) & { … } }` into
+ * `:global(footer) .Foo { … }` — passing the pseudo-class through verbatim
+ * because Sass has no knowledge of CSS Modules semantics.  Browsers see
+ * `:global(footer)` as an unknown pseudo-class that never matches, so the
+ * rule is silently ignored.
+ *
+ * This function resolves that by unwrapping:
+ *   `:global(footer .Bar)` → `footer .Bar`
+ *   `:local(.Baz)`         → `.Baz`
+ *
+ * Nested parentheses inside the wrapper (e.g. `:global(li:nth-child(2))`)
+ * are handled correctly via depth tracking.
+ */
+function unwrapCssModuleGlobals(css: string): string {
+  // Matches the start of :global( or :local( — the inner content and closing
+  // paren are then found via depth-tracking in the replacement loop.
+  const RE = /:(?:global|local)\(/g;
+  let result = "";
+  let lastIndex = 0;
 
+  for (const m of css.matchAll(RE)) {
+    const wrapperStart = m.index!;
+    const innerStart = wrapperStart + m[0].length; // first char after "("
+
+    // Walk forward to find the matching closing paren.
+    let depth = 1;
+    let j = innerStart;
+    while (j < css.length && depth > 0) {
+      const ch = css[j];
+      if (ch === "(") depth++;
+      else if (ch === ")") depth--;
+      j++;
+    }
+    // j now points one past the closing ")"
+    // Inner content: css.slice(innerStart, j - 1)
+
+    result += css.slice(lastIndex, wrapperStart) + css.slice(innerStart, j - 1);
+    lastIndex = j;
+  }
+
+  result += css.slice(lastIndex);
+  return result;
+}
 // ---------------------------------------------------------------------------
 // Regex for CSS/SCSS imports in .tsx/.jsx
 // Captures:
@@ -418,6 +701,9 @@ function collectCssFromFile(
         classMap = {};
         finalCss = rawCss;
       }
+      // Unwrap CSS Modules :global(...) / :local(...) pseudo-classes that Sass
+      // passes through verbatim — browsers don't understand them.
+      finalCss = unwrapCssModuleGlobals(finalCss);
       themeCache.set(absPath, { finalCss, finalMap: map, classMap });
     } catch {
       continue;
@@ -447,6 +733,7 @@ function rebuildTheme(
   absThemesDir: string,
   absOutputDir: string,
   bufferedWrite = false,
+  assetsSubdir = "assets",
 ): void {
   const themeDir = path.join(absThemesDir, themeName);
   if (!fs.existsSync(themeDir)) return;
@@ -474,6 +761,26 @@ function rebuildTheme(
 
   for (const tsxPath of tsxFiles) {
     collectCssFromFile(tsxPath, themeCache);
+  }
+
+  // ── Asset rewriting pass ──────────────────────────────────────────────────
+  // Now that all chunks are compiled (and source maps are available), resolve
+  // relative url() paths, copy referenced assets, and rewrite URLs to their
+  // public web paths.  This must happen before the write pass below, which
+  // consumes finalCss and strips it from the cache entries.
+  for (const entry of themeCache.values()) {
+    if (!entry.finalCss || !entry.finalMap) continue;
+    entry.finalCss = rewriteAndCopyAssets(
+      entry.finalCss,
+      entry.finalMap,
+      absOutputDir,
+      themeName,
+      assetsSubdir,
+      assetMtimeCache,
+    );
+    // In production the map is only needed for URL resolution — discard it
+    // now to avoid inflating the buffered write or the source-map merge.
+    if (IS_PRODUCTION) entry.finalMap = null;
   }
 
   const outDir = path.join(absOutputDir, themeName);
@@ -547,6 +854,7 @@ export default function themeCssLoader(
     outputDir = "public/themes",
     bufferedWrite = true,
     evictOtherThemes = false,
+    assetsSubdir = "assets",
   } = this.getOptions() ?? {};
   const absThemesDir = path.resolve(CWD, themesDir);
   const absOutputDir = path.resolve(CWD, outputDir);
@@ -573,6 +881,7 @@ export default function themeCssLoader(
       absThemesDir,
       absOutputDir,
       bufferedWrite,
+      assetsSubdir,
     );
     themeLastRebuild.set(themeName, Date.now());
   } else {
@@ -617,6 +926,7 @@ export default function themeCssLoader(
         absThemesDir,
         absOutputDir,
         bufferedWrite,
+        assetsSubdir,
       );
       themeLastRebuild.set(themeName, Date.now());
     }
