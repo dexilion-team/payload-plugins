@@ -7,6 +7,7 @@ import { transformTenantScopedGlobals } from "./utilities/transformTenantScopedG
 
 export { isUserInTenant } from "./isUserInTenant";
 export { getTenantName } from "./getTenantName";
+export { getRelationshipIDs } from "./utils";
 
 export type PayloadMultiTenantPluginOptions = {
   /**
@@ -128,12 +129,12 @@ export const multiTenantPlugin =
     const tenantScopedGlobalCollectionSlugs = [
       ...(options.collections ?? []),
       ...transformTenantScopedGlobals(
-      tenantScopedGlobalSlugs,
-      config.globals,
-      config.collections,
-      tenantFieldName,
-      tenantsSlug,
-    )
+        tenantScopedGlobalSlugs,
+        config.globals,
+        config.collections,
+        tenantFieldName,
+        tenantsSlug,
+      ),
     ];
 
     // Remove tenant-scoped globals from config.globals

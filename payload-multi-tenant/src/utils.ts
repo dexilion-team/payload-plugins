@@ -30,7 +30,7 @@ export const getRelationshipID = (value: unknown): RelationshipID | null => {
   return null;
 };
 
-const getRelationshipIDs = (value: unknown): RelationshipID[] => {
+export const getRelationshipIDs = (value: unknown): RelationshipID[] => {
   if (!value) return [];
   if (Array.isArray(value)) {
     return value

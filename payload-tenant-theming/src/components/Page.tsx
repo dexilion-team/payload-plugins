@@ -27,9 +27,12 @@ export async function Page({
   redirectSlug,
   payloadConfig,
 }: PageType) {
-  const { segments } = await params;
+  const { segments = [] } = await params;
 
   const payload = await getPayload({ config: payloadConfig });
+  const { user } = await payload.auth({
+    headers: await headers(),
+  });
 
   const tenantName = await getTenantName();
   if (!tenantName) {
@@ -48,11 +51,11 @@ export async function Page({
     return <UnderConstructionPage />;
   }
 
-  let page;
-  page = await getPage({
+  const page = await getPage({
     segments,
     pagesSlug,
     payloadConfig,
+    user,
   });
 
   if (!page && !redirectSlug) {

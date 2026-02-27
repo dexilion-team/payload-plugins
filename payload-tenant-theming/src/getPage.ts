@@ -1,4 +1,7 @@
-import { getTenantName } from "@dexilion/payload-multi-tenant";
+import {
+  getRelationshipIDs,
+  getTenantName,
+} from "@dexilion/payload-multi-tenant";
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getTheme } from "./getTheme";
 
@@ -6,12 +9,16 @@ export const getPage = async ({
   segments,
   pagesSlug,
   tenantFieldKey,
+  tenantFieldName = "tenant",
   payloadConfig,
+  user,
 }: {
   segments: string[];
   pagesSlug: string;
+  tenantFieldName?: string;
   tenantFieldKey?: string;
   payloadConfig: Promise<SanitizedConfig>;
+  user?: any;
 }): Promise<any | null> => {
   const payload = await getPayload({ config: payloadConfig });
 
@@ -51,29 +58,62 @@ export const getPage = async ({
       `[@dexilion/payload-tenant-theming] No "path" field found in the "${pagesSlug}" collection.`,
     );
   }
-  const tenantKey = `tenant.${tenantFieldKey ?? "domain"}`;
+
+  const tenantField = user?.[tenantFieldName as keyof typeof user] as any;
+  const userTenantIds = user ? getRelationshipIDs(tenantField?.docs) : [];
+  const tenantKey = `${tenantFieldName}.${tenantFieldKey ?? "domain"}`;
 
   let path = await payload.find({
     collection: pagesSlug as CollectionSlug,
     where: {
-      [pathFieldKey]: {
-        equals: "/" + (segments ?? []).join("/").toLowerCase(),
-      },
-      [tenantKey]: {
-        equals: tenantName,
-      },
+      and: [
+        {
+          [pathFieldKey]: {
+            equals: "/" + (segments ?? []).join("/").toLowerCase(),
+          },
+          [tenantKey]: {
+            equals: tenantName,
+          },
+        },
+        {
+          or: [
+            {
+              [`${tenantFieldName}.id`]: {
+                in: userTenantIds,
+              },
+            },
+            { _status: { equals: "published" } },
+          ],
+        },
+      ],
     },
     draft: true,
+    disableErrors: true,
   });
 
-  if (!path.totalDocs && segments.length == 1 && !isNaN(Number(segments[0]))) {
+  if (!path.totalDocs && segments?.length == 1 && !isNaN(Number(segments[0]))) {
     path = await payload.find({
       collection: pagesSlug as CollectionSlug,
       where: {
-        id: { equals: Number(segments[0]) },
-        [tenantKey]: { equals: tenantName },
+        and: [
+          {
+            id: { equals: Number(segments[0]) },
+            [tenantKey]: { equals: tenantName },
+          },
+          {
+            or: [
+              {
+                [`${tenantFieldName}.id`]: {
+                  in: userTenantIds,
+                },
+              },
+              { _status: { equals: "published" } },
+            ],
+          },
+        ],
       },
       draft: true,
+      disableErrors: true,
     });
   }
 
