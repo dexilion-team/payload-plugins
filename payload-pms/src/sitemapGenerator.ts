@@ -27,6 +27,7 @@ export const sitemapGenerator =
       where: {
         [options?.domainFieldName ?? "domain"]: { equals: tenantName },
       },
+      draft: false,
     });
     if (!tenant?.docs?.length) {
       payload.logger.warn(
@@ -39,9 +40,11 @@ export const sitemapGenerator =
       collection: (options?.pageSlug || "pages") as CollectionSlug,
       where: {
         tenant: { equals: tenant.docs[0]!.id },
+        _status: { equals: "published" },
       },
       pagination: false,
       depth: 0,
+      draft: false,
     });
 
     if (!pages?.docs?.length) {
