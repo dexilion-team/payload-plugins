@@ -51,16 +51,9 @@ export async function Page({
     return <UnderConstructionPage />;
   }
 
-  const page = await getPage({
-    segments,
-    pagesSlug,
-    payloadConfig,
-    user,
-  });
-
-  if (!page && !redirectSlug) {
-    notFound();
-  } else if (!page && redirectSlug) {
+  // Handle redirects before checking for page to
+  // allow redirecting for existing pages
+  if (redirectSlug) {
     const payload = await getPayload({ config: payloadConfig });
 
     const { docs: redirects } = await payload.find({
@@ -87,7 +80,17 @@ export async function Page({
 
       redirect(value.to.url, RedirectType.replace);
     }
+  }
 
+  // Load page data if exists
+  const page = await getPage({
+    segments,
+    pagesSlug,
+    payloadConfig,
+    user,
+  });
+
+  if (!page) {
     notFound();
   }
 
