@@ -32,9 +32,10 @@ const getThemeName = async ({ req }: { req: PayloadRequest }) => {
   if (!tenantId) {
     let user: UserWithTenants | null = null;
     if (typeof req.user === "number") {
+      const userId = typeof req.user === "number" ? req.user : Number(req.user);
       user = (await req.payload.findByID({
         collection: "users",
-        id: req.user,
+        id: userId,
         depth: 1,
       })) as UserWithTenants | null;
     } else {
@@ -61,7 +62,12 @@ const getThemeName = async ({ req }: { req: PayloadRequest }) => {
   const tenant = await req.payload.findByID({
     collection: "tenants",
     id: Number(tenantId),
+    disableErrors: true,
   });
+
+  if (!tenant) {
+    return null;
+  }
   const themeName = "theme" in tenant && (tenant.theme as string);
 
   if (!themeName) {

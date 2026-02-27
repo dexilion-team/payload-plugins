@@ -296,21 +296,32 @@ const generatePath =
     if (parent == null) {
       return `/${slug ?? ""}`;
     }
-    //console.log({ parent, slug });
+
+    const parentId =
+      parent && typeof parent === "object" && "id" in parent
+        ? (parent as { id: number | string }).id
+        : parent;
+
     let doc = await payload.findByID({
       collection: collection as CollectionSlug,
-      id: parent,
+      id: parentId,
       depth: 0,
       draft: false,
+      overrideAccess: true,
+      disableErrors: true,
     });
-    if ((doc as any)[parentFieldName] == null) {
+
+    if (doc == null || (doc as any)[parentFieldName] == null) {
       doc = await payload.findByID({
         collection: collection as CollectionSlug,
-        id: parent,
+        id: parentId,
         depth: 0,
         draft: true,
+        overrideAccess: true,
+        disableErrors: true,
       });
     }
+
     const path = recursivelySearchForDataByName(doc, "path");
 
     return `${path ? path : ""}/${slug}`.replace(/\/\/+/g, "/");

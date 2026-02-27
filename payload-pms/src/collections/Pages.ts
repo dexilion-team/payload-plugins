@@ -14,6 +14,7 @@ import type {
 import pageRead from "../access/pageRead";
 import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
 import getThemeName from "../utils/getThemeName";
+import { stripSnapshot } from "../utils/stripSnapshot";
 
 const httpsProbeTimeoutMs = 1000;
 
@@ -115,6 +116,17 @@ export const createPagesCollection = ({
     read: pageRead,
   },
   hooks: {
+    beforeOperation: [
+      // HACK: Payload 3.74+ always adds `snapshot: { not_equals: true }` to
+      // the hidden argument "where" in findVersions queries in the admin UI,
+      // but `snapshot` is only a recognized field when localization is enabled.
+      ({ operation, args }) => {
+        if (operation === "read" && "where" in args) {
+          args.where = stripSnapshot(args.where as Record<string, any>);
+        }
+        return args;
+      },
+    ],
     afterOperation: [setDefaultUserPreferences],
   },
   fields: [
