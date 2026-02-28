@@ -91,6 +91,9 @@ export async function Page({
   });
 
   if (!page) {
+    payload.logger.info(
+      `[@dexilion/payload-tenant-theming] No page found for path: /${segments?.join("/")}.`,
+    );
     notFound();
   }
 
