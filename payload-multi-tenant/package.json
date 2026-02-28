@@ -16,11 +16,6 @@
       "import": "./src/components/TenantSelect.tsx",
       "default": "./src/components/TenantSelect.tsx"
     },
-    "./GlobalViewRedirect": {
-      "types": "./src/components/GlobalViewRedirect.tsx",
-      "import": "./src/components/GlobalViewRedirect.tsx",
-      "default": "./src/components/GlobalViewRedirect.tsx"
-    },
     "./GlobalCollectionRedirect": {
       "types": "./src/components/GlobalCollectionRedirect.tsx",
       "import": "./src/components/GlobalCollectionRedirect.tsx",
@@ -53,9 +48,10 @@
     "vitest": "^4.0.16"
   },
   "scripts": {
-    "build": "pnpm build:types && pnpm build:swc",
+    "build": "pnpm build:types && pnpm build:swc && pnpm build:packagejson",
     "build:swc": "swc ./src -d ./dist --config-file .swcrc --strip-leading-paths",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "build:packagejson": "node ../scripts/build-dist-package-json.mjs",
     "clean": "rimraf -g {dist,*.tsbuildinfo}",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -79,11 +75,6 @@
         "types": "./dist/components/TenantSelect.d.ts",
         "import": "./dist/components/TenantSelect.js",
         "default": "./dist/components/TenantSelect.js"
-      },
-      "./GlobalViewRedirect": {
-        "types": "./dist/components/GlobalViewRedirect.d.ts",
-        "import": "./dist/components/GlobalViewRedirect.js",
-        "default": "./dist/components/GlobalViewRedirect.js"
       },
       "./GlobalCollectionRedirect": {
         "types": "./dist/components/GlobalCollectionRedirect.d.ts",

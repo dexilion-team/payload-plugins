@@ -48,9 +48,10 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "build": "pnpm build:types && pnpm build:swc",
+    "build": "pnpm build:types && pnpm build:swc && pnpm build:packagejson",
     "build:swc": "swc ./src -d ./dist --config-file .swcrc --strip-leading-paths",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "build:packagejson": "node ../scripts/build-dist-package-json.mjs",
     "clean": "rimraf -g {dist,*.tsbuildinfo}",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

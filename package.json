@@ -12,6 +12,7 @@
     "@changesets/cli": "^2.29.8"
   },
   "dependencies": {
+    "payload": "3.74.0",
     "@dexilion/payload-blog": "workspace:*",
     "@dexilion/payload-lexical-ext": "workspace:*",
     "@dexilion/payload-multi-tenant": "workspace:*",

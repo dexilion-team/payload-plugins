@@ -56,7 +56,14 @@ export const RichText = ({
     void convert();
   }, [content]);
 
-  return html && <div dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    html && (
+      <div
+        dangerouslySetInnerHTML={{ __html: html }}
+        suppressHydrationWarning
+      />
+    )
+  );
 };
 
 const convertTextNode = ({ node }: any) => {
