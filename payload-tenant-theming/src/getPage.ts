@@ -87,8 +87,8 @@ export const getPage = async ({
         },
       ],
     },
-    draft: true,
     disableErrors: true,
+    draft: userTenantIds.length > 0,
   });
 
   if (!path.totalDocs && segments?.length == 1 && !isNaN(Number(segments[0]))) {
@@ -112,8 +112,8 @@ export const getPage = async ({
           },
         ],
       },
-      draft: true,
       disableErrors: true,
+      draft: userTenantIds.length > 0,
     });
   }
 
