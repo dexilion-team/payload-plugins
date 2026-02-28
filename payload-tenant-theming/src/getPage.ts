@@ -87,7 +87,6 @@ export const getPage = async ({
         },
       ],
     },
-    draft: true,
     disableErrors: true,
   });
 
@@ -112,7 +111,6 @@ export const getPage = async ({
           },
         ],
       },
-      draft: true,
       disableErrors: true,
     });
   }
