@@ -705,7 +705,10 @@ function collectCssFromFile(
       // passes through verbatim — browsers don't understand them.
       finalCss = unwrapCssModuleGlobals(finalCss);
       themeCache.set(absPath, { finalCss, finalMap: map, classMap });
-    } catch {
+    } catch (error) {
+      console.error(
+        `[@dexilion/payload-tenant-theming] Failed to compile ${absPath} imported from ${tsxPath}. ${error}`,
+      );
       continue;
     }
   }
