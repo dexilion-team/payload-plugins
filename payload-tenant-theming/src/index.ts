@@ -1,4 +1,10 @@
-import { Config, SanitizedConfig, Plugin } from "payload";
+import {
+  Config,
+  SanitizedConfig,
+  Plugin,
+  PayloadRequest,
+  CollectionSlug,
+} from "payload";
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
@@ -96,6 +102,27 @@ export const tenantTheming =
           t("plugin-tenant-theming:domainFieldLabel"),
         type: "text",
         required: true,
+        validate: async (
+          value: string | null | undefined,
+          { req, id }: { req: PayloadRequest; id?: string | number },
+        ) => {
+          if (!value) return true;
+
+          const existing = await req.payload.find({
+            collection: tenantsCollection.slug as CollectionSlug,
+            where: {
+              [domainFieldName]: { equals: value },
+              ...(id ? { id: { not_equals: id } } : {}),
+            },
+            limit: 1,
+          });
+
+          if (existing.docs.length > 0) {
+            return `Domain "${value}" is already in use by another tenant.`;
+          }
+
+          return true;
+        },
       });
     }
 
