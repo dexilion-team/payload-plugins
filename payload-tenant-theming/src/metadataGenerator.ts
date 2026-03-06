@@ -29,21 +29,24 @@ export const metadataGenerator =
       (page.meta.title ||
         recursivelySearchForDataByName<string>(page, "title", ["parent"])) ??
       "";
+    const canonicalUrl =
+      recursivelySearchForDataByName<string>(page, "path", ["parent"]) ?? path;
+    console.log(page.generalTab.path);
 
     return {
       metadataBase: tenantName ? new URL(`https://${tenantName}`) : undefined,
       title: title,
       alternates: {
-        canonical: path,
+        canonical: canonicalUrl,
       },
       openGraph: {
         title: title,
-        url: path,
+        url: canonicalUrl,
         images: logo ? [logo] : undefined,
       },
       twitter: {
         title: title,
-        site: path,
+        site: canonicalUrl,
         images: logo ? [logo] : undefined,
       },
     };
