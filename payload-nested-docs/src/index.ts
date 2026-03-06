@@ -3,6 +3,7 @@ import {
   Config,
   deepMergeWithSourceArrays,
   Field,
+  FilterOptionsProps,
   PayloadRequest,
 } from "payload";
 import translationEn from "../translations/en.json";
@@ -181,10 +182,18 @@ export function createParentField(
 
         return undefined;
       },
-      filterOptions: ({ data }: { data: any }) => {
-        return {
+      filterOptions: ({ data, siblingData }: FilterOptionsProps) => {
+        const siblingDataRecord = siblingData as Record<string, unknown>;
+        const tenant =
+          recursivelySearchForDataByName(siblingDataRecord, "tenant") ??
+          recursivelySearchForDataByName(data, "tenant");
+        const filter: Record<string, any> = {
           id: { not_equals: data.id },
         };
+        if (tenant) {
+          filter.tenant = { equals: tenant };
+        }
+        return filter;
       },
     },
     overrides || {},
