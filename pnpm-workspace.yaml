@@ -9,5 +9,6 @@ packages:
   - payload-lexical-ext
   - payload-sync
   - payload-auditlog
+  - payload-cron-sync
 
 autoInstallPeers: false

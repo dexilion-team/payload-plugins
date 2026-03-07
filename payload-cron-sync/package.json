@@ -1,0 +1,45 @@
+{
+  "name": "@dexilion/payload-cron-sync",
+  "version": "3.74.0",
+  "description": "Payload CMS plugin that automatically syncs your job schedules to cron-job.org",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup index.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint *.ts",
+    "prepare": "tsup index.ts --format cjs,esm --dts --clean"
+  },
+  "keywords": [
+    "payload",
+    "payloadcms",
+    "payload-plugin",
+    "cron",
+    "cron-job.org",
+    "scheduler",
+    "jobs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "payload": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "payload": "^3.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}
