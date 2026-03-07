@@ -36,6 +36,7 @@ export const metadataGenerator =
     return {
       metadataBase: tenantName ? new URL(`https://${tenantName}`) : undefined,
       title: title,
+      description: page.meta?.description,
       alternates: {
         canonical: canonicalUrl,
       },
