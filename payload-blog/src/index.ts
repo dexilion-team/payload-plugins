@@ -3,6 +3,8 @@ import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { Tags } from "./collections/Tags";
 import { createPostsCollection } from "./collections/Posts";
 
+export { sitemapGenerator } from "./sitemapGenerator";
+
 export type PayloadBlogPluginOptions = {
   mediaSlug?: string;
   postsOverride?: (posts: CollectionConfig) => CollectionConfig;
