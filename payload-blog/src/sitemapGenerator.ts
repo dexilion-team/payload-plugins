@@ -1,14 +1,20 @@
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
+import { getTenantName } from "@dexilion/payload-multi-tenant";
 
 export function sitemapGenerator({
   config,
   collection,
+  basePath = "post",
+  domain,
 }: {
   config: SanitizedConfig | Promise<SanitizedConfig>;
   collection?: CollectionSlug;
+  basePath?: string;
+  domain?: string;
 }) {
   return async () => {
     const payload = await getPayload({ config });
+    const tenantName = domain ?? (await getTenantName());
 
     const pages = await payload.find({
       collection: collection ?? "posts",
@@ -27,8 +33,9 @@ export function sitemapGenerator({
     return pages.docs.map((page: any) => {
       const path = page.slug;
       const { updatedAt } = page;
+
       return {
-        url: `/${path}`,
+        url: `https://${tenantName}/${basePath}/${path}`,
         lastModified: updatedAt,
       };
     });
