@@ -19,7 +19,12 @@ export async function getTheme({
 
   const res = await payload.find({
     collection: tenantsSlug as CollectionSlug,
-    where: { domain: { equals: tenantName } },
+    where: {
+      or: [
+        { domain: { equals: tenantName } },
+        { "aliases.domain": { equals: tenantName } },
+      ],
+    },
     limit: 1,
   });
 
