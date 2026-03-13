@@ -78,6 +78,7 @@ export const createPagesCollection = ({
           collection: "tenants" as CollectionSlug,
           id: `${tenantId}`,
           req,
+          disableErrors: true,
         })) as unknown as { [tenantDomainFieldKey: string]: string };
         const domain = tenant?.[tenantDomainFieldKey || "domain"] as string;
         const protocol = (await supportsHttps(domain)) ? "https" : "http";
