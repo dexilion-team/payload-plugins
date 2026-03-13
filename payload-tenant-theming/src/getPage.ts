@@ -8,7 +8,6 @@ import { getTheme } from "./getTheme";
 export const getPage = async ({
   segments,
   pagesSlug,
-  tenantFieldKey,
   tenantFieldName = "tenant",
   payloadConfig,
   user,
@@ -16,7 +15,6 @@ export const getPage = async ({
   segments: string[];
   pagesSlug: string;
   tenantFieldName?: string;
-  tenantFieldKey?: string;
   payloadConfig: Promise<SanitizedConfig>;
   user?: any;
 }): Promise<any | null> => {
@@ -61,7 +59,32 @@ export const getPage = async ({
 
   const tenantField = user?.[tenantFieldName as keyof typeof user] as any;
   const userTenantIds = user ? getRelationshipIDs(tenantField?.docs) : [];
-  const tenantKey = `${tenantFieldName}.${tenantFieldKey ?? "domain"}`;
+
+  const tenantRes = await payload.find({
+    collection: "tenants" as CollectionSlug,
+    where: { domain: { equals: tenantName } },
+    limit: 1,
+    disableErrors: true,
+  });
+
+  let tenant = tenantRes?.docs?.[0];
+
+  if (!tenant) {
+    const all = await payload.find({
+      collection: "tenants" as CollectionSlug,
+      limit: 100,
+      disableErrors: true,
+    });
+    tenant = all?.docs?.find((t: any) =>
+      t.aliases?.some((alias: any) => alias.domain === tenantName),
+    );
+  }
+
+  if (!tenant) {
+    throw new Error(`No tenant found for "${tenantName}"`);
+  }
+
+  const tenantIdKey = `${tenantFieldName}.id`;
 
   let path = await payload.find({
     collection: pagesSlug as CollectionSlug,
@@ -71,8 +94,8 @@ export const getPage = async ({
           [pathFieldKey]: {
             equals: "/" + (segments ?? []).join("/").toLowerCase(),
           },
-          [tenantKey]: {
-            equals: tenantName,
+          [tenantIdKey]: {
+            equals: tenant.id,
           },
         },
         {
@@ -98,7 +121,7 @@ export const getPage = async ({
         and: [
           {
             id: { equals: Number(segments[0]) },
-            [tenantKey]: { equals: tenantName },
+            [tenantIdKey]: { equals: tenant.id },
           },
           {
             or: [

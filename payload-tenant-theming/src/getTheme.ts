@@ -25,12 +25,19 @@ export async function getTheme({
   });
 
   if (!res?.docs?.length) {
-    res = await payload.find({
+    const all = await payload.find({
       collection: tenantsSlug as CollectionSlug,
-      where: { "aliases.domain": { equals: tenantName } },
-      limit: 1,
+      limit: 100,
       disableErrors: true,
     });
+
+    const match = all?.docs?.find((tenant: any) =>
+      tenant.aliases?.some((alias: any) => alias.domain === tenantName),
+    );
+
+    if (match) {
+      res = { ...all, docs: [match], totalDocs: 1 };
+    }
   }
 
   if (!res?.docs?.length) {
