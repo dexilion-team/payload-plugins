@@ -29,20 +29,5 @@ export const createDefaultTenantsCollection = (
         },
       },
     },
-    {
-      name: "aliases",
-      type: "array",
-      admin: {
-        description:
-          "Additional domains that map to this tenant (e.g. staging, test domains)",
-      },
-      fields: [
-        {
-          name: "domain",
-          type: "text",
-          required: true,
-        },
-      ],
-    },
   ],
 });
