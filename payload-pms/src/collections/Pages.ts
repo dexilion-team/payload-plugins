@@ -48,6 +48,7 @@ export type PagesConfig = {
   blocks: Record<string, Block[]>;
   tabs?: Tab[];
   tenantDomainFieldKey?: string;
+  livePreviewBasePath?: string;
 };
 
 export const createPagesCollection = ({
@@ -56,6 +57,7 @@ export const createPagesCollection = ({
   blocks,
   tabs,
   tenantDomainFieldKey,
+  livePreviewBasePath,
 }: PagesConfig): CollectionConfig => ({
   slug: slug ?? "pages",
   admin: {
@@ -80,7 +82,7 @@ export const createPagesCollection = ({
         const domain = tenant?.[tenantDomainFieldKey || "domain"] as string;
         const protocol = (await supportsHttps(domain)) ? "https" : "http";
 
-        return `${protocol}://${domain}/${data.id}`;
+        return `${protocol}://${domain}${livePreviewBasePath ? `${livePreviewBasePath}` : ""}/${data.id}`;
       },
       breakpoints: [
         {
