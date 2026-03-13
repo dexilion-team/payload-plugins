@@ -29,6 +29,7 @@ export type PayloadPMSPluginOptions = {
   navSlug?: string;
   navDepth?: number;
   navExtraFields?: GlobalConfig["fields"];
+  livePreviewBasePath?: string;
 };
 
 export const pmsPlugin =
@@ -44,6 +45,7 @@ export const pmsPlugin =
       blocks: await options.blocks(),
       layouts: await options.layouts(),
       tabs: options.extraTabs || [],
+      livePreviewBasePath: options.livePreviewBasePath,
     });
     const pagesCollectionExists = config.collections.some(
       (c) => c.slug === Pages.slug,

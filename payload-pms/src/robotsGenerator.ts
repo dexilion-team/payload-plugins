@@ -13,18 +13,22 @@ export const robotsGenerator =
       );
 
       return {
-        rules: {
-          userAgent: "*",
-          disallow: "",
-        },
+        rules: [
+          {
+            userAgent: "*",
+            disallow: ["/admin", "/api"],
+          },
+        ],
       };
     }
 
     return {
-      rules: {
-        userAgent: "*",
-        disallow: " ",
-      },
+      rules: [
+        {
+          userAgent: "*",
+          disallow: ["/admin", "/api"],
+        },
+      ],
       sitemap: `https://${tenantName}/sitemap.xml`,
     };
   };

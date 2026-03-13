@@ -74,8 +74,9 @@ export async function Page({
         const result = await payload.findByID({
           collection: ref.relationTo,
           id: ref.value.id,
+          disableErrors: true,
         });
-        redirect(result?.generalTab.path || "/", RedirectType.replace);
+        redirect(result?.generalTab?.path || "/", RedirectType.replace);
       }
 
       redirect(value.to.url, RedirectType.replace);

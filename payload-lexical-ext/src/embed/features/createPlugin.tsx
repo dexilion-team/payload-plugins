@@ -41,7 +41,7 @@ function extractVideoId(input: string, type: string): string | null {
   if (type === "youtube") {
     // Handle various YouTube URL formats
     const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/,
+      /(?:(?:m\.)?youtube\.com\/watch\?v=|youtu\.be\/|(?:m\.)?youtube\.com\/embed\/)([^&?/]+)/,
       /^([a-zA-Z0-9_-]{11})$/,
     ];
 
