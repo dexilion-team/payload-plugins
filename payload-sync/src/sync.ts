@@ -25,7 +25,7 @@ const GENERATED_UPLOAD_FIELDS = new Set([
   "url",
   "width",
 ]);
-const STRIP_FIELDS = new Set(["sessions"]);
+const STRIP_FIELDS = new Set(["apiKey", "apiKeyIndex", "sessions"]);
 
 let mediaFilenameCache: null | Set<string> = null;
 let mediaFilenameCachePromise: null | Promise<Set<string>> = null;
