@@ -75,25 +75,26 @@ export const getPage = async ({
 
   const tenantIdKey = `${tenantFieldName}.id`;
 
-  let path = await payload.find({
+  const segmentPath = "/" + (segments ?? []).join("/").toLowerCase();
+  const numericId =
+    segments?.length === 1 && !isNaN(Number(segments[0]))
+      ? Number(segments[0])
+      : null;
+
+  const path = await payload.find({
     collection: pagesSlug as CollectionSlug,
     where: {
       and: [
         {
-          [pathFieldKey]: {
-            equals: "/" + (segments ?? []).join("/").toLowerCase(),
-          },
-          [tenantIdKey]: {
-            equals: tenant.id,
-          },
+          or: [
+            { [pathFieldKey]: { equals: segmentPath } },
+            ...(numericId ? [{ id: { equals: numericId } }] : []),
+          ],
         },
+        { [tenantIdKey]: { equals: tenant.id } },
         {
           or: [
-            {
-              [`${tenantFieldName}.id`]: {
-                in: userTenantIds,
-              },
-            },
+            { [`${tenantFieldName}.id`]: { in: userTenantIds } },
             { _status: { equals: "published" } },
           ],
         },
@@ -102,32 +103,6 @@ export const getPage = async ({
     disableErrors: true,
     draft: userTenantIds.length > 0,
   });
-
-  if (!path.totalDocs && segments?.length == 1 && !isNaN(Number(segments[0]))) {
-    path = await payload.find({
-      collection: pagesSlug as CollectionSlug,
-      where: {
-        and: [
-          {
-            id: { equals: Number(segments[0]) },
-            [tenantIdKey]: { equals: tenant.id },
-          },
-          {
-            or: [
-              {
-                [`${tenantFieldName}.id`]: {
-                  in: userTenantIds,
-                },
-              },
-              { _status: { equals: "published" } },
-            ],
-          },
-        ],
-      },
-      disableErrors: true,
-      draft: userTenantIds.length > 0,
-    });
-  }
 
   const page = path.docs[0] || null;
 

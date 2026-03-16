@@ -25,22 +25,6 @@ export async function getTheme({
   });
 
   if (!res?.docs?.length) {
-    const all = await payload.find({
-      collection: tenantsSlug as CollectionSlug,
-      limit: 100,
-      disableErrors: true,
-    });
-
-    const match = all?.docs?.find((tenant: any) =>
-      tenant.aliases?.some((alias: any) => alias.domain === tenantName),
-    );
-
-    if (match) {
-      res = { ...all, docs: [match], totalDocs: 1 };
-    }
-  }
-
-  if (!res?.docs?.length) {
     throw new Error(
       `[@dexilion/payload-tenant-theming] No tenant found with name "${tenantName}" in collection "${tenantsSlug}".`,
     );
