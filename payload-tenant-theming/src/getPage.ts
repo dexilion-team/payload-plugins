@@ -1,6 +1,6 @@
 import {
   getRelationshipIDs,
-  getTenantName,
+  getTenantDomain,
 } from "@dexilion/payload-multi-tenant";
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getTheme } from "./getTheme";
@@ -20,9 +20,9 @@ export const getPage = async ({
 }): Promise<any | null> => {
   const payload = await getPayload({ config: payloadConfig });
 
-  const tenantName = await getTenantName();
+  const domainName = await getTenantDomain();
 
-  if (!tenantName) {
+  if (!domainName) {
     throw new Error(
       `[@dexilion/payload-tenant-theming] No tenant found for the current request.`,
     );
@@ -31,13 +31,13 @@ export const getPage = async ({
   let theme;
   try {
     theme = await getTheme({
-      tenantName,
+      tenantName: domainName,
       payloadConfig,
     });
 
     if (!theme || !theme.Layout) {
       throw new Error(
-        `[@dexilion/payload-tenant-theming] No theme or layout found for tenant "${tenantName}".`,
+        `[@dexilion/payload-tenant-theming] No theme or layout found for tenant "${domainName}".`,
       );
     }
   } catch (error) {
@@ -62,7 +62,7 @@ export const getPage = async ({
 
   const tenantRes = await payload.find({
     collection: "tenants" as CollectionSlug,
-    where: { domain: { equals: tenantName } },
+    where: { domain: { equals: domainName } },
     limit: 1,
     disableErrors: true,
   });
@@ -70,18 +70,7 @@ export const getPage = async ({
   let tenant = tenantRes?.docs?.[0];
 
   if (!tenant) {
-    const all = await payload.find({
-      collection: "tenants" as CollectionSlug,
-      limit: 100,
-      disableErrors: true,
-    });
-    tenant = all?.docs?.find((t: any) =>
-      t.aliases?.some((alias: any) => alias.domain === tenantName),
-    );
-  }
-
-  if (!tenant) {
-    throw new Error(`No tenant found for "${tenantName}"`);
+    throw new Error(`No tenant found for "${domainName}"`);
   }
 
   const tenantIdKey = `${tenantFieldName}.id`;

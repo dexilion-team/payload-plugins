@@ -1,5 +1,5 @@
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
-import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { getTenantDomain } from "@dexilion/payload-multi-tenant";
 
 export function sitemapGenerator({
   config,
@@ -14,7 +14,7 @@ export function sitemapGenerator({
 }) {
   return async () => {
     const payload = await getPayload({ config });
-    const tenantName = domain ?? (await getTenantName());
+    const domainName = domain ?? (await getTenantDomain());
 
     const pages = await payload.find({
       collection: collection ?? "posts",
@@ -35,7 +35,7 @@ export function sitemapGenerator({
       const { updatedAt } = page;
 
       return {
-        url: `https://${tenantName}/${basePath}/${path}`,
+        url: `https://${domainName}/${basePath}/${path}`,
         lastModified: updatedAt,
       };
     });
