@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
-import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { getTenantDomain } from "@dexilion/payload-multi-tenant";
 import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
 
 export type SitemapGeneratorOptions = {
@@ -14,8 +14,8 @@ export const sitemapGenerator =
   async (): Promise<MetadataRoute.Sitemap> => {
     const payload = await getPayload({ config: options.config });
 
-    const tenantName = await getTenantName();
-    if (!tenantName) {
+    const domainName = await getTenantDomain();
+    if (!domainName) {
       payload.logger.warn(
         "[@dexilion/payload-tenant-theming] No tenant found with that name.",
       );
@@ -25,13 +25,13 @@ export const sitemapGenerator =
     const tenant = await payload.find({
       collection: "tenants",
       where: {
-        [options?.domainFieldName ?? "domain"]: { equals: tenantName },
+        [options?.domainFieldName ?? "domain"]: { equals: domainName },
       },
       draft: false,
     });
     if (!tenant?.docs?.length) {
       payload.logger.warn(
-        `[@dexilion/payload-tenant-theming] No tenant found with the name "${tenantName}".`,
+        `[@dexilion/payload-tenant-theming] No tenant found with the name "${domainName}".`,
       );
       return [];
     }
@@ -58,7 +58,7 @@ export const sitemapGenerator =
       const path = recursivelySearchForDataByName(page, "path");
       const { updatedAt } = page;
       return {
-        url: `https://${tenantName}${path}`,
+        url: `https://${domainName}${path}`,
         lastModified: new Date(updatedAt),
       };
     });

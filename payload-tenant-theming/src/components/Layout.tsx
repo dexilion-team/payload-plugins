@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { getTenantDomain } from "@dexilion/payload-multi-tenant";
 import { getTheme } from "../getTheme";
 import { SanitizedConfig } from "payload";
 import Head from "next/head";
@@ -15,11 +15,11 @@ export const Layout = async ({
   let themeHref: string | null = null;
 
   try {
-    const tenantName = await getTenantName();
-    if (tenantName) {
+    const domainName = await getTenantDomain();
+    if (domainName) {
       const theme = await getTheme({
         payloadConfig,
-        tenantName,
+        tenantName: domainName,
       });
       themeHref = themeCssHrefTemplate.replace(
         "{{themeName}}",
