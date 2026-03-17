@@ -60,21 +60,6 @@ export const getPage = async ({
   const tenantField = user?.[tenantFieldName as keyof typeof user] as any;
   const userTenantIds = user ? getRelationshipIDs(tenantField?.docs) : [];
 
-  const tenantRes = await payload.find({
-    collection: "tenants" as CollectionSlug,
-    where: { domain: { equals: domainName } },
-    limit: 1,
-    disableErrors: true,
-  });
-
-  let tenant = tenantRes?.docs?.[0];
-
-  if (!tenant) {
-    throw new Error(`No tenant found for "${domainName}"`);
-  }
-
-  const tenantIdKey = `${tenantFieldName}.id`;
-
   const segmentPath = "/" + (segments ?? []).join("/").toLowerCase();
   const numericId =
     segments?.length === 1 && !isNaN(Number(segments[0]))
@@ -91,7 +76,7 @@ export const getPage = async ({
             ...(numericId ? [{ id: { equals: numericId } }] : []),
           ],
         },
-        { [tenantIdKey]: { equals: tenant.id } },
+        { [`${tenantFieldName}.domain`]: { equals: domainName } },
         {
           or: [
             { [`${tenantFieldName}.id`]: { in: userTenantIds } },
