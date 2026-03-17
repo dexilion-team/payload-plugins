@@ -7,8 +7,8 @@ export async function getTenantDomain() {
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
 
-  const tenant = await payload.find({
-    collection: "tenants" as CollectionSlug,
+  const tenant = await payload.find<"tenants", { domain: true }, false>({
+    collection: "tenants",
     disableErrors: true,
     limit: 1,
     where: {
