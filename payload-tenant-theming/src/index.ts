@@ -102,6 +102,7 @@ export const tenantTheming =
           t("plugin-tenant-theming:domainFieldLabel"),
         type: "text",
         required: true,
+        index: true,
         validate: async (
           value: string | null | undefined,
           { req, id }: { req: PayloadRequest; id?: string | number },
