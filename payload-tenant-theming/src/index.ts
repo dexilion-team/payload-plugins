@@ -8,6 +8,7 @@ import {
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
+import { createDomainValidator } from "./validators/domainValidator";
 
 export type { Theme } from "./types";
 export { metadataGenerator } from "./metadataGenerator";
@@ -102,28 +103,8 @@ export const tenantTheming =
           t("plugin-tenant-theming:domainFieldLabel"),
         type: "text",
         required: true,
-        index: true,
-        validate: async (
-          value: string | null | undefined,
-          { req, id }: { req: PayloadRequest; id?: string | number },
-        ) => {
-          if (!value) return true;
-
-          const existing = await req.payload.find({
-            collection: tenantsCollection.slug as CollectionSlug,
-            where: {
-              [domainFieldName]: { equals: value },
-              ...(id ? { id: { not_equals: id } } : {}),
-            },
-            limit: 1,
-          });
-
-          if (existing.docs.length > 0) {
-            return `Domain "${value}" is already in use by another tenant.`;
-          }
-
-          return true;
-        },
+        unique: true,
+        validate: createDomainValidator(tenantsCollection),
       });
     }
 
@@ -150,71 +131,11 @@ export const tenantTheming =
             name: "domain",
             type: "text",
             required: true,
-            validate: async (
-              value: string | null | undefined,
-              {
-                req,
-                id,
-              }: {
-                req: PayloadRequest;
-                id?: string | number;
-                siblingData: any;
-                data: any;
-              },
-            ) => {
-              if (!value) return true;
-
-              // Check against primary domain of any tenant
-              const existingPrimary = await req.payload.find({
-                collection: tenantsCollection.slug as CollectionSlug,
-                where: {
-                  [domainFieldName]: { equals: value },
-                },
-                limit: 1,
-              });
-              if (existingPrimary.docs.length > 0) {
-                return `Domain "${value}" is already in use as a primary domain.`;
-              }
-
-              // Check against aliases of any other tenant
-              const existingAlias = await req.payload.find({
-                collection: tenantsCollection.slug as CollectionSlug,
-                where: {
-                  and: [
-                    { "aliases.domain": { equals: value } },
-                    ...(id ? [{ id: { not_equals: id } }] : []),
-                  ],
-                },
-                limit: 1,
-                disableErrors: true,
-              });
-              if (existingAlias?.docs?.length > 0) {
-                return `Domain "${value}" is already in use as an alias on another tenant.`;
-              }
-
-              return true;
-            },
+            unique: true,
+            validate: createDomainValidator(tenantsCollection),
           },
         ],
       });
-      tenantsCollection.hooks = {
-        ...tenantsCollection.hooks,
-        beforeChange: [
-          ...(tenantsCollection.hooks?.beforeChange ?? []),
-          ({ data }) => {
-            const aliases = (data.aliases ?? [])
-              .map((a: any) => a.domain)
-              .filter(Boolean);
-            const unique = new Set(aliases);
-            if (unique.size !== aliases.length) {
-              throw new Error(
-                "Duplicate alias domains are not allowed on the same tenant.",
-              );
-            }
-            return data;
-          },
-        ],
-      };
     }
 
     // Add i18n
