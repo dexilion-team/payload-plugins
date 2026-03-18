@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import config from "@payload-config";
-import { CollectionSlug, getPayload } from "payload";
+import { getPayload } from "payload";
 
-export async function getTenantDomain() {
+export async function getTenantDomain(): Promise<string | null> {
   const payload = await getPayload({ config });
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
@@ -27,5 +27,7 @@ export async function getTenantDomain() {
     },
   });
 
-  return tenant.docs?.[0]?.domain ?? host;
+  const domain = tenant.docs?.[0]?.domain as string | undefined;
+
+  return domain ?? host;
 }

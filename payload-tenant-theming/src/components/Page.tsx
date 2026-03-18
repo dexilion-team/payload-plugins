@@ -152,7 +152,8 @@ export async function Page({
               );
             }
 
-            const Component = await Widget.component();
+            const Component: React.ElementType<{ block: any }, any> =
+              await Widget.component();
             if (!Component) {
               throw new Error(
                 `[@dexilion/payload-tenant-theming] No component found for block type "${block.blockType}" on page with ID "${page.id}".`,
