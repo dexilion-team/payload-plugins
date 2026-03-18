@@ -1,7 +1,7 @@
-import type { Config } from 'payload'
-import type { CronJobOrgPluginOptions } from './types.js'
-import type { ResolvedOptions } from './sync.js'
-import { syncCronJobs } from './sync.js'
+import type { Config, SanitizedConfig } from "payload";
+import type { CronJobOrgPluginOptions } from "./types.js";
+import type { ResolvedOptions } from "./sync.js";
+import { syncCronJobs } from "./sync.js";
 
 /**
  * payload-plugin-cronjob-org
@@ -52,36 +52,86 @@ export const cronJobOrgPlugin =
   (incomingConfig: Config): Config => {
     // Allow users to disable the plugin without removing it from their config
     if (pluginOptions.enabled === false) {
-      return incomingConfig
+      return incomingConfig;
     }
 
-    const config: Config = { ...incomingConfig }
+    const config: Config = { ...incomingConfig };
+
+    // Validate that we are not causing duplicate scheduling with autoRun
+    const jobs = config.jobs;
+    let originalAutoRun: any[] | undefined = undefined;
+    if (jobs && Array.isArray(jobs.autoRun) && jobs.autoRun.length > 0) {
+      if (pluginOptions.forceOverrideAutoRun !== true) {
+        throw new Error(
+          `[payload-plugin-cronjob-org] The Payload config has autoRun set, which would cause duplicate scheduling. ` +
+            `If you want to use this plugin to handle autoRun schedules via cron-job.org, set the plugin option 'forceOverrideAutoRun: true'. ` +
+            `Otherwise, remove autoRun from your Payload config or disable this plugin.`,
+        );
+      } else {
+        // Store the original autoRun
+        originalAutoRun = jobs.autoRun;
+        // We are forcing the override, so we set autoRun to undefined to prevent Payload's internal scheduler from running.
+        config.jobs = {
+          ...jobs,
+          autoRun: undefined,
+        };
+      }
+    }
 
     // Extend onInit to run our sync after Payload has fully initialised
-    const existingOnInit = config.onInit
+    const existingOnInit = config.onInit;
 
     config.onInit = async (payload) => {
       // Always run the original onInit first
       if (existingOnInit) {
-        await existingOnInit(payload)
+        await existingOnInit(payload);
       }
 
       // Resolve options, falling back to environment variables
-      const resolved = resolveOptions(pluginOptions, payload.logger)
-      if (!resolved) return // logged inside resolveOptions
+      const resolved = resolveOptions(pluginOptions, payload.logger);
+      if (!resolved) return; // logged inside resolveOptions
 
       try {
-        await syncCronJobs(payload.config, resolved, payload.logger)
+        // Log if we are overriding autoRun
+        if (originalAutoRun) {
+          payload.logger.info(
+            `[payload-plugin-cronjob-org] Overriding autoRun with cron-job.org sync (forceOverrideAutoRun enabled). Original autoRun entries: ${originalAutoRun.length}`,
+          );
+        }
+
+        // Create a temporary config for the sync that has the original autoRun
+        let jobsForSync;
+        if (payload.config.jobs) {
+          jobsForSync = {
+            ...payload.config.jobs,
+            autoRun: originalAutoRun ?? payload.config.jobs.autoRun,
+          };
+        } else if (originalAutoRun) {
+          // Create a minimal jobs config with autoRun and empty arrays for tasks and workflows
+          jobsForSync = {
+            autoRun: originalAutoRun,
+            tasks: [],
+            workflows: [],
+          };
+        } else {
+          jobsForSync = undefined;
+        }
+
+        const syncConfig = {
+          ...payload.config,
+          jobs: jobsForSync,
+        } as SanitizedConfig;
+        await syncCronJobs(syncConfig, resolved, payload.logger);
       } catch (err) {
         // Log but don't crash Payload startup
         payload.logger.error(
           `[payload-plugin-cronjob-org] Sync failed: ${String(err)}`,
-        )
+        );
       }
-    }
+    };
 
-    return config
-  }
+    return config;
+  };
 
 function resolveOptions(
   opts: CronJobOrgPluginOptions,
@@ -90,47 +140,46 @@ function resolveOptions(
   const apiKey =
     opts.apiKey ??
     process.env.CRONJOB_ORG_API_KEY ??
-    process.env.CRON_JOB_ORG_API_KEY
+    process.env.CRON_JOB_ORG_API_KEY;
 
   if (!apiKey) {
     logger.warn(
-      '[payload-plugin-cronjob-org] No API key provided. ' +
-        'Set the `apiKey` option or the CRONJOB_ORG_API_KEY environment variable. ' +
-        'Skipping cron-job.org sync.',
-    )
-    return null
+      "[payload-plugin-cronjob-org] No API key provided. " +
+        "Set the `apiKey` option or the CRONJOB_ORG_API_KEY environment variable. " +
+        "Skipping cron-job.org sync.",
+    );
+    return null;
   }
 
   const callbackBaseUrl =
     opts.callbackBaseUrl ??
     process.env.PAYLOAD_PUBLIC_SERVER_URL ??
     process.env.NEXT_PUBLIC_SERVER_URL ??
-    process.env.SERVER_URL
+    process.env.SERVER_URL;
 
   if (!callbackBaseUrl) {
     logger.warn(
-      '[payload-plugin-cronjob-org] No callbackBaseUrl provided. ' +
-        'Set the `callbackBaseUrl` option or the PAYLOAD_PUBLIC_SERVER_URL environment variable. ' +
-        'Skipping cron-job.org sync.',
-    )
-    return null
+      "[payload-plugin-cronjob-org] No callbackBaseUrl provided. " +
+        "Set the `callbackBaseUrl` option or the PAYLOAD_PUBLIC_SERVER_URL environment variable. " +
+        "Skipping cron-job.org sync.",
+    );
+    return null;
   }
 
-  const cronSecret =
-    opts.cronSecret ?? process.env.CRON_SECRET ?? undefined
+  const cronSecret = opts.cronSecret ?? process.env.CRON_SECRET ?? undefined;
 
   return {
     apiKey,
     callbackBaseUrl,
-    runEndpointPath: opts.runEndpointPath ?? '/api/payload-jobs/run',
+    runEndpointPath: opts.runEndpointPath ?? "/api/payload-jobs/run",
     handleSchedulesEndpointPath:
-      opts.handleSchedulesEndpointPath ?? '/api/payload-jobs/handleSchedules',
+      opts.handleSchedulesEndpointPath ?? "/api/payload-jobs/handleSchedules",
     cronSecret,
-    timezone: opts.timezone ?? 'UTC',
+    timezone: opts.timezone ?? "UTC",
     saveResponses: opts.saveResponses ?? false,
     jobTitlePrefix: opts.jobTitlePrefix,
-  }
+  };
 }
 
 // Re-export types for consumers
-export type { CronJobOrgPluginOptions } from './types.js'
+export type { CronJobOrgPluginOptions } from "./types.js";

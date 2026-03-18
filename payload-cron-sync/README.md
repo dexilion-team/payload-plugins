@@ -149,6 +149,7 @@ jobs: {
 | `saveResponses` | `boolean` | `false` | Save cron-job.org execution responses (useful for debugging) |
 | `jobTitlePrefix` | `string` | `undefined` | Prefix for job titles, useful when sharing one cron-job.org account across multiple apps |
 | `enabled` | `boolean` | `true` | Set to `false` to disable the plugin without removing it |
+| `forceOverrideAutoRun` | `boolean` | `false` | If the Payload config has `autoRun` set, the plugin will throw an error by default to avoid duplicate scheduling. Set to `true` to force the plugin to run and handle the `autoRun` schedules via cron-job.org. |
 
 All `string` options fall back to environment variables if not provided explicitly (see table above for which env vars).
 
@@ -165,6 +166,18 @@ On every `onInit`, the plugin:
    - Changed URL, title, or schedule → **update**
    - No longer in config → **delete**
 4. **Skips duplicates** – if `autoRun` already covers a cron expression, no redundant `handleSchedules` job is created.
+
+### Duplicate scheduling prevention
+
+If your Payload config has `autoRun` set, the plugin will throw an error by default to prevent duplicate scheduling (both Payload's internal scheduler and cron-job.org would run the same jobs). This avoids the issue described in the [Payload documentation](https://payloadcms.com/docs/jobs-queue/overview#duplicate-job-scheduling).
+
+If you want to use this plugin to handle `autoRun` schedules via cron-job.org (instead of Payload's internal scheduler), set the plugin option `forceOverrideAutoRun: true`. When this option is enabled:
+
+1. The plugin will store the original `autoRun` entries and set `autoRun` to `undefined` in the Payload config to disable Payload's internal scheduler.
+2. The plugin will create cron jobs on cron-job.org for each stored `autoRun` entry.
+3. You can safely use the plugin on serverless platforms where `autoRun` would not work.
+
+The plugin logs the override action and the number of original `autoRun` entries at startup.
 
 ### Job title format
 

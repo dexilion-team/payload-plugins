@@ -4,22 +4,22 @@ import type {
   CronJobOrgListResponse,
   CronJobOrgCreateResponse,
   CronJobOrgSchedule,
-} from './types.js'
+} from "./types.js";
 
-const CRON_JOB_ORG_API = 'https://api.cron-job.org'
+const CRON_JOB_ORG_API = "https://api.cron-job.org";
 
 export class CronJobOrgClient {
-  private readonly apiKey: string
+  private readonly apiKey: string;
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey
+    this.apiKey = apiKey;
   }
 
   private get headers(): Record<string, string> {
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: `Bearer ${this.apiKey}`,
-    }
+    };
   }
 
   private async request<T>(
@@ -27,47 +27,52 @@ export class CronJobOrgClient {
     path: string,
     body?: unknown,
   ): Promise<T> {
-    const url = `${CRON_JOB_ORG_API}${path}`
+    const url = `${CRON_JOB_ORG_API}${path}`;
 
     const response = await fetch(url, {
       method,
       headers: this.headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
-    })
+    });
 
     if (!response.ok) {
-      const text = await response.text().catch(() => response.statusText)
+      const text = await response.text().catch(() => response.statusText);
       throw new Error(
         `cron-job.org API error ${response.status} on ${method} ${path}: ${text}`,
-      )
+      );
     }
 
     // Some endpoints return empty body on success
-    const text = await response.text()
-    if (!text) return {} as T
-    return JSON.parse(text) as T
+    const text = await response.text();
+    if (!text) return {} as T;
+    return JSON.parse(text) as T;
   }
 
   /** Fetch all jobs in this account */
   async listJobs(): Promise<CronJobOrgJob[]> {
-    const data = await this.request<CronJobOrgListResponse>('GET', '/jobs')
-    return data.jobs ?? []
+    const data = await this.request<CronJobOrgListResponse>("GET", "/jobs");
+    return data.jobs ?? [];
   }
 
   /** Create a new cron job */
   async createJob(job: CronJobOrgJobCore): Promise<number> {
-    const data = await this.request<CronJobOrgCreateResponse>('PUT', '/jobs', { job })
-    return data.jobId
+    const data = await this.request<CronJobOrgCreateResponse>("PUT", "/jobs", {
+      job,
+    });
+    return data.jobId;
   }
 
   /** Update an existing cron job (partial update) */
-  async updateJob(jobId: number, job: Partial<CronJobOrgJobCore>): Promise<void> {
-    await this.request<unknown>('PATCH', `/jobs/${jobId}`, { job })
+  async updateJob(
+    jobId: number,
+    job: Partial<CronJobOrgJobCore>,
+  ): Promise<void> {
+    await this.request<unknown>("PATCH", `/jobs/${jobId}`, { job });
   }
 
   /** Delete a cron job */
   async deleteJob(jobId: number): Promise<void> {
-    await this.request<unknown>('DELETE', `/jobs/${jobId}`)
+    await this.request<unknown>("DELETE", `/jobs/${jobId}`);
   }
 }
 
@@ -90,16 +95,22 @@ export class CronJobOrgClient {
  */
 export function parseCronExpression(
   expression: string,
-  timezone = 'UTC',
+  timezone = "UTC",
 ): CronJobOrgSchedule {
-  const parts = expression.trim().split(/\s+/)
+  const parts = expression.trim().split(/\s+/);
   if (parts.length !== 5) {
     throw new Error(
       `Invalid cron expression "${expression}": expected 5 fields (minute hour mday month wday)`,
-    )
+    );
   }
 
-  const [minutePart, hourPart, mdayPart, monthPart, wdayPart] = parts
+  const [minutePart, hourPart, mdayPart, monthPart, wdayPart] = parts as [
+    string,
+    string,
+    string,
+    string,
+    string,
+  ];
 
   return {
     timezone,
@@ -109,43 +120,43 @@ export function parseCronExpression(
     mdays: parseCronField(mdayPart, 1, 31),
     months: parseCronField(monthPart, 1, 12),
     wdays: parseCronField(wdayPart, 0, 6),
-  }
+  };
 }
 
 function parseCronField(field: string, min: number, max: number): number[] {
   // Wildcard = every unit
-  if (field === '*') return [-1]
+  if (field === "*") return [-1];
 
   // Step syntax: */n
-  if (field.startsWith('*/')) {
-    const step = parseInt(field.slice(2), 10)
-    if (isNaN(step) || step <= 0) return [-1]
-    const values: number[] = []
-    for (let i = min; i <= max; i += step) values.push(i)
-    return values
+  if (field.startsWith("*/")) {
+    const step = parseInt(field.slice(2), 10);
+    if (isNaN(step) || step <= 0) return [-1];
+    const values: number[] = [];
+    for (let i = min; i <= max; i += step) values.push(i);
+    return values;
   }
 
   // Range: n-m
-  if (field.includes('-') && !field.includes(',')) {
-    const [startStr, endStr] = field.split('-')
-    const start = parseInt(startStr, 10)
-    const end = parseInt(endStr, 10)
-    if (isNaN(start) || isNaN(end)) return [-1]
-    const values: number[] = []
-    for (let i = start; i <= end; i++) values.push(i)
-    return values
+  if (field.includes("-") && !field.includes(",")) {
+    const [startStr, endStr] = field.split("-") as [string, string];
+    const start = parseInt(startStr, 10);
+    const end = parseInt(endStr, 10);
+    if (isNaN(start) || isNaN(end)) return [-1];
+    const values: number[] = [];
+    for (let i = start; i <= end; i++) values.push(i);
+    return values;
   }
 
   // List: 1,2,3
-  if (field.includes(',')) {
+  if (field.includes(",")) {
     return field
-      .split(',')
+      .split(",")
       .map((v) => parseInt(v.trim(), 10))
-      .filter((v) => !isNaN(v))
+      .filter((v) => !isNaN(v));
   }
 
   // Single value
-  const val = parseInt(field, 10)
-  if (isNaN(val)) return [-1]
-  return [val]
+  const val = parseInt(field, 10);
+  if (isNaN(val)) return [-1];
+  return [val];
 }

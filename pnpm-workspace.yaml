@@ -12,3 +12,9 @@ packages:
   - payload-cron-sync
 
 autoInstallPeers: false
+
+ignoredBuiltDependencies:
+  - '@swc/core'
+  - esbuild
+  - mongodb-memory-server
+  - unrs-resolver

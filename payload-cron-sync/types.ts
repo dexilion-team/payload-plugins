@@ -7,7 +7,7 @@ export interface CronJobOrgPluginOptions {
    * Get it from https://console.cron-job.org → Settings → API Keys
    * Can also be set via the CRONJOB_ORG_API_KEY environment variable.
    */
-  apiKey?: string
+  apiKey?: string;
 
   /**
    * The base URL of your Payload deployment.
@@ -15,20 +15,20 @@ export interface CronJobOrgPluginOptions {
    * Example: "https://my-app.com"
    * Can also be set via the PAYLOAD_PUBLIC_SERVER_URL or NEXT_PUBLIC_SERVER_URL env vars.
    */
-  callbackBaseUrl?: string
+  callbackBaseUrl?: string;
 
   /**
    * Override the path used for triggering job runs.
    * Defaults to "/api/payload-jobs/run"
    * The queue name will be appended as a query param: ?queue=myQueue
    */
-  runEndpointPath?: string
+  runEndpointPath?: string;
 
   /**
    * Override the path used for triggering schedule evaluation.
    * Defaults to "/api/payload-jobs/handleSchedules"
    */
-  handleSchedulesEndpointPath?: string
+  handleSchedulesEndpointPath?: string;
 
   /**
    * A secret token added as "Authorization: Bearer <token>" header on all
@@ -36,32 +36,39 @@ export interface CronJobOrgPluginOptions {
    * request is from cron-job.org and not random traffic.
    * Can also be set via the CRON_SECRET environment variable.
    */
-  cronSecret?: string
+  cronSecret?: string;
 
   /**
    * Timezone to use for all created cron jobs on cron-job.org.
    * Defaults to "UTC". Must be a valid IANA timezone string.
    */
-  timezone?: string
+  timezone?: string;
 
   /**
    * Whether to save cron-job.org execution responses.
    * Useful for debugging. Defaults to false.
    */
-  saveResponses?: boolean
+  saveResponses?: boolean;
 
   /**
    * Whether to enable or disable the plugin entirely.
    * Defaults to true.
    */
-  enabled?: boolean
+  enabled?: boolean;
 
   /**
    * An optional prefix added to the title of every cron job created on cron-job.org.
    * Useful when managing multiple Payload apps under one cron-job.org account.
    * Example: "MyApp" → job title becomes "MyApp | daily queue runner"
    */
-  jobTitlePrefix?: string
+  jobTitlePrefix?: string;
+
+  /**
+   * If the Payload config has `autoRun` set, the plugin will throw an error by default to avoid duplicate scheduling.
+   * Set this to `true` to force the plugin to run and handle the `autoRun` schedules via cron-job.org.
+   * When set, the plugin will set `autoRun` to `undefined` in the config to prevent Payload's internal scheduler from running.
+   */
+  forceOverrideAutoRun?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,46 +76,46 @@ export interface CronJobOrgPluginOptions {
 // ---------------------------------------------------------------------------
 
 export interface CronJobOrgSchedule {
-  timezone: string
-  expiresAt: number
-  hours: number[]
-  mdays: number[]
-  minutes: number[]
-  months: number[]
-  wdays: number[]
+  timezone: string;
+  expiresAt: number;
+  hours: number[];
+  mdays: number[];
+  minutes: number[];
+  months: number[];
+  wdays: number[];
 }
 
 export interface CronJobOrgExtendedData {
-  headers?: Record<string, string>
-  body?: string
+  headers?: Record<string, string>;
+  body?: string;
 }
 
 export interface CronJobOrgJobCore {
-  url: string
-  enabled: boolean
-  title: string
-  saveResponses: boolean
-  requestMethod: number // 0=GET, 1=POST
-  schedule: CronJobOrgSchedule
-  extendedData?: CronJobOrgExtendedData
-  requestTimeout?: number
+  url: string;
+  enabled: boolean;
+  title: string;
+  saveResponses: boolean;
+  requestMethod: number; // 0=GET, 1=POST
+  schedule: CronJobOrgSchedule;
+  extendedData?: CronJobOrgExtendedData;
+  requestTimeout?: number;
 }
 
 export interface CronJobOrgJob extends CronJobOrgJobCore {
-  jobId: number
-  lastStatus: number
-  lastDuration: number
-  lastExecution: number
-  nextExecution: number
+  jobId: number;
+  lastStatus: number;
+  lastDuration: number;
+  lastExecution: number;
+  nextExecution: number;
 }
 
 export interface CronJobOrgListResponse {
-  jobs: CronJobOrgJob[]
-  someFailed: boolean
+  jobs: CronJobOrgJob[];
+  someFailed: boolean;
 }
 
 export interface CronJobOrgCreateResponse {
-  jobId: number
+  jobId: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,13 +128,13 @@ export interface CronJobOrgCreateResponse {
  */
 export interface SyncTarget {
   /** Unique stable identifier used as part of the job title for matching */
-  key: string
+  key: string;
   /** Human-readable title */
-  title: string
+  title: string;
   /** The full URL cron-job.org will call */
-  url: string
+  url: string;
   /** The 5-field cron expression, e.g. "* * * * *" */
-  cronExpression: string
+  cronExpression: string;
   /** Whether this target triggers job execution (run) or schedule evaluation (handleSchedules) */
-  type: 'run' | 'handleSchedules'
+  type: "run" | "handleSchedules";
 }
