@@ -6,7 +6,7 @@ import { createDefaultTenantsCollection } from "./collections/Tenant";
 import { transformTenantScopedGlobals } from "./utilities/transformTenantScopedGlobals";
 
 export { isUserInTenant } from "./isUserInTenant";
-export { getTenantName } from "./getTenantName";
+export { getTenantDomain } from "./getTenantDomain";
 export { getRelationshipIDs } from "./utils";
 
 export type PayloadMultiTenantPluginOptions = {

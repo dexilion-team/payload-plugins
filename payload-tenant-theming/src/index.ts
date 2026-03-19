@@ -8,6 +8,7 @@ import {
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
+import { createDomainValidator } from "./validators/domainValidator";
 
 export type { Theme } from "./types";
 export { metadataGenerator } from "./metadataGenerator";
@@ -102,27 +103,38 @@ export const tenantTheming =
           t("plugin-tenant-theming:domainFieldLabel"),
         type: "text",
         required: true,
-        validate: async (
-          value: string | null | undefined,
-          { req, id }: { req: PayloadRequest; id?: string | number },
-        ) => {
-          if (!value) return true;
+        unique: true,
+        validate: createDomainValidator(tenantsCollection),
+      });
+    }
 
-          const existing = await req.payload.find({
-            collection: tenantsCollection.slug as CollectionSlug,
-            where: {
-              [domainFieldName]: { equals: value },
-              ...(id ? { id: { not_equals: id } } : {}),
-            },
-            limit: 1,
-          });
+    // Verify if the aliases field is already configured
+    const existingAliasesField = tenantsCollection.fields.find(
+      (field) => "name" in field && field.name === "aliases",
+    );
+    if (existingAliasesField && existingAliasesField.type !== "text") {
+      throw new Error(
+        `[@dexilion/payload-tenant-theming] The "aliases" field in the tenants collection must be of type "text".`,
+      );
+    }
 
-          if (existing.docs.length > 0) {
-            return `Domain "${value}" is already in use by another tenant.`;
-          }
-
-          return true;
+    if (!existingAliasesField) {
+      tenantsCollection.fields.push({
+        name: "aliases",
+        type: "array",
+        admin: {
+          description:
+            "Additional domains that map to this tenant (e.g. staging, test domains)",
         },
+        fields: [
+          {
+            name: "domain",
+            type: "text",
+            required: true,
+            unique: true,
+            validate: createDomainValidator(tenantsCollection),
+          },
+        ],
       });
     }
 

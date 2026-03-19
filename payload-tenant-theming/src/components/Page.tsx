@@ -3,7 +3,7 @@ import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getPage } from "../getPage";
 import { recursivelySearchForDataByName } from "@dexilion/payload-nested-docs";
 import { getTheme } from "../getTheme";
-import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { getTenantDomain } from "@dexilion/payload-multi-tenant";
 import { Theme } from "../types";
 import { RefreshRouteOnSave } from "./RefreshRouteOnSave";
 import { headers } from "next/headers";
@@ -34,15 +34,15 @@ export async function Page({
     headers: await headers(),
   });
 
-  const tenantName = await getTenantName();
-  if (!tenantName) {
+  const domainName = await getTenantDomain();
+  if (!domainName) {
     return <UnderConstructionPage />;
   }
 
   let theme: Theme | null = null;
   try {
     theme = await getTheme({
-      tenantName,
+      tenantName: domainName,
       payloadConfig,
     });
   } catch {}
@@ -63,7 +63,7 @@ export async function Page({
       pagination: false,
       where: {
         from: { equals: `/${segments.join("/")}` },
-        ["tenant.domain"]: { equals: tenantName },
+        ["tenant.domain"]: { equals: domainName },
       },
     });
 
@@ -74,8 +74,9 @@ export async function Page({
         const result = await payload.findByID({
           collection: ref.relationTo,
           id: ref.value.id,
+          disableErrors: true,
         });
-        redirect(result?.generalTab.path || "/", RedirectType.replace);
+        redirect(result?.generalTab?.path || "/", RedirectType.replace);
       }
 
       redirect(value.to.url, RedirectType.replace);
@@ -92,7 +93,7 @@ export async function Page({
 
   if (!page) {
     payload.logger.info(
-      `[@dexilion/payload-tenant-theming] No page found for path "/${segments.join("/")}". User: ${user ? user.id : "unauthenticated"}. Tenant: ${tenantName}.`,
+      `[@dexilion/payload-tenant-theming] No page found for path "/${segments.join("/")}". User: ${user ? user.id : "unauthenticated"}. Tenant: ${domainName}.`,
     );
     notFound();
   }
@@ -151,7 +152,8 @@ export async function Page({
               );
             }
 
-            const Component = await Widget.component();
+            const Component: React.ElementType<{ block: any }, any> =
+              await Widget.component();
             if (!Component) {
               throw new Error(
                 `[@dexilion/payload-tenant-theming] No component found for block type "${block.blockType}" on page with ID "${page.id}".`,
@@ -162,7 +164,7 @@ export async function Page({
           }),
         )}
       </Layout>
-      <RefreshRouteOnSave serverURL={`${proto}://${tenantName}`} />
+      <RefreshRouteOnSave serverURL={`${proto}://${domainName}`} />
     </>
   );
 }

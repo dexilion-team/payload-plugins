@@ -1,4 +1,4 @@
-import { getTenantName } from "@dexilion/payload-multi-tenant";
+import { getTenantDomain } from "@dexilion/payload-multi-tenant";
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 
 export const getNav = async (params: {
@@ -9,8 +9,8 @@ export const getNav = async (params: {
   const { slug, tenantFieldKey } = params;
   const payload = await getPayload({ config: params.payloadConfig });
 
-  const tenantName = await getTenantName();
-  if (!tenantName) {
+  const domainName = await getTenantDomain();
+  if (!domainName) {
     throw new Error(
       "[@dexilion/payload-tenant-theming] No tenant found with that name.",
     );
@@ -21,7 +21,7 @@ export const getNav = async (params: {
     collection: slug ?? ("nav" as CollectionSlug),
     where: {
       [tenantKey]: {
-        equals: tenantName,
+        equals: domainName,
       },
     },
     limit: 1,

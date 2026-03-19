@@ -17,13 +17,14 @@ export async function getTheme({
   const config = await payloadConfig;
   const payload = await getPayload({ config: payloadConfig });
 
-  const res = await payload.find({
+  let res = await payload.find({
     collection: tenantsSlug as CollectionSlug,
     where: { domain: { equals: tenantName } },
     limit: 1,
+    disableErrors: true,
   });
 
-  if (res.totalDocs === 0) {
+  if (!res?.docs?.length) {
     throw new Error(
       `[@dexilion/payload-tenant-theming] No tenant found with name "${tenantName}" in collection "${tenantsSlug}".`,
     );

@@ -7,7 +7,7 @@ export const YoutubeFeature = createEmbedServerFeature({
   fieldDescription:
     "Paste a YouTube video URL or enter the video ID (e.g., dQw4w9WgXcQ)",
   fieldLabel: "YouTube URL or Video ID",
-  fieldPlaceholder: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  fieldPlaceholder: "https://www.youtube.com/watch?v=<id> or <id>",
   node: createNode({
     node: YouTubeNode,
     converters: {

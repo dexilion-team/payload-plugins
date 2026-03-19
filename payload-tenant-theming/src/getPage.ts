@@ -1,6 +1,6 @@
 import {
   getRelationshipIDs,
-  getTenantName,
+  getTenantDomain,
 } from "@dexilion/payload-multi-tenant";
 import { CollectionSlug, getPayload, SanitizedConfig } from "payload";
 import { getTheme } from "./getTheme";
@@ -8,7 +8,6 @@ import { getTheme } from "./getTheme";
 export const getPage = async ({
   segments,
   pagesSlug,
-  tenantFieldKey,
   tenantFieldName = "tenant",
   payloadConfig,
   user,
@@ -16,15 +15,14 @@ export const getPage = async ({
   segments: string[];
   pagesSlug: string;
   tenantFieldName?: string;
-  tenantFieldKey?: string;
   payloadConfig: Promise<SanitizedConfig>;
   user?: any;
 }): Promise<any | null> => {
   const payload = await getPayload({ config: payloadConfig });
 
-  const tenantName = await getTenantName();
+  const domainName = await getTenantDomain();
 
-  if (!tenantName) {
+  if (!domainName) {
     throw new Error(
       `[@dexilion/payload-tenant-theming] No tenant found for the current request.`,
     );
@@ -33,13 +31,13 @@ export const getPage = async ({
   let theme;
   try {
     theme = await getTheme({
-      tenantName,
+      tenantName: domainName,
       payloadConfig,
     });
 
     if (!theme || !theme.Layout) {
       throw new Error(
-        `[@dexilion/payload-tenant-theming] No theme or layout found for tenant "${tenantName}".`,
+        `[@dexilion/payload-tenant-theming] No theme or layout found for tenant "${domainName}".`,
       );
     }
   } catch (error) {
@@ -61,27 +59,27 @@ export const getPage = async ({
 
   const tenantField = user?.[tenantFieldName as keyof typeof user] as any;
   const userTenantIds = user ? getRelationshipIDs(tenantField?.docs) : [];
-  const tenantKey = `${tenantFieldName}.${tenantFieldKey ?? "domain"}`;
 
-  let path = await payload.find({
+  const segmentPath = "/" + (segments ?? []).join("/").toLowerCase();
+  const numericId =
+    segments?.length === 1 && !isNaN(Number(segments[0]))
+      ? Number(segments[0])
+      : null;
+
+  const path = await payload.find({
     collection: pagesSlug as CollectionSlug,
     where: {
       and: [
         {
-          [pathFieldKey]: {
-            equals: "/" + (segments ?? []).join("/").toLowerCase(),
-          },
-          [tenantKey]: {
-            equals: tenantName,
-          },
+          or: [
+            { [pathFieldKey]: { equals: segmentPath } },
+            ...(numericId ? [{ id: { equals: numericId } }] : []),
+          ],
         },
+        { [`${tenantFieldName}.domain`]: { equals: domainName } },
         {
           or: [
-            {
-              [`${tenantFieldName}.id`]: {
-                in: userTenantIds,
-              },
-            },
+            { [`${tenantFieldName}.id`]: { in: userTenantIds } },
             { _status: { equals: "published" } },
           ],
         },
@@ -90,32 +88,6 @@ export const getPage = async ({
     disableErrors: true,
     draft: userTenantIds.length > 0,
   });
-
-  if (!path.totalDocs && segments?.length == 1 && !isNaN(Number(segments[0]))) {
-    path = await payload.find({
-      collection: pagesSlug as CollectionSlug,
-      where: {
-        and: [
-          {
-            id: { equals: Number(segments[0]) },
-            [tenantKey]: { equals: tenantName },
-          },
-          {
-            or: [
-              {
-                [`${tenantFieldName}.id`]: {
-                  in: userTenantIds,
-                },
-              },
-              { _status: { equals: "published" } },
-            ],
-          },
-        ],
-      },
-      disableErrors: true,
-      draft: userTenantIds.length > 0,
-    });
-  }
 
   const page = path.docs[0] || null;
 

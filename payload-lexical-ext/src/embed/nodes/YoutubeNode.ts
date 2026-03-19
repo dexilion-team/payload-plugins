@@ -48,11 +48,13 @@ export class YouTubeNode extends EmbedNode {
         const src =
           domNode.getAttribute("src") || domNode.getAttribute("data-src");
 
-        const match = src?.match(/youtube(\-nocookie)?\.com\/embed\/([^?]+)/);
+        const match = src?.match(
+          /(?:(?:m\.)?youtube(?:-nocookie)?\.com\/embed\/|youtu\.be\/)([^?/]+)/,
+        );
 
-        if (match && match[2]) {
+        if (match && match[1]) {
           return {
-            conversion: () => ({ node: $createYouTubeNode(match[2]!) }),
+            conversion: () => ({ node: $createYouTubeNode(match[1]!) }),
             priority: 1,
           };
         }
