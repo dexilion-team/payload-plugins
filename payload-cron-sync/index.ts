@@ -1,10 +1,11 @@
-import type { Config, SanitizedConfig } from "payload";
+import type { Config, SanitizedConfig, GlobalConfig } from "payload";
 import type { CronJobOrgPluginOptions } from "./types.js";
 import type { ResolvedOptions } from "./sync.js";
-import { syncCronJobs } from "./sync.js";
+import { buildSyncTargets, syncCronJobs } from "./sync.js";
+import { hashTargets } from "./hash.js";
 
 /**
- * payload-plugin-cronjob-org
+ * payload-cron-sync
  *
  * Reads all `autoRun` and task/workflow `schedule` entries from your Payload
  * config and automatically creates, updates, or deletes the corresponding
@@ -24,7 +25,7 @@ import { syncCronJobs } from "./sync.js";
  * @example
  * ```ts
  * import { buildConfig } from 'payload'
- * import { cronJobOrgPlugin } from 'payload-plugin-cronjob-org'
+ * import { cronJobOrgPlugin } from 'payload-cron-sync'
  *
  * export default buildConfig({
  *   plugins: [
@@ -57,13 +58,15 @@ export const cronJobOrgPlugin =
 
     const config: Config = { ...incomingConfig };
 
+    config.globals = [...(config.globals ?? []), cronSyncStateGlobal];
+
     // Validate that we are not causing duplicate scheduling with autoRun
     const jobs = config.jobs;
     let originalAutoRun: any[] | undefined = undefined;
     if (jobs && Array.isArray(jobs.autoRun) && jobs.autoRun.length > 0) {
       if (pluginOptions.forceOverrideAutoRun !== true) {
         throw new Error(
-          `[payload-plugin-cronjob-org] The Payload config has autoRun set, which would cause duplicate scheduling. ` +
+          `[payload-cron-sync] The Payload config has autoRun set, which would cause duplicate scheduling. ` +
             `If you want to use this plugin to handle autoRun schedules via cron-job.org, set the plugin option 'forceOverrideAutoRun: true'. ` +
             `Otherwise, remove autoRun from your Payload config or disable this plugin.`,
         );
@@ -88,14 +91,35 @@ export const cronJobOrgPlugin =
       }
 
       // Resolve options, falling back to environment variables
-      const resolved = resolveOptions(pluginOptions, payload.logger);
+      const resolved = resolveOptions(
+        pluginOptions,
+        config.serverURL,
+        payload.logger,
+      );
       if (!resolved) return; // logged inside resolveOptions
+
+      if (resolved.cronSecret && pluginOptions.injectAccessControl !== false) {
+        const existingAccess = config.jobs?.access?.run;
+        config.jobs = {
+          ...config.jobs,
+          access: {
+            ...config.jobs?.access,
+            run: ({ req }) => {
+              const authHeader = req.headers.get("authorization");
+              if (authHeader === `Bearer ${resolved.cronSecret}`) return true;
+              // fall through to existing access check if there was one
+              if (existingAccess) return existingAccess({ req });
+              return false;
+            },
+          },
+        };
+      }
 
       try {
         // Log if we are overriding autoRun
         if (originalAutoRun) {
           payload.logger.info(
-            `[payload-plugin-cronjob-org] Overriding autoRun with cron-job.org sync (forceOverrideAutoRun enabled). Original autoRun entries: ${originalAutoRun.length}`,
+            `[payload-cron-sync] Overriding autoRun with cron-job.org sync (forceOverrideAutoRun enabled). Original autoRun entries: ${originalAutoRun.length}`,
           );
         }
 
@@ -121,59 +145,86 @@ export const cronJobOrgPlugin =
           ...payload.config,
           jobs: jobsForSync,
         } as SanitizedConfig;
+
+        // Compute hash of what we'd sync
+        const targets = buildSyncTargets(syncConfig, resolved);
+        const currentHash = hashTargets(targets);
+
+        const state = await payload.findGlobal({ slug: "cron-sync-state" });
+        if (state.lastSyncedHash === currentHash) {
+          payload.logger.info(
+            "[payload-cron-sync] Config unchanged, skipping sync.",
+          );
+          return;
+        }
+
         await syncCronJobs(syncConfig, resolved, payload.logger);
+
+        await payload.updateGlobal({
+          slug: "cron-sync-state",
+          data: {
+            lastSyncedHash: currentHash,
+            lastSyncedAt: new Date().toISOString(),
+          },
+        });
       } catch (err) {
         // Log but don't crash Payload startup
-        payload.logger.error(
-          `[payload-plugin-cronjob-org] Sync failed: ${String(err)}`,
-        );
+        payload.logger.error(`[payload-cron-sync] Sync failed: ${String(err)}`);
       }
     };
 
     return config;
   };
 
+const cronSyncStateGlobal: GlobalConfig = {
+  slug: "cron-sync-state",
+  admin: {
+    hidden: true,
+  },
+  fields: [
+    {
+      name: "lastSyncedHash",
+      type: "text",
+    },
+    {
+      name: "lastSyncedAt",
+      type: "date",
+    },
+  ],
+};
+
 function resolveOptions(
   opts: CronJobOrgPluginOptions,
+  serverURL: string | undefined,
   logger: { warn: (msg: string) => void },
 ): ResolvedOptions | null {
-  const apiKey =
-    opts.apiKey ??
-    process.env.CRONJOB_ORG_API_KEY ??
-    process.env.CRON_JOB_ORG_API_KEY;
+  const apiKey = opts.apiKey;
 
   if (!apiKey) {
     logger.warn(
-      "[payload-plugin-cronjob-org] No API key provided. " +
+      "[payload-cron-sync] No API key provided. " +
         "Set the `apiKey` option or the CRONJOB_ORG_API_KEY environment variable. " +
         "Skipping cron-job.org sync.",
     );
     return null;
   }
 
-  const callbackBaseUrl =
-    opts.callbackBaseUrl ??
-    process.env.PAYLOAD_PUBLIC_SERVER_URL ??
-    process.env.NEXT_PUBLIC_SERVER_URL ??
-    process.env.SERVER_URL;
+  const callbackBaseUrl = opts.callbackBaseUrl ?? serverURL;
 
   if (!callbackBaseUrl) {
     logger.warn(
-      "[payload-plugin-cronjob-org] No callbackBaseUrl provided. " +
+      "[payload-cron-sync] No callbackBaseUrl provided. " +
         "Set the `callbackBaseUrl` option or the PAYLOAD_PUBLIC_SERVER_URL environment variable. " +
         "Skipping cron-job.org sync.",
     );
     return null;
   }
 
-  const cronSecret = opts.cronSecret ?? process.env.CRON_SECRET ?? undefined;
+  const cronSecret = opts.cronSecret;
 
   return {
     apiKey,
     callbackBaseUrl,
-    runEndpointPath: opts.runEndpointPath ?? "/api/payload-jobs/run",
-    handleSchedulesEndpointPath:
-      opts.handleSchedulesEndpointPath ?? "/api/payload-jobs/handleSchedules",
     cronSecret,
     timezone: opts.timezone ?? "UTC",
     saveResponses: opts.saveResponses ?? false,

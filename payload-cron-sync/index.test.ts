@@ -55,8 +55,6 @@ describe("buildSyncTargets", () => {
   const baseOptions: ResolvedOptions = {
     apiKey: "test-key",
     callbackBaseUrl: "https://my-app.com",
-    runEndpointPath: "/api/payload-jobs/run",
-    handleSchedulesEndpointPath: "/api/payload-jobs/handleSchedules",
     cronSecret: undefined,
     timezone: "UTC",
     saveResponses: false,
@@ -105,7 +103,7 @@ describe("buildSyncTargets", () => {
 
     const targets = buildSyncTargets(config, baseOptions);
     expect(targets).toHaveLength(2);
-    expect(targets[0]!.type).toBe("handleSchedules");
+    expect(targets[0]!.type).toBe("both");
     expect(targets[0]!.url).toBe(
       "https://my-app.com/api/payload-jobs/handleSchedules",
     );

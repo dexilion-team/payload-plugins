@@ -1,6 +1,6 @@
-# payload-plugin-cronjob-org
+# payload-cron-sync
 
-A [Payload CMS](https://payloadcms.com) plugin that automatically registers and keeps your Payload job schedules in sync with [cron-job.org](https://cron-job.org).
+A [Payload CMS](https://payloadcms.com) plugin for serverless deployments that automatically registers and keeps your Payload job schedules in sync with [cron-job.org](https://cron-job.org) — a free external cron service. Since serverless environments have no built-in cron runtime, this plugin bridges the gap by reading your task/workflow schedule entries and creating exactly the right jobs on cron-job.org, updating or deleting them whenever your config changes.
 
 Once added to your config you never have to manually manage cron triggers again — the plugin reads your `autoRun` and task/workflow `schedule` entries and creates exactly the right jobs on cron-job.org, updating or deleting them whenever your config changes.
 
@@ -15,19 +15,17 @@ Payload's jobs queue needs something external to periodically call:
 | `POST /api/payload-jobs/run?queue=<name>` | Execute queued jobs |
 | `POST /api/payload-jobs/handleSchedules` | Evaluate and enqueue scheduled tasks/workflows |
 
-On Vercel (serverless) or any platform where `autoRun` won't work, you need a reliable external scheduler. cron-job.org is free and provides exactly this — but keeping those jobs in sync with your config is tedious and error-prone.
-
-This plugin does it for you automatically.
-
 ---
 
 ## Features
 
-- 🔄 **Auto-sync on startup** – cron-job.org jobs are created, updated, or deleted every time Payload starts.
-- 🎯 **Precise targeting** – one cron-job.org job per unique `(queue, cron expression)` for `autoRun`, plus dedicated `handleSchedules` jobs for task/workflow schedules not covered by `autoRun`.
-- 🔐 **Secure** – attaches your `CRON_SECRET` as an `Authorization: Bearer` header so your endpoints can verify the caller.
-- 🧹 **Garbage-free** – obsolete jobs (removed from your config) are automatically deleted.
-- ⚙️ **Zero runtime overhead** – sync only runs once on `onInit`. No polling, no intervals.
+## Features
+
+- **Auto-sync on startup** – cron-job.org jobs are created, updated, or deleted every time Payload starts.
+- **Precise targeting** – one cron-job.org job per unique cron expression from your task/workflow schedules.
+- **Secure** – attaches your `cronSecret` as an `Authorization: Bearer` header so your endpoints can verify the caller.
+- **Garbage-free** – obsolete jobs (removed from your config) are automatically deleted.
+- **Zero runtime overhead** – sync only runs once on `onInit`. No polling, no intervals.
 
 ---
 
@@ -41,9 +39,9 @@ This plugin does it for you automatically.
 ### 2. Install the plugin
 
 ```bash
-npm install payload-plugin-cronjob-org
+npm install payload-cron-sync
 # or
-pnpm add payload-plugin-cronjob-org
+pnpm add payload-cron-sync
 ```
 
 ### 3. Add to your Payload config
@@ -51,7 +49,7 @@ pnpm add payload-plugin-cronjob-org
 ```ts
 // payload.config.ts
 import { buildConfig } from 'payload'
-import { cronJobOrgPlugin } from 'payload-plugin-cronjob-org'
+import { cronJobOrgPlugin } from 'payload-cron-sync'
 
 export default buildConfig({
   plugins: [
@@ -92,7 +90,8 @@ export default buildConfig({
     // scheduler: 'manual',
 
     // On dedicated servers / Docker: autoRun triggers job execution directly.
-    // This plugin creates a matching cron-job.org entry for each autoRun entry.
+    // This plugin creates a matching cron-job.org entry for each autoRun entry
+    // if `forceOverrideAutoRun` is enabled.
     autoRun: [
       {
         cron: '* * * * *',    // every minute
@@ -109,16 +108,7 @@ export default buildConfig({
 })
 ```
 
-### 4. Set environment variables
-
-```env
-# .env
-CRONJOB_ORG_API_KEY=your_api_key_here
-NEXT_PUBLIC_SERVER_URL=https://my-app.com
-CRON_SECRET=a-random-secret-at-least-16-chars
-```
-
-### 5. Secure your run endpoint (recommended)
+### 4. Secure your run endpoint (recommended)
 
 Payload lets you control access to the jobs run endpoint. Add this to your config so only requests with your `CRON_SECRET` can trigger jobs:
 
@@ -140,18 +130,13 @@ jobs: {
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `apiKey` | `string` | `CRONJOB_ORG_API_KEY` env | Your cron-job.org API key |
-| `callbackBaseUrl` | `string` | `PAYLOAD_PUBLIC_SERVER_URL` or `NEXT_PUBLIC_SERVER_URL` env | Public base URL of your Payload app |
-| `cronSecret` | `string` | `CRON_SECRET` env | Secret sent as `Authorization: Bearer` header |
+| `apiKey` | `string` | required | Your cron-job.org API key |
+| `callbackBaseUrl` | `string` | `config.serverURL` | Public base URL of your Payload app |
 | `timezone` | `string` | `"UTC"` | IANA timezone for all cron jobs |
-| `runEndpointPath` | `string` | `"/api/payload-jobs/run"` | Override the run endpoint path |
-| `handleSchedulesEndpointPath` | `string` | `"/api/payload-jobs/handleSchedules"` | Override the handleSchedules endpoint path |
 | `saveResponses` | `boolean` | `false` | Save cron-job.org execution responses (useful for debugging) |
 | `jobTitlePrefix` | `string` | `undefined` | Prefix for job titles, useful when sharing one cron-job.org account across multiple apps |
 | `enabled` | `boolean` | `true` | Set to `false` to disable the plugin without removing it |
 | `forceOverrideAutoRun` | `boolean` | `false` | If the Payload config has `autoRun` set, the plugin will throw an error by default to avoid duplicate scheduling. Set to `true` to force the plugin to run and handle the `autoRun` schedules via cron-job.org. |
-
-All `string` options fall back to environment variables if not provided explicitly (see table above for which env vars).
 
 ---
 
@@ -159,7 +144,7 @@ All `string` options fall back to environment variables if not provided explicit
 
 On every `onInit`, the plugin:
 
-1. **Reads your config** – collects all `autoRun` entries and `schedule` arrays from tasks/workflows.
+1. **Reads your config** – collects all `schedule` arrays from tasks/workflows (and `autoRun` entries if `forceOverrideAutoRun` is set).
 2. **Fetches existing jobs** from cron-job.org (filtered to jobs it manages via a `[payload-managed]` marker in the title).
 3. **Diffs** desired vs. existing:
    - Missing → **create**
@@ -193,7 +178,7 @@ The `[payload-managed]` marker is how the plugin identifies its own jobs and won
 
 ---
 
-## Vercel example
+## Example
 
 ```ts
 // payload.config.ts

@@ -5,7 +5,6 @@ export interface CronJobOrgPluginOptions {
   /**
    * Your cron-job.org API key.
    * Get it from https://console.cron-job.org → Settings → API Keys
-   * Can also be set via the CRONJOB_ORG_API_KEY environment variable.
    */
   apiKey?: string;
 
@@ -13,28 +12,13 @@ export interface CronJobOrgPluginOptions {
    * The base URL of your Payload deployment.
    * Used to construct the callback URLs that cron-job.org will call.
    * Example: "https://my-app.com"
-   * Can also be set via the PAYLOAD_PUBLIC_SERVER_URL or NEXT_PUBLIC_SERVER_URL env vars.
    */
   callbackBaseUrl?: string;
-
-  /**
-   * Override the path used for triggering job runs.
-   * Defaults to "/api/payload-jobs/run"
-   * The queue name will be appended as a query param: ?queue=myQueue
-   */
-  runEndpointPath?: string;
-
-  /**
-   * Override the path used for triggering schedule evaluation.
-   * Defaults to "/api/payload-jobs/handleSchedules"
-   */
-  handleSchedulesEndpointPath?: string;
 
   /**
    * A secret token added as "Authorization: Bearer <token>" header on all
    * cron-job.org requests to your Payload endpoints, so you can verify the
    * request is from cron-job.org and not random traffic.
-   * Can also be set via the CRON_SECRET environment variable.
    */
   cronSecret?: string;
 
@@ -69,6 +53,14 @@ export interface CronJobOrgPluginOptions {
    * When set, the plugin will set `autoRun` to `undefined` in the config to prevent Payload's internal scheduler from running.
    */
   forceOverrideAutoRun?: boolean;
+
+  /**
+   * By default, if `cronSecret` is set, the plugin automatically secures your
+   * jobs endpoints by injecting an `access.run` check that validates the
+   * `Authorization: Bearer` header. Set to `false` to disable this and handle
+   * access control yourself.
+   */
+  injectAccessControl?: boolean; // default true
 }
 
 // ---------------------------------------------------------------------------
@@ -136,5 +128,5 @@ export interface SyncTarget {
   /** The 5-field cron expression, e.g. "* * * * *" */
   cronExpression: string;
   /** Whether this target triggers job execution (run) or schedule evaluation (handleSchedules) */
-  type: "run" | "handleSchedules";
+  type: "run" | "handleSchedules" | "both";
 }
