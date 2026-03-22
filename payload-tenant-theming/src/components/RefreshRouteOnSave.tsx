@@ -10,11 +10,12 @@ export const RefreshRouteOnSave = ({
   livePreviewPathBase?: string;
 }) => {
   const router = useRouter();
+  const url =
+    typeof window !== "undefined"
+      ? window.location.origin + (livePreviewPathBase ?? "")
+      : "";
 
   return (
-    <PayloadLivePreview
-      refresh={() => router.refresh()}
-      serverURL={window.location.origin + (livePreviewPathBase ?? "")}
-    />
+    <PayloadLivePreview refresh={() => router.refresh()} serverURL={url} />
   );
 };
