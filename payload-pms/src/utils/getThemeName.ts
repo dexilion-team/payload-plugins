@@ -1,4 +1,3 @@
-import { setPreference } from "@dexilion/payload-utils";
 import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import { PayloadRequest } from "payload";
 

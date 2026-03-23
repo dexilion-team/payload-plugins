@@ -19,6 +19,7 @@ export type PageType = {
   pagesSlug: string;
   redirectSlug?: string;
   payloadConfig: Promise<SanitizedConfig>;
+  livePreviewPathBase?: string;
 };
 
 export async function Page({
@@ -26,6 +27,7 @@ export async function Page({
   pagesSlug = "pages",
   redirectSlug,
   payloadConfig,
+  livePreviewPathBase,
 }: PageType) {
   const { segments = [] } = await params;
 
@@ -136,7 +138,6 @@ export async function Page({
   }
 
   const Layout = await layout.component();
-  const proto = (await headers()).get("x-forwarded-proto");
 
   return (
     <>
@@ -164,7 +165,7 @@ export async function Page({
           }),
         )}
       </Layout>
-      <RefreshRouteOnSave serverURL={`${proto}://${domainName}`} />
+      <RefreshRouteOnSave livePreviewPathBase={livePreviewPathBase} />
     </>
   );
 }

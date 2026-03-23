@@ -31,7 +31,6 @@ export const metadataGenerator =
       "";
     const canonicalUrl =
       recursivelySearchForDataByName<string>(page, "path", ["parent"]) ?? path;
-    console.log(page.generalTab.path);
 
     return {
       metadataBase: tenantName ? new URL(`https://${tenantName}`) : undefined,
