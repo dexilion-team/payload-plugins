@@ -6,6 +6,7 @@ import {
   FilterOptionsProps,
   PayloadRequest,
 } from "payload";
+import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import translationEn from "../translations/en.json";
 
 export type PayloadNextedDocsPluginOptions = {
@@ -152,7 +153,20 @@ export function createParentField(
         }
 
         // Find the home page within the same tenant
-        const tenant = recursivelySearchForDataByName(data, "tenant");
+        let tenant = recursivelySearchForDataByName(data, "tenant");
+        if (!tenant) {
+          if (!req.user) {
+            return undefined;
+          }
+
+          const preference = await getPreferences<string>(
+            "admin-tenant-select",
+            req.payload,
+            req.user.id,
+            "users",
+          );
+          tenant = preference?.value;
+        }
 
         const query: Record<string, any> = {
           [pagesSlugPath]: { equals: "home" },
@@ -182,17 +196,28 @@ export function createParentField(
 
         return undefined;
       },
-      filterOptions: ({ data, siblingData }: FilterOptionsProps) => {
+      filterOptions: async ({ req, data, siblingData }: FilterOptionsProps) => {
+        const preference = req.user
+          ? await getPreferences<string>(
+              "admin-tenant-select",
+              req.payload,
+              req.user.id,
+              "users",
+            )
+          : null;
         const siblingDataRecord = siblingData as Record<string, unknown>;
         const tenant =
           recursivelySearchForDataByName(siblingDataRecord, "tenant") ??
-          recursivelySearchForDataByName(data, "tenant");
-        const filter: Record<string, any> = {
-          id: { not_equals: data.id },
-        };
+          recursivelySearchForDataByName(data, "tenant") ??
+          preference?.value;
+
+        const filter: Record<string, any> = data.id
+          ? { id: { not_equals: data.id } }
+          : {};
         if (tenant) {
           filter.tenant = { equals: tenant };
         }
+
         return filter;
       },
     },
