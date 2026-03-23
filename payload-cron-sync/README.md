@@ -1,33 +1,25 @@
 # payload-cron-sync
 
-A [Payload CMS](https://payloadcms.com) plugin for serverless deployments that automatically registers and keeps your Payload job schedules in sync with [cron-job.org](https://cron-job.org) — a free external cron service. Since serverless environments have no built-in cron runtime, this plugin bridges the gap by reading your task/workflow schedule entries and creating exactly the right jobs on cron-job.org, updating or deleting them whenever your config changes.
+A [Payload CMS](https://payloadcms.com) plugin for serverless deployments that automatically registers and keeps your Payload job schedules in sync with [cron-job.org](https://cron-job.org), a free external cron service. Since serverless environments have no built-in cron runtime, this plugin bridges the gap by reading your task/workflow schedule entries and creating exactly the right jobs on cron-job.org, updating or deleting them whenever your config changes.
 
-Once added to your config you never have to manually manage cron triggers again — the plugin reads your `autoRun` and task/workflow `schedule` entries and creates exactly the right jobs on cron-job.org, updating or deleting them whenever your config changes.
-
----
+Once added to your config you never have to manually manage cron triggers again, the plugin reads your `autoRun` and task/workflow `schedule` entries and creates exactly the right jobs on cron-job.org, updating or deleting them whenever your config changes.
 
 ## Why this plugin?
 
 Payload's jobs queue needs something external to periodically call:
 
-| Endpoint | Purpose |
-|---|---|
-| `POST /api/payload-jobs/run?queue=<name>` | Execute queued jobs |
-| `POST /api/payload-jobs/handleSchedules` | Evaluate and enqueue scheduled tasks/workflows |
-
----
-
-## Features
+| Endpoint                                  | Purpose                                        |
+| ----------------------------------------- | ---------------------------------------------- |
+| `POST /api/payload-jobs/run?queue=<name>` | Execute queued jobs                            |
+| `POST /api/payload-jobs/handleSchedules`  | Evaluate and enqueue scheduled tasks/workflows |
 
 ## Features
 
 - **Auto-sync on startup** – cron-job.org jobs are created, updated, or deleted every time Payload starts.
 - **Precise targeting** – one cron-job.org job per unique cron expression from your task/workflow schedules.
-- **Secure** – attaches your `cronSecret` as an `Authorization: Bearer` header so your endpoints can verify the caller.
+- **Secure** – attaches your `cronSecret` as an `Authorization: Bearer` header so your endpoints can verify the caller and avoid unauthorized triggers.
 - **Garbage-free** – obsolete jobs (removed from your config) are automatically deleted.
-- **Zero runtime overhead** – sync only runs once on `onInit`. No polling, no intervals.
-
----
+- **Minimal runtime overhead** – sync only runs once on `onInit`. No polling, no intervals.
 
 ## Getting started
 
@@ -39,8 +31,6 @@ Payload's jobs queue needs something external to periodically call:
 ### 2. Install the plugin
 
 ```bash
-npm install payload-cron-sync
-# or
 pnpm add payload-cron-sync
 ```
 
@@ -48,8 +38,8 @@ pnpm add payload-cron-sync
 
 ```ts
 // payload.config.ts
-import { buildConfig } from 'payload'
-import { cronJobOrgPlugin } from 'payload-cron-sync'
+import { buildConfig } from "payload";
+import { cronJobOrgPlugin } from "payload-cron-sync";
 
 export default buildConfig({
   plugins: [
@@ -70,16 +60,16 @@ export default buildConfig({
   jobs: {
     tasks: [
       {
-        slug: 'sendDailyDigest',
+        slug: "sendDailyDigest",
         schedule: [
           {
-            cron: '0 8 * * *', // every day at 08:00 UTC
-            queue: 'daily',
+            cron: "0 8 * * *", // every day at 08:00 UTC
+            queue: "daily",
           },
         ],
         handler: async ({ req }) => {
           // ... your task logic
-          return { output: {} }
+          return { output: {} };
         },
       },
     ],
@@ -94,18 +84,18 @@ export default buildConfig({
     // if `forceOverrideAutoRun` is enabled.
     autoRun: [
       {
-        cron: '* * * * *',    // every minute
-        queue: 'default',
+        cron: "* * * * *", // every minute
+        queue: "default",
         limit: 10,
       },
       {
-        cron: '0 * * * *',   // every hour
-        queue: 'daily',
+        cron: "0 * * * *", // every hour
+        queue: "daily",
         limit: 5,
       },
     ],
   },
-})
+});
 ```
 
 ### 4. Secure your run endpoint (recommended)
@@ -128,15 +118,15 @@ jobs: {
 
 ## Configuration options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `apiKey` | `string` | required | Your cron-job.org API key |
-| `callbackBaseUrl` | `string` | `config.serverURL` | Public base URL of your Payload app |
-| `timezone` | `string` | `"UTC"` | IANA timezone for all cron jobs |
-| `saveResponses` | `boolean` | `false` | Save cron-job.org execution responses (useful for debugging) |
-| `jobTitlePrefix` | `string` | `undefined` | Prefix for job titles, useful when sharing one cron-job.org account across multiple apps |
-| `enabled` | `boolean` | `true` | Set to `false` to disable the plugin without removing it |
-| `forceOverrideAutoRun` | `boolean` | `false` | If the Payload config has `autoRun` set, the plugin will throw an error by default to avoid duplicate scheduling. Set to `true` to force the plugin to run and handle the `autoRun` schedules via cron-job.org. |
+| Option                 | Type      | Default            | Description                                                                                                                                                                                                     |
+| ---------------------- | --------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apiKey`               | `string`  | required           | Your cron-job.org API key                                                                                                                                                                                       |
+| `callbackBaseUrl`      | `string`  | `config.serverURL` | Public base URL of your Payload app                                                                                                                                                                             |
+| `timezone`             | `string`  | `"UTC"`            | IANA timezone for all cron jobs                                                                                                                                                                                 |
+| `saveResponses`        | `boolean` | `false`            | Save cron-job.org execution responses (useful for debugging)                                                                                                                                                    |
+| `jobTitlePrefix`       | `string`  | `undefined`        | Prefix for job titles, useful when sharing one cron-job.org account across multiple apps                                                                                                                        |
+| `enabled`              | `boolean` | `true`             | Set to `false` to disable the plugin without removing it                                                                                                                                                        |
+| `forceOverrideAutoRun` | `boolean` | `false`            | If the Payload config has `autoRun` set, the plugin will throw an error by default to avoid duplicate scheduling. Set to `true` to force the plugin to run and handle the `autoRun` schedules via cron-job.org. |
 
 ---
 
@@ -188,7 +178,7 @@ cronJobOrgPlugin({
     ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
     : process.env.NEXT_PUBLIC_SERVER_URL,
   cronSecret: process.env.CRON_SECRET,
-})
+});
 ```
 
 ```ts
