@@ -9,12 +9,14 @@ packages:
   - payload-lexical-ext
   - payload-sync
   - payload-auditlog
-  - payload-cron-sync
+  - payload-cron-job-org
 
 autoInstallPeers: false
 
 ignoredBuiltDependencies:
-  - '@swc/core'
+  - "@swc/core"
   - esbuild
   - mongodb-memory-server
   - unrs-resolver
+onlyBuiltDependencies:
+  - sharp

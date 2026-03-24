@@ -3,14 +3,14 @@
  */
 export interface CronJobOrgPluginOptions {
   /**
-   * Your cron-job.org API key.
-   * Get it from https://console.cron-job.org → Settings → API Keys
+   * Your cron-job.org API key. Required.
+   * Get it from https://console.cron-job.org -> Settings -> API Keys
    */
-  apiKey?: string;
+  apiKey: string;
 
   /**
-   * The base URL of your Payload deployment.
-   * Used to construct the callback URLs that cron-job.org will call.
+   * The base URL of your Payload deployment. Defaults to serverURL from Payload
+   * config. Used to construct the callback URLs that cron-job.org will call.
    * Example: "https://my-app.com"
    */
   callbackBaseUrl?: string;
@@ -41,16 +41,19 @@ export interface CronJobOrgPluginOptions {
   enabled?: boolean;
 
   /**
-   * An optional prefix added to the title of every cron job created on cron-job.org.
-   * Useful when managing multiple Payload apps under one cron-job.org account.
-   * Example: "MyApp" → job title becomes "MyApp | daily queue runner"
+   * An optional prefix added to the title of every cron job created on
+   * cron-job.org. Useful when managing multiple Payload apps under one
+   * cron-job.org account.
+   * Example: "MyApp" -> job title becomes "MyApp | daily queue runner"
    */
   jobTitlePrefix?: string;
 
   /**
-   * If the Payload config has `autoRun` set, the plugin will throw an error by default to avoid duplicate scheduling.
-   * Set this to `true` to force the plugin to run and handle the `autoRun` schedules via cron-job.org.
-   * When set, the plugin will set `autoRun` to `undefined` in the config to prevent Payload's internal scheduler from running.
+   * If the Payload config has `autoRun` set, the plugin will throw an error by
+   * default to avoid duplicate scheduling. Set this to `true` to force the
+   * plugin to run and handle the `autoRun` schedules via cron-job.org. When
+   * set, the plugin will set `autoRun` to `undefined` in the config to prevent
+   * Payload's internal scheduler from running.
    */
   forceOverrideAutoRun?: boolean;
 
@@ -116,17 +119,25 @@ export interface CronJobOrgCreateResponse {
 
 /**
  * Represents a single logical "run target" that needs an external cron trigger.
- * Each unique (queue + cron expression) combination becomes one cron job on cron-job.org.
+ * Each unique (queue + cron expression) combination becomes one cron job on
+ * cron-job.org.
  */
 export interface SyncTarget {
   /** Unique stable identifier used as part of the job title for matching */
   key: string;
+
   /** Human-readable title */
   title: string;
+
   /** The full URL cron-job.org will call */
   url: string;
+
   /** The 5-field cron expression, e.g. "* * * * *" */
   cronExpression: string;
-  /** Whether this target triggers job execution (run) or schedule evaluation (handleSchedules) */
+
+  /**
+   * Whether this target triggers job execution (run) or schedule evaluation
+   * (handleSchedules)
+   */
   type: "run" | "handleSchedules" | "both";
 }

@@ -1,4 +1,4 @@
-# payload-cron-sync
+# @dexilion/payload-cron-job-org
 
 A [Payload CMS](https://payloadcms.com) plugin for serverless deployments that automatically registers and keeps your Payload job schedules in sync with [cron-job.org](https://cron-job.org), a free external cron service. Since serverless environments have no built-in cron runtime, this plugin bridges the gap by reading your task/workflow schedule entries and creating exactly the right jobs on cron-job.org, updating or deleting them whenever your config changes.
 
@@ -31,7 +31,7 @@ Payload's jobs queue needs something external to periodically call:
 ### 2. Install the plugin
 
 ```bash
-pnpm add payload-cron-sync
+pnpm add @dexilion/payload-cron-job-org
 ```
 
 ### 3. Add to your Payload config
@@ -39,7 +39,7 @@ pnpm add payload-cron-sync
 ```ts
 // payload.config.ts
 import { buildConfig } from "payload";
-import { cronJobOrgPlugin } from "payload-cron-sync";
+import { cronJobOrgPlugin } from "@dexilion/payload-cron-job-org";
 
 export default buildConfig({
   plugins: [

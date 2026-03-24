@@ -1,16 +1,6 @@
-import type { Config, SanitizedConfig } from "payload";
-import type {
-  CronJobOrgPluginOptions,
-  SyncTarget,
-  CronJobOrgJob,
-} from "./types.js";
-import { CronJobOrgClient, parseCronExpression } from "./client.js";
-
-/**
- * Marker embedded in job titles so we can distinguish our managed jobs
- * from any manually created ones in the same account.
- */
-const MANAGED_MARKER = "[payload-managed]";
+import type { SanitizedConfig } from "payload";
+import type { SyncTarget, CronJobOrgJob } from "./types";
+import { CronJobOrgClient, parseCronExpression } from "./client";
 
 /**
  * Build the full list of SyncTargets from a Payload config.
@@ -35,6 +25,10 @@ export function buildSyncTargets(
   config: SanitizedConfig,
   options: ResolvedOptions,
 ): SyncTarget[] {
+  // Marker embedded in job titles so we can distinguish our managed jobs
+  // from any manually created ones in the same account.
+  const MANAGED_MARKER = `[${options.callbackBaseUrl ?? "@dexilion/payload-cron-job-org"}]`;
+
   const targets: SyncTarget[] = [];
 
   const jobs = config.jobs;
@@ -153,9 +147,13 @@ export async function syncCronJobs(
     error: (msg: string) => void;
   },
 ): Promise<void> {
+  // Marker embedded in job titles so we can distinguish our managed jobs
+  // from any manually created ones in the same account.
+  const MANAGED_MARKER = `[${options.callbackBaseUrl ?? "@dexilion/payload-cron-job-org"}]`;
+
   const client = new CronJobOrgClient(options.apiKey);
 
-  logger.info("[payload-cron-sync] Starting sync with cron-job.org…");
+  logger.info("[payload-cron-job-org] Starting sync with cron-job.org…");
 
   // Fetch existing managed jobs from the account
   let existingJobs: CronJobOrgJob[];
@@ -163,7 +161,7 @@ export async function syncCronJobs(
     existingJobs = await client.listJobs();
   } catch (err) {
     logger.error(
-      `[payload-cron-sync] Failed to fetch existing jobs: ${String(err)}`,
+      `[payload-cron-job-org] Failed to fetch existing jobs: ${String(err)}`,
     );
     throw err;
   }
@@ -177,7 +175,7 @@ export async function syncCronJobs(
 
   if (targets.length === 0) {
     logger.info(
-      "[payload-cron-sync] No autoRun or task schedules found in Payload config. Nothing to sync.",
+      "[payload-cron-job-org] No autoRun or task schedules found in Payload config. Nothing to sync.",
     );
     // Clean up any stale managed jobs
     await deleteObsoleteJobs(client, managedJobs, [], logger);
@@ -185,7 +183,7 @@ export async function syncCronJobs(
   }
 
   logger.info(
-    `[payload-cron-sync] Found ${targets.length} sync target(s) in Payload config.`,
+    `[payload-cron-job-org] Found ${targets.length} sync target(s) in Payload config.`,
   );
 
   // For each target, create or update
@@ -221,7 +219,7 @@ export async function syncCronJobs(
       schedule = parseCronExpression(target.cronExpression, options.timezone);
     } catch (err) {
       logger.error(
-        `[payload-cron-sync] Skipping target "${target.key}" – could not parse cron expression "${target.cronExpression}": ${String(err)}`,
+        `[payload-cron-job-org] Skipping target "${target.key}" – could not parse cron expression "${target.cronExpression}": ${String(err)}`,
       );
       continue;
     }
@@ -253,16 +251,16 @@ export async function syncCronJobs(
         try {
           await client.updateJob(existingMatch.jobId, jobPayload);
           logger.info(
-            `[payload-cron-sync] Updated job #${existingMatch.jobId} "${target.title}"`,
+            `[payload-cron-job-org] Updated job #${existingMatch.jobId} "${target.title}"`,
           );
         } catch (err) {
           logger.error(
-            `[payload-cron-sync] Failed to update job #${existingMatch.jobId}: ${String(err)}`,
+            `[payload-cron-job-org] Failed to update job #${existingMatch.jobId}: ${String(err)}`,
           );
         }
       } else {
         logger.info(
-          `[payload-cron-sync] Job #${existingMatch.jobId} "${target.title}" is up-to-date.`,
+          `[payload-cron-job-org] Job #${existingMatch.jobId} "${target.title}" is up-to-date.`,
         );
       }
     } else {
@@ -270,11 +268,11 @@ export async function syncCronJobs(
       try {
         const newId = await client.createJob(jobPayload);
         logger.info(
-          `[payload-cron-sync] Created new job #${newId} "${target.title}"`,
+          `[payload-cron-job-org] Created new job #${newId} "${target.title}"`,
         );
       } catch (err) {
         logger.error(
-          `[payload-cron-sync] Failed to create job "${target.title}": ${String(err)}`,
+          `[payload-cron-job-org] Failed to create job "${target.title}": ${String(err)}`,
         );
       }
     }
@@ -283,7 +281,7 @@ export async function syncCronJobs(
   // Clean up managed jobs that are no longer in the config
   await deleteObsoleteJobs(client, managedJobs, targets, logger);
 
-  logger.info("[payload-cron-sync] Sync complete.");
+  logger.info("[payload-cron-job-org] Sync complete.");
 }
 
 async function deleteObsoleteJobs(
@@ -298,11 +296,11 @@ async function deleteObsoleteJobs(
       try {
         await client.deleteJob(job.jobId);
         logger.info(
-          `[payload-cron-sync] Deleted obsolete job #${job.jobId} "${job.title}"`,
+          `[payload-cron-job-org] Deleted obsolete job #${job.jobId} "${job.title}"`,
         );
       } catch (err) {
         logger.warn(
-          `[payload-cron-sync] Failed to delete obsolete job #${job.jobId}: ${String(err)}`,
+          `[payload-cron-job-org] Failed to delete obsolete job #${job.jobId}: ${String(err)}`,
         );
       }
     }

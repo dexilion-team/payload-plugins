@@ -4,7 +4,7 @@ import type {
   CronJobOrgListResponse,
   CronJobOrgCreateResponse,
   CronJobOrgSchedule,
-} from "./types.js";
+} from "./types";
 
 const CRON_JOB_ORG_API = "https://api.cron-job.org";
 

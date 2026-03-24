@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { SyncTarget } from "./types";
+import { SyncTarget } from "../types";
 
 export function hashTargets(targets: SyncTarget[]): string {
   const stable = JSON.stringify(

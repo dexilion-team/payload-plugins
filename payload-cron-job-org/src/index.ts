@@ -1,11 +1,11 @@
 import type { Config, SanitizedConfig, GlobalConfig } from "payload";
-import type { CronJobOrgPluginOptions } from "./types.js";
-import type { ResolvedOptions } from "./sync.js";
-import { buildSyncTargets, syncCronJobs } from "./sync.js";
-import { hashTargets } from "./hash.js";
+import type { CronJobOrgPluginOptions } from "./types";
+import { buildSyncTargets, syncCronJobs } from "./sync";
+import { hashTargets } from "./utils/hash";
+import { resolveOptions } from "./utils/resolveOptions";
 
 /**
- * payload-cron-sync
+ * payload-cron-job-org plugin for Payload CMS
  *
  * Reads all `autoRun` and task/workflow `schedule` entries from your Payload
  * config and automatically creates, updates, or deletes the corresponding
@@ -25,13 +25,13 @@ import { hashTargets } from "./hash.js";
  * @example
  * ```ts
  * import { buildConfig } from 'payload'
- * import { cronJobOrgPlugin } from 'payload-cron-sync'
+ * import { cronJobOrgPlugin } from '@dexilion/payload-cron-job-org'
  *
  * export default buildConfig({
  *   plugins: [
  *     cronJobOrgPlugin({
  *       apiKey: process.env.CRONJOB_ORG_API_KEY,
- *       callbackBaseUrl: process.env.NEXT_PUBLIC_SERVER_URL,
+ *       callbackBaseUrl: process.env.NEXT_PUBLIC_SERVER_URL, // or set serverURL
  *       cronSecret: process.env.CRON_SECRET,
  *     }),
  *   ],
@@ -49,7 +49,7 @@ import { hashTargets } from "./hash.js";
  * ```
  */
 export const cronJobOrgPlugin =
-  (pluginOptions: CronJobOrgPluginOptions = {}) =>
+  (pluginOptions: CronJobOrgPluginOptions) =>
   (incomingConfig: Config): Config => {
     // Allow users to disable the plugin without removing it from their config
     if (pluginOptions.enabled === false) {
@@ -66,7 +66,7 @@ export const cronJobOrgPlugin =
     if (jobs && Array.isArray(jobs.autoRun) && jobs.autoRun.length > 0) {
       if (pluginOptions.forceOverrideAutoRun !== true) {
         throw new Error(
-          `[payload-cron-sync] The Payload config has autoRun set, which would cause duplicate scheduling. ` +
+          `[@dexilion/payload-cron-job-org] The Payload config has autoRun set, which would cause duplicate scheduling. ` +
             `If you want to use this plugin to handle autoRun schedules via cron-job.org, set the plugin option 'forceOverrideAutoRun: true'. ` +
             `Otherwise, remove autoRun from your Payload config or disable this plugin.`,
         );
@@ -119,7 +119,7 @@ export const cronJobOrgPlugin =
         // Log if we are overriding autoRun
         if (originalAutoRun) {
           payload.logger.info(
-            `[payload-cron-sync] Overriding autoRun with cron-job.org sync (forceOverrideAutoRun enabled). Original autoRun entries: ${originalAutoRun.length}`,
+            `[@dexilion/payload-cron-job-org] Overriding autoRun with cron-job.org sync (forceOverrideAutoRun enabled). Original autoRun entries: ${originalAutoRun.length}`,
           );
         }
 
@@ -150,10 +150,10 @@ export const cronJobOrgPlugin =
         const targets = buildSyncTargets(syncConfig, resolved);
         const currentHash = hashTargets(targets);
 
-        const state = await payload.findGlobal({ slug: "cron-sync-state" });
+        const state = await payload.findGlobal({ slug: "cron-job-org-state" });
         if (state.lastSyncedHash === currentHash) {
           payload.logger.info(
-            "[payload-cron-sync] Config unchanged, skipping sync.",
+            "[@dexilion/payload-cron-job-org] Config unchanged, skipping sync.",
           );
           return;
         }
@@ -161,7 +161,7 @@ export const cronJobOrgPlugin =
         await syncCronJobs(syncConfig, resolved, payload.logger);
 
         await payload.updateGlobal({
-          slug: "cron-sync-state",
+          slug: "cron-job-org-state",
           data: {
             lastSyncedHash: currentHash,
             lastSyncedAt: new Date().toISOString(),
@@ -169,7 +169,9 @@ export const cronJobOrgPlugin =
         });
       } catch (err) {
         // Log but don't crash Payload startup
-        payload.logger.error(`[payload-cron-sync] Sync failed: ${String(err)}`);
+        payload.logger.error(
+          `[@dexilion/payload-cron-job-org] Sync failed: ${String(err)}`,
+        );
       }
     };
 
@@ -177,7 +179,7 @@ export const cronJobOrgPlugin =
   };
 
 const cronSyncStateGlobal: GlobalConfig = {
-  slug: "cron-sync-state",
+  slug: "cron-job-org-state",
   admin: {
     hidden: true,
   },
@@ -192,45 +194,6 @@ const cronSyncStateGlobal: GlobalConfig = {
     },
   ],
 };
-
-function resolveOptions(
-  opts: CronJobOrgPluginOptions,
-  serverURL: string | undefined,
-  logger: { warn: (msg: string) => void },
-): ResolvedOptions | null {
-  const apiKey = opts.apiKey;
-
-  if (!apiKey) {
-    logger.warn(
-      "[payload-cron-sync] No API key provided. " +
-        "Set the `apiKey` option or the CRONJOB_ORG_API_KEY environment variable. " +
-        "Skipping cron-job.org sync.",
-    );
-    return null;
-  }
-
-  const callbackBaseUrl = opts.callbackBaseUrl ?? serverURL;
-
-  if (!callbackBaseUrl) {
-    logger.warn(
-      "[payload-cron-sync] No callbackBaseUrl provided. " +
-        "Set the `callbackBaseUrl` option or the PAYLOAD_PUBLIC_SERVER_URL environment variable. " +
-        "Skipping cron-job.org sync.",
-    );
-    return null;
-  }
-
-  const cronSecret = opts.cronSecret;
-
-  return {
-    apiKey,
-    callbackBaseUrl,
-    cronSecret,
-    timezone: opts.timezone ?? "UTC",
-    saveResponses: opts.saveResponses ?? false,
-    jobTitlePrefix: opts.jobTitlePrefix,
-  };
-}
 
 // Re-export types for consumers
 export type { CronJobOrgPluginOptions } from "./types.js";

@@ -1,9 +1,9 @@
 import { describe, test, expect, vi } from "vitest";
-import { parseCronExpression } from "./client.js";
-import { buildSyncTargets } from "./sync.js";
-import type { ResolvedOptions } from "./sync.js";
+import { parseCronExpression } from "../src/client.js";
+import { buildSyncTargets } from "../src/sync";
+import type { ResolvedOptions } from "./src/sync";
 import type { Config, SanitizedConfig } from "payload";
-import { cronJobOrgPlugin } from "./index.js";
+import { cronJobOrgPlugin } from "../src/index";
 
 describe("parseCronExpression", () => {
   test("should parse wildcard cron expression", () => {
