@@ -1,4 +1,9 @@
-import type { Config, SanitizedConfig, GlobalConfig } from "payload";
+import {
+  type Config,
+  type SanitizedConfig,
+  type GlobalConfig,
+  type Payload,
+} from "payload";
 import type { CronJobOrgPluginOptions } from "./types";
 import { buildSyncTargets, syncCronJobs } from "./sync";
 import { hashTargets } from "./utils/hash";
@@ -84,7 +89,7 @@ export const cronJobOrgPlugin =
     // Extend onInit to run our sync after Payload has fully initialised
     const existingOnInit = config.onInit;
 
-    config.onInit = async (payload) => {
+    config.onInit = async (payload: Payload) => {
       // Always run the original onInit first
       if (existingOnInit) {
         await existingOnInit(payload);
@@ -150,7 +155,12 @@ export const cronJobOrgPlugin =
         const targets = buildSyncTargets(syncConfig, resolved);
         const currentHash = hashTargets(targets);
 
-        const state = await payload.findGlobal({ slug: "cron-job-org-state" });
+        const state: { lastSyncedHash?: string; lastSyncedAt?: string } =
+          await payload.findGlobal({
+            // @ts-ignore - payload is BasePayload in onInit
+            slug: "cron-job-org-state",
+            disableErrors: true,
+          });
         if (state.lastSyncedHash === currentHash) {
           payload.logger.info(
             "[@dexilion/payload-cron-job-org] Config unchanged, skipping sync.",
@@ -161,11 +171,13 @@ export const cronJobOrgPlugin =
         await syncCronJobs(syncConfig, resolved, payload.logger);
 
         await payload.updateGlobal({
+          // @ts-ignore - payload is BasePayload in onInit
           slug: "cron-job-org-state",
           data: {
             lastSyncedHash: currentHash,
             lastSyncedAt: new Date().toISOString(),
-          },
+          } as any,
+          disableErrors: true,
         });
       } catch (err) {
         // Log but don't crash Payload startup
