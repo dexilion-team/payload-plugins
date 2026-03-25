@@ -57,5 +57,8 @@ export const uploadConverter: HTMLConvertersAsync["upload"] = async (
         : undefined
       : image.width;
 
-  return `<img ${format ? `style="text-align: ${format};"` : ""} src="${image.url || image.src}" alt="${image.alt || ""}" width="${width}" height="${height}" />`;
+  const style = format ? `display: flex; justify-content: ${format};` : "";
+  const styleParam = style.length > 0 ? `style="${style}"` : "";
+
+  return `<div ${styleParam}><img src="${image.url || image.src}" alt="${image.alt || ""}" width="${width}" height="${height}" /></div>`;
 };
