@@ -245,6 +245,17 @@ export function createSlugField(
           return value?.toLowerCase();
         },
       ],
+      beforeDuplicate: [
+        async ({ data }) => {
+          if (!data) {
+            return undefined;
+          }
+
+          const slug = recursivelySearchForDataByName<string>(data, "slug");
+
+          return slug + `-${Math.floor(Math.random() * 10000)}`;
+        },
+      ],
     },
     validate: async (value, { req: { t, payload }, data, id }) => {
       // Check format
