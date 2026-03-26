@@ -32,6 +32,7 @@ export const RichText = ({
             ...defaultConverters,
             upload: uploadConverter,
             text: convertTextNode,
+            "custom-paragraph": defaultConverters.paragraph,
             vimeo: async ({ node }) => {
               const style = node.format
                 ? ` style="text-align:${node.format}"`
