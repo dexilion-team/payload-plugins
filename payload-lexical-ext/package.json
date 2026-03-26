@@ -17,6 +17,7 @@
       "default": "./src/client.ts"
     },
     "./client.css": {
+      "types": "./src/color/components/ColorPicker.css.d.ts",
       "import": "./src/color/components/ColorPicker.css"
     }
   },
