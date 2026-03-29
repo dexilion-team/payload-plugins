@@ -41,24 +41,31 @@ export const uploadConverter: HTMLConvertersAsync["upload"] = async (
     return "";
   }
 
+  const imgStyle = !width && !height ? "object-fit: contain;" : "";
   const aspectRatio = image ? image.width / image.height : undefined;
-  height = !isNaN(height)
-    ? height
-    : !isNaN(width)
-      ? width && aspectRatio
-        ? Math.round(width / aspectRatio)
-        : undefined
-      : image.height;
-  width = !isNaN(width)
-    ? width
-    : !isNaN(height)
-      ? height && aspectRatio
-        ? Math.round(height * aspectRatio)
-        : undefined
-      : image.width;
+  height =
+    imgStyle.length > 0
+      ? "auto"
+      : !isNaN(height)
+        ? height
+        : !isNaN(width)
+          ? width && aspectRatio
+            ? Math.round(width / aspectRatio)
+            : undefined
+          : image.height;
+  width =
+    imgStyle.length > 0
+      ? "100%"
+      : !isNaN(width)
+        ? width
+        : !isNaN(height)
+          ? height && aspectRatio
+            ? Math.round(height * aspectRatio)
+            : undefined
+          : image.width;
 
   const style = format ? `display: flex; justify-content: ${format};` : "";
   const styleParam = style.length > 0 ? `style="${style}"` : "";
 
-  return `<div ${styleParam}><img src="${image.url || image.src}" alt="${image.alt || ""}" width="${width}" height="${height}" /></div>`;
+  return `<div ${styleParam}><img src="${image.url || image.src}" alt="${image.alt || ""}" width="${width}" height="${height}" style="${imgStyle}" /></div>`;
 };
