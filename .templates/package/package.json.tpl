@@ -61,7 +61,7 @@
     "sort-package-json": "^2.10.0",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "6.0.5",
-    "vitest": "4.0.18"
+    "vitest": "4.1.2"
   },
   "scripts": {
 "build": "run-s copyfiles build:types build:swc",

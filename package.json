@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-plugins",
-  "version": "3.74.0",
+  "version": "3.81.0",
   "private": true,
   "scripts": {
     "build": "pnpm -r run build",
@@ -9,7 +9,7 @@
     "publish": "pnpm build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.8"
+    "@changesets/cli": "^2.30.0"
   },
   "dependencies": {
     "@dexilion/payload-blog": "workspace:*",

@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-tenant-theming",
-  "version": "3.80.0",
+  "version": "3.81.0",
   "description": "A Payload CMS plugin to provide theming capabilities for multi-tenant setups.",
   "author": "Dexilion",
   "license": "MIT",
@@ -34,8 +34,8 @@
     "*.css"
   ],
   "peerDependencies": {
-    "@dexilion/payload-multi-tenant": "3.80.0",
-    "@dexilion/payload-nested-docs": "3.80.0",
+    "@dexilion/payload-multi-tenant": "3.81.0",
+    "@dexilion/payload-nested-docs": "3.81.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "next": "^16",
@@ -49,7 +49,7 @@
     "@types/react": "19.2.2",
     "eslint": "^10.1.0",
     "eslint-config-next": "^16.2.2",
-    "payload": "3.80.0",
+    "payload": "3.81.0",
     "typescript": "^5.9.3"
   },
   "scripts": {
