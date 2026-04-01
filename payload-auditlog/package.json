@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-auditlog",
-  "version": "3.74.0",
+  "version": "3.80.0",
   "type": "module",
   "license": "MIT",
   "description": "An auditlog plugin to log all basic operations in Payload CMS collections",
@@ -21,7 +21,7 @@
     "payload": "3"
   },
   "devDependencies": {
-    "@payloadcms/db-mongodb": "3.74.0",
+    "@payloadcms/db-mongodb": "3.80.0",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",

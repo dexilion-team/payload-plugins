@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-lexical-ext",
-  "version": "3.74.0",
+  "version": "3.80.0",
   "description": "Extended lexical editor features for Payload CMS (Text color, highlight, block background, embeds)",
   "author": "Dexilion",
   "license": "MIT",
