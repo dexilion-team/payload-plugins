@@ -40,8 +40,8 @@
     "@types/react": "19.2.2",
     "@types/pg": "^8.6.6",
     "commander": "^14.0",
-    "eslint": "^9.38.0",
-    "eslint-config-next": "^16.0.0",
+    "eslint": "^10.1.0",
+    "eslint-config-next": "^16.2.2",
     "mongodb-memory-server": "^10.2.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
