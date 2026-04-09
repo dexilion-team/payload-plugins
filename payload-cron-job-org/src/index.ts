@@ -159,7 +159,6 @@ export const cronJobOrgPlugin =
           await payload.findGlobal({
             // @ts-ignore - payload is BasePayload in onInit
             slug: "cron-job-org-state",
-            disableErrors: true,
           });
         if (state.lastSyncedHash === currentHash) {
           payload.logger.info(
@@ -177,7 +176,6 @@ export const cronJobOrgPlugin =
             lastSyncedHash: currentHash,
             lastSyncedAt: new Date().toISOString(),
           } as any,
-          disableErrors: true,
         });
       } catch (err) {
         // Log but don't crash Payload startup
