@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-utils",
-  "version": "3.81.0",
+  "version": "3.82.0",
   "type": "module",
   "license": "MIT",
   "description": "A collection of utility functions and components for Payload CMS.",
@@ -22,7 +22,7 @@
     "@payloadcms/ui": "3"
   },
   "devDependencies": {
-    "@payloadcms/db-mongodb": "3.81.0",
+    "@payloadcms/db-mongodb": "3.82.0",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
