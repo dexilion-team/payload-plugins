@@ -42,10 +42,11 @@ export const scopeCollectionToTenant = (
       },
     });
   } else {
-    throw new Error(
-      "[@dexilion/payload-multi-tenant] Collection " +
-        `"${collection.slug}" already has a field named "${tenantFieldName}".`,
-    );
+    // TODO: Disabled temporarily due to a HMR error
+    // throw new Error(
+    //   "[@dexilion/payload-multi-tenant] Collection " +
+    //     `"${collection.slug}" already has a field named "${tenantFieldName}".`,
+    // );
   }
 
   // Hide collection from admin UI if user has no tenants
@@ -62,7 +63,6 @@ export const scopeCollectionToTenant = (
     // Hide if user has no tenants
     const tenantsDocs = user?.[tenantFieldName as keyof typeof user] as any;
     const tenants = tenantsDocs?.docs ?? [];
-    
     return !tenants || (Array.isArray(tenants) && tenants.length === 0);
   };
 
