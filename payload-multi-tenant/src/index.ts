@@ -153,6 +153,54 @@ export const multiTenantPlugin =
             ` config.collections.`,
         );
       }
+
+      // Check if this is the redirects collection from @payloadcms/plugin-redirects
+      // and add filterOptions to filter pages by selected tenant
+      if (slug === "redirects") {
+        const toField = collection.fields?.find(
+          (f) =>
+            "name" in f && f.name === "to" && "type" in f && f.type === "group",
+        );
+        if (toField && "fields" in toField && Array.isArray(toField.fields)) {
+          const referenceField = toField.fields.find(
+            (f: any) => f.name === "reference",
+          );
+          if (referenceField && "relationTo" in referenceField) {
+            // Add filterOptions to filter the relationship by selected tenant
+            (referenceField as any).filterOptions = async ({
+              req,
+            }: {
+              req: any;
+            }) => {
+              if (!req.user) {
+                return { id: { equals: "none" } };
+              }
+
+              // Get preference using the same key as TenantSelect
+              const { getPreferences } = await import(
+                "@payloadcms/ui/utilities/upsertPreferences"
+              );
+              const preference = await getPreferences<number | undefined>(
+                "admin-tenant-select",
+                req.payload,
+                req.user.id,
+                "users",
+              );
+
+              // If no tenant selected, don't show any pages
+              if (!preference?.value) {
+                return { id: { equals: "none" } };
+              }
+
+              // Filter pages by the selected tenant
+              return {
+                tenant: { equals: preference.value },
+              };
+            };
+          }
+        }
+      }
+
       scopeCollectionToTenant(
         collection,
         tenantsSlug,
