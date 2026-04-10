@@ -155,6 +155,7 @@ export const cronJobOrgPlugin =
         const targets = buildSyncTargets(syncConfig, resolved);
         const currentHash = hashTargets(targets);
 
+        // @ts-ignore - payload is BasePayload in onInit
         const state: { lastSyncedHash?: string; lastSyncedAt?: string } =
           await payload.findGlobal({
             // @ts-ignore - payload is BasePayload in onInit
