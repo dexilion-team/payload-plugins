@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-plugins",
-  "version": "3.82.0",
+  "version": "3.82.1",
   "private": true,
   "scripts": {
     "build": "pnpm -r run build",
@@ -9,7 +9,14 @@
     "publish": "pnpm build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.30.0"
+    "@changesets/cli": "^2.30.0",
+    "next": "^16.2.3",
+    "@payloadcms/next": "3.82.1",
+    "@payloadcms/db-mongodb": "3.82.1",
+    "@payloadcms/richtext-lexical": "3.82.1",
+    "mongodb-memory-server": "10.1.4",
+    "payload": "3.82.1",
+    "sharp": "^0.34.5"
   },
   "dependencies": {
     "@dexilion/payload-blog": "workspace:*",
