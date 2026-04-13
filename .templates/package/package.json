@@ -1,7 +1,8 @@
 {
-  "name": "@dexilion/{{ packageName }}",
-  "version": "{{ lastCompatiblePayloadCMSVersion }}",
-  "description": "{{ packageDescription }}",
+  "name": "@dexilion/package-template",
+  "version": "0.0.0",
+  "description": "Description of the package",
+  "private": true,
   "author": "Dexilion",
   "license": "MIT",
   "type": "module",
@@ -19,29 +20,28 @@
     "*.css"
   ],
   "peerDependencies": {
-    "payload": "{{ lastCompatiblePayloadCMSVersion }}",
-    "@payloadcms/ui": "{{ lastCompatiblePayloadCMSVersion }}"
+    "payload": "3.82.1",
+    "@payloadcms/ui": "3.82.1"
   },
   "engines": {
-    "node": "^18.20.2 || >=20.9.0",
+    "node": "^25.9.0 || ^24.14.1 || ^22.22.2 ",
     "pnpm": "^9 || ^10"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.2.0",
-    "@payloadcms/db-mongodb": "{{ lastCompatiblePayloadCMSVersion }}",
-    "@payloadcms/db-postgres": "{{ lastCompatiblePayloadCMSVersion }}",
-    "@payloadcms/db-sqlite": "{{ lastCompatiblePayloadCMSVersion }}",
-    "@payloadcms/eslint-config": "3.9.0",
-    "@payloadcms/next": "{{ lastCompatiblePayloadCMSVersion }}",
-    "@payloadcms/richtext-lexical": "{{ lastCompatiblePayloadCMSVersion }}",
-    "@payloadcms/ui": "{{ lastCompatiblePayloadCMSVersion }}",
-    "@playwright/test": "1.58.2",
-    "@swc-node/register": "1.10.9",
-    "@swc/cli": "0.6.0",
-    "@types/node": "22.19.9",
+    "@eslint/eslintrc": "^3.3.5",
+    "@payloadcms/db-mongodb": "3.82.1",
+    "@payloadcms/db-postgres": "3.82.1",
+    "@payloadcms/db-sqlite": "3.82.1",
+    "@payloadcms/eslint-config": "3.28.0",
+    "@payloadcms/next": "3.82.1",
+    "@payloadcms/richtext-lexical": "3.82.1",
+    "@payloadcms/ui": "3.82.1",
+    "@playwright/test": "1.59.1",
+    "@swc-node/register": "1.11.1",
+    "@swc/cli": "0.8.1",
+    "@types/node": "24.1.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "copyfiles": "2.4.1",
     "cross-env": "^7.0.3",
     "eslint": "^10.1.0",
     "eslint-config-next": "16.2.2",
@@ -50,21 +50,18 @@
     "monaco-editor": ">= 0.25.0 < 1",
     "next": "^16.2",
     "npm-run-all2": "^8",
-    "open": "^10.1.0",
-    "payload": "{{ lastCompatiblePayloadCMSVersion }}",
-    "prettier": "^3.4.2",
-    "qs-esm": "7.0.2",
+    "payload": "3.82.1",
+    "prettier": "^3.8.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "rimraf": "6.1.3",
     "sharp": "^0.34.5",
-    "sort-package-json": "^2.10.0",
-    "typescript": "5.9.3",
-    "vite-tsconfig-paths": "6.0.5",
-    "vitest": "4.1.2"
+    "typescript": "5.7.3",
+    "vite-tsconfig-paths": "6.1.1",
+    "vitest": "4.1.4"
   },
   "scripts": {
-"build": "run-s copyfiles build:types build:swc",
+    "build": "run-s copyfiles build:types build:swc",
     "build:swc": "swc ./src -d ./dist --config-file .swcrc --strip-leading-paths",
     "build:types": "tsc --outDir dist --rootDir ./src",
     "clean": "rimraf {dist,*.tsbuildinfo}",
@@ -105,5 +102,5 @@
       "esbuild",
       "unrs-resolver"
     ]
-  },
+  }
 }
