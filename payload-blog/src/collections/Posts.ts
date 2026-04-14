@@ -28,6 +28,12 @@ export const createPostsCollection = ({
       name: "slug",
       type: "text",
       required: true,
+      validate: (val: string | string[] | null | undefined) => {
+        if (val && typeof val === 'string' && /\s/.test(val)) {
+          return 'Slug must not contain whitespace';
+        }
+        return true;
+      },
       admin: {
         position: "sidebar",
       },
