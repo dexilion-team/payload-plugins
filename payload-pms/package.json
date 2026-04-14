@@ -36,10 +36,10 @@
     "sharp": "^0.34.5",
     "@payloadcms/ui": "3",
     "@payloadcms/richtext-lexical": "3",
-    "@dexilion/payload-utils": "3.82"
+    "@dexilion/payload-utils": "3.82.1"
   },
   "devDependencies": {
-    "@payloadcms/db-mongodb": "3.82",
+    "@payloadcms/db-mongodb": "3.82.1",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",

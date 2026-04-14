@@ -34,7 +34,7 @@
     "@payloadcms/ui": "3"
   },
   "devDependencies": {
-    "@payloadcms/db-mongodb": "3.82",
+    "@payloadcms/db-mongodb": "3.82.1",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",

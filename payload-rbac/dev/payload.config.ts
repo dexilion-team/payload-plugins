@@ -31,7 +31,8 @@ const buildConfigWithMemoryDB = async () => {
   return buildConfig({
     admin: {
       importMap: {
-        baseDir: path.resolve(dirname),
+        autoGenerate: true,
+        baseDir: path.join(path.resolve(dirname), "../src"),
       },
       autoLogin: {
         email: devUser.email,
@@ -53,6 +54,10 @@ const buildConfigWithMemoryDB = async () => {
       {
         slug: "users",
         auth: true,
+        admin: {
+          useAsTitle: "email",
+          defaultColumns: ["email", "updatedAt", "createdAt"],
+        },
         fields: [],
       },
     ],

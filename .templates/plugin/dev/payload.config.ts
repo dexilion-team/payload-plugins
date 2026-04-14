@@ -31,6 +31,7 @@ const buildConfigWithMemoryDB = async () => {
   return buildConfig({
     admin: {
       importMap: {
+        autoGenerate: true,
         baseDir: path.resolve(dirname),
       },
       autoLogin: {
@@ -49,6 +50,15 @@ const buildConfigWithMemoryDB = async () => {
         upload: {
           staticDir: path.resolve(dirname, "media"),
         },
+      },
+      {
+        slug: "users",
+        auth: true,
+        admin: {
+          useAsTitle: "email",
+          defaultColumns: ["email", "updatedAt", "createdAt"],
+        },
+        fields: [],
       },
     ],
     db: mongooseAdapter({
