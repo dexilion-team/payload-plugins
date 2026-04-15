@@ -1,10 +1,4 @@
 import type { CollectionConfig, CollectionSlug } from "payload";
-import {
-  FixedToolbarFeature,
-  lexicalEditor,
-  LinkFeature,
-  UploadFeature,
-} from "@payloadcms/richtext-lexical";
 
 export const createPostsCollection = ({
   mediaSlug,
@@ -29,8 +23,8 @@ export const createPostsCollection = ({
       type: "text",
       required: true,
       validate: (val: string | string[] | null | undefined) => {
-        if (val && typeof val === 'string' && /\s/.test(val)) {
-          return 'Slug must not contain whitespace';
+        if (val && typeof val === "string" && /\s/.test(val)) {
+          return "Slug must not contain whitespace";
         }
         return true;
       },
@@ -82,14 +76,6 @@ export const createPostsCollection = ({
       name: "content",
       type: "richText",
       required: true,
-      editor: lexicalEditor({
-        features: ({ defaultFeatures }) => [
-          ...defaultFeatures,
-          FixedToolbarFeature(),
-          UploadFeature({}),
-          LinkFeature({}),
-        ],
-      }),
     },
   ],
 });
