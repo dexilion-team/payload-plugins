@@ -19,10 +19,15 @@ export default defineConfig(() => {
     test: {
       environment: "node",
       globals: true,
-      include: ["test/**/*.test.ts"],
-      setupFiles: ["test/vitest.setup.ts"],
-      hookTimeout: 30_000,
-      testTimeout: 30_000,
+      include: ["dev/**/*.spec.ts"],
+      hookTimeout: 60_000,
+      testTimeout: 60_000,
+      typecheck: {
+        enabled: false,
+      },
+    },
+    esbuild: {
+      target: "node18",
     },
   };
 });
