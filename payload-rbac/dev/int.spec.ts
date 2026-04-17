@@ -58,7 +58,7 @@ describe("RBAC Plugin - Roles Collection", () => {
 });
 
 describe("RBAC Plugin - userHasPermission function", () => {
-  let testUserId: number;
+  let testUserId: string;
   let testRoleId: string;
 
   test("should create a test user with a role", async () => {
@@ -70,7 +70,7 @@ describe("RBAC Plugin - userHasPermission function", () => {
         password: "testpassword123",
       },
     });
-    testUserId = Number(user.id);
+    testUserId = user.id as string;
 
     // Create a role with specific permissions
     const role = await payload.create({
@@ -95,29 +95,9 @@ describe("RBAC Plugin - userHasPermission function", () => {
   });
 
   test("should return true when user has read permission", async () => {
-    // Create a mock request with user
     const mockReq = {
       user: { id: testUserId },
-      payload: {
-        find: async ({
-          collection,
-          where,
-        }: {
-          collection: CollectionSlug;
-          where: Record<string, unknown>;
-        }) => {
-          if (collection === "roles") {
-            const role = await payload.find({
-              collection: "roles",
-              where: {
-                users: { contains: testUserId },
-              },
-            });
-            return role;
-          }
-          return { docs: [] };
-        },
-      },
+      payload,
     } as any;
 
     const hasPermission = await userHasPermission({
@@ -363,7 +343,7 @@ describe("RBAC Plugin - Users collection has roles field", () => {
 });
 
 describe("RBAC Plugin - Integration with collection access", () => {
-  let restrictedUserId: number;
+  let restrictedUserId: string;
   let restrictedRoleId: string;
 
   test("should enforce RBAC when used with collection access control", async () => {
@@ -375,7 +355,7 @@ describe("RBAC Plugin - Integration with collection access", () => {
         password: "testpassword123",
       },
     });
-    restrictedUserId = Number(user.id);
+    restrictedUserId = user.id as string;
 
     // Create a role with only read permission
     const role = await payload.create({
