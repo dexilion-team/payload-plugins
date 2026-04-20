@@ -1,4 +1,9 @@
-import { Block, CollectionSlug, Config } from "payload";
+import {
+  Block,
+  CollectionBeforeReadHook,
+  CollectionSlug,
+  Config,
+} from "payload";
 
 type CollectionFieldMap = {
   slug: CollectionSlug;
@@ -16,11 +21,15 @@ const dynamicBlocks = ({
   enable,
 }: PluginOptions) => {
   return async (incomingConfig: Config): Promise<Config> => {
-    if (!enable) {
+    if (enable === false) {
       return incomingConfig;
     }
 
     const config = { ...incomingConfig };
+
+    for (const collectionSlug of collectionsToAugment) {
+      injectBlocksIntoCollection(collectionSlug, config);
+    }
 
     return config;
   };
@@ -56,13 +65,48 @@ const injectBlocksIntoCollection = (
       name: blockFieldName,
       type: "blocks",
       virtual: true,
-      blocks: [],
+      blocks: [{ slug: "placeholder", fields: [] }], // HACK: Needed to avoid Payload UI crash
+      filterOptions: ({ siblingData }) => {
+        console.log("Filter options called with siblingData:", siblingData);
+        return [];
+      },
+      hooks: {
+        beforeChange: [
+          ({ siblingData }) => {
+            console.log(
+              "Before change hook triggered for dynamic blocks field",
+            );
+          },
+        ],
+        afterRead: [
+          async ({ value }) => {
+            console.log("After read hook triggered for dynamic blocks field");
+            return value as Block[];
+          },
+        ],
+      },
     },
     {
       name: contentFieldName,
       type: "json",
+      admin: {
+        hidden: true,
+      },
     },
   ];
+
+  const beforeReadHook: CollectionBeforeReadHook<{ id: string }> = async ({
+    doc,
+    req,
+  }) => {
+    console.log(JSON.stringify(doc));
+    return doc;
+  };
+
+  collection.hooks = {
+    ...(collection.hooks || {}),
+    beforeRead: [...(collection.hooks?.beforeRead || []), beforeReadHook],
+  };
 };
 
 export default dynamicBlocks;

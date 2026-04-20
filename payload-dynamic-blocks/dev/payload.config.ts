@@ -42,7 +42,12 @@ const buildConfigWithMemoryDB = async () => {
     collections: [
       {
         slug: "posts",
-        fields: [],
+        fields: [
+          {
+            name: "title",
+            type: "text",
+          },
+        ],
       },
       {
         slug: "media",
@@ -72,7 +77,7 @@ const buildConfigWithMemoryDB = async () => {
     },
     plugins: [
       dynamicBlocks({
-        collections: [],
+        collections: ["posts"],
       }),
     ],
     secret: process.env.PAYLOAD_SECRET || "test-secret_key",
