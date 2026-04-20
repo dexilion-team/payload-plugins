@@ -1,8 +1,7 @@
 {
-  "name": "@dexilion/package-template",
-  "version": "0.0.0",
-  "description": "Description of the package",
-  "private": true,
+  "name": "@dexilion/payload-dynamic-blocks",
+  "version": "3.82.1",
+  "description": "Dynamic blocks for Payload CMS, allowing for flexible content structures.",
   "author": "Dexilion",
   "license": "MIT",
   "type": "module",

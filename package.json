@@ -17,6 +17,8 @@
     "@payloadcms/richtext-lexical": "3.82.1",
     "@payloadcms/ui": "3.82.1",
     "mongodb-memory-server": "10.1.4",
+    "node-addon-api": "^8.7.0",
+    "node-gyp": "^12.2.0",
     "payload": "3.82.1",
     "sharp": "^0.34.5",
     "vitest": "^4.1.4",

@@ -3,7 +3,7 @@ import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import path from "path";
 import { buildConfig } from "payload";
-import { myPlugin } from "../src";
+import dynamicBlocks from "../src";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
 
@@ -71,8 +71,8 @@ const buildConfigWithMemoryDB = async () => {
       await seed(payload);
     },
     plugins: [
-      myPlugin({
-        // Configure your plugin options here
+      dynamicBlocks({
+        collections: [],
       }),
     ],
     secret: process.env.PAYLOAD_SECRET || "test-secret_key",
