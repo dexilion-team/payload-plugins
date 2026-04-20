@@ -5,6 +5,9 @@ import {
   Config,
 } from "payload";
 
+import { createWidgetCollection } from "./collections/Widgets";
+import { createBlocksEndpoint } from "./endpoints/blocks";
+
 type CollectionFieldMap = {
   slug: CollectionSlug;
   blockFieldName?: string;
@@ -26,6 +29,18 @@ const dynamicBlocks = ({
     }
 
     const config = { ...incomingConfig };
+
+    // Inject the Widgets collection
+    config.collections = [
+      ...(config.collections || []),
+      createWidgetCollection(),
+    ];
+
+    // Inject blocks endpoint
+    config.endpoints = [
+      ...(config.endpoints || []),
+      createBlocksEndpoint(incomingConfig),
+    ];
 
     for (const collectionSlug of collectionsToAugment) {
       injectBlocksIntoCollection(collectionSlug, config);
@@ -63,12 +78,11 @@ const injectBlocksIntoCollection = (
     ...(collection.fields || []),
     {
       name: blockFieldName,
-      type: "blocks",
-      virtual: true,
-      blocks: [{ slug: "placeholder", fields: [] }], // HACK: Needed to avoid Payload UI crash
-      filterOptions: ({ siblingData }) => {
-        console.log("Filter options called with siblingData:", siblingData);
-        return [];
+      type: "json",
+      admin: {
+        components: {
+          Field: "@dexilion/payload-dynamic-blocks/client/WidgetField",
+        },
       },
       hooks: {
         beforeChange: [

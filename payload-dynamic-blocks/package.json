@@ -10,6 +10,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./client/WidgetField": {
+      "types": "./src/components/WidgetField.tsx",
+      "import": "./src/components/WidgetField.tsx",
+      "default": "./src/components/WidgetField.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -19,8 +24,10 @@
     "*.css"
   ],
   "peerDependencies": {
+    "@payloadcms/ui": "3.82.1",
     "payload": "3.82.1",
-    "@payloadcms/ui": "3.82.1"
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "engines": {
     "node": "^25.9.0 || ^24.14.1 || ^22.22.2 ",
@@ -39,14 +46,14 @@
     "@swc-node/register": "1.11.1",
     "@swc/cli": "0.8.1",
     "@types/node": "24.1.0",
-    "@types/react": "19.2.14",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "19.2.3",
     "cross-env": "^7.0.3",
     "eslint": "^10.1.0",
     "eslint-config-next": "16.2.2",
     "graphql": "^16.8.1",
-    "mongodb-memory-server": "10.1.4",
     "monaco-editor": ">= 0.25.0 < 1",
+    "mongodb-memory-server": "10.1.4",
     "next": "^16.2",
     "npm-run-all2": "^8",
     "payload": "3.82.1",
@@ -89,6 +96,11 @@
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
+      },
+      "./client/WidgetField": {
+        "types": "./src/components/WidgetField.js",
+        "import": "./src/components/WidgetField.js",
+        "default": "./src/components/WidgetField.js"
       }
     },
     "main": "./dist/index.js",
