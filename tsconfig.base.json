@@ -26,7 +26,10 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@payload-config": ["../payload-config"]
+    }
   },
   "include": [
     "./src/**/*.ts",
