@@ -11,13 +11,6 @@ export function rbacAccess(principal: string, action: PermissionAction) {
     const result = await userHasPermission({ req, principal, action });
     console.log(`[RBAC] Result:`, result);
 
-    // Throw an error if permission is denied
-    if (!result) {
-      throw new Error(
-        `Unauthorized: User does not have ${action} permission on ${principal}`,
-      );
-    }
-
     return result;
   };
 }

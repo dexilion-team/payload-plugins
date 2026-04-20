@@ -1,5 +1,4 @@
 import type { Payload } from "payload";
-import type { CollectionSlug } from "payload";
 
 import config from "@payload-config";
 import { getPayload } from "payload";
@@ -114,17 +113,7 @@ describe("RBAC Plugin - userHasPermission function", () => {
   test("should return true when user has create permission", async () => {
     const mockReq = {
       user: { id: testUserId },
-      payload: {
-        find: async ({ collection }: { collection: CollectionSlug }) => {
-          if (collection === "roles") {
-            return payload.find({
-              collection: "roles",
-              where: { users: { contains: testUserId } },
-            });
-          }
-          return { docs: [] };
-        },
-      },
+      payload,
     } as any;
 
     const hasPermission = await userHasPermission({
@@ -139,17 +128,7 @@ describe("RBAC Plugin - userHasPermission function", () => {
   test("should return false when user does NOT have delete permission", async () => {
     const mockReq = {
       user: { id: testUserId },
-      payload: {
-        find: async ({ collection }: { collection: CollectionSlug }) => {
-          if (collection === "roles") {
-            return payload.find({
-              collection: "roles",
-              where: { users: { contains: testUserId } },
-            });
-          }
-          return { docs: [] };
-        },
-      },
+      payload,
     } as any;
 
     const hasPermission = await userHasPermission({
@@ -164,9 +143,7 @@ describe("RBAC Plugin - userHasPermission function", () => {
   test("should return false when user has no roles", async () => {
     const mockReq = {
       user: { id: 99999 },
-      payload: {
-        find: async () => ({ docs: [] }),
-      },
+      payload,
     } as any;
 
     const hasPermission = await userHasPermission({
@@ -226,17 +203,7 @@ describe("RBAC Plugin - userHasPermission function", () => {
 
     const mockReq = {
       user: { id: testUserId },
-      payload: {
-        find: async ({ collection }: { collection: CollectionSlug }) => {
-          if (collection === "roles") {
-            return payload.find({
-              collection: "roles",
-              where: { users: { contains: testUserId } },
-            });
-          }
-          return { docs: [] };
-        },
-      },
+      payload,
     } as any;
 
     // Should have read permission for posts
@@ -267,17 +234,7 @@ describe("RBAC Plugin - userHasPermission function", () => {
   test("should handle array of principals", async () => {
     const mockReq = {
       user: { id: testUserId },
-      payload: {
-        find: async ({ collection }: { collection: CollectionSlug }) => {
-          if (collection === "roles") {
-            return payload.find({
-              collection: "roles",
-              where: { users: { contains: testUserId } },
-            });
-          }
-          return { docs: [] };
-        },
-      },
+      payload,
     } as any;
 
     // Check if user has permission for any of the principals
@@ -395,6 +352,7 @@ describe("RBAC Plugin - Integration with collection access", () => {
     // Try to read posts (should succeed)
     const { docs: posts } = await payload.find({
       collection: "posts",
+      overrideAccess: false,
       req: { user: { id: restrictedUserId } } as any,
     });
 

@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import { devUser } from "./helpers/credentials";
 import { testEmailAdapter } from "./helpers/testEmailAdapter";
 import { seed } from "./seed";
+import { applyRbacToCollections } from "../src/security/rbacAccess";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -62,7 +63,8 @@ const buildConfigWithMemoryDB = async () => {
         password: devUser.password,
       },
     },
-    collections,
+    // Example usage of the RBAC plugin
+    collections: applyRbacToCollections(collections),
     db: mongooseAdapter({
       ensureIndexes: true,
       url: process.env.DATABASE_URL || "",

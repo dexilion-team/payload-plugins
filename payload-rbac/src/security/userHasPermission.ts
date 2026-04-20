@@ -35,6 +35,12 @@ export default async function userHasPermission({
     req,
   });
 
+  // If no roles exist anywhere in the system yet, allow access (bootstrap mode)
+  const { totalDocs } = await req.payload.count({
+    collection: "roles" as CollectionSlug,
+  });
+  if (totalDocs === 0) return true;
+
   for (const role of userRoles.docs) {
     // @ts-ignore
     const permissions = role.permissions || {};
