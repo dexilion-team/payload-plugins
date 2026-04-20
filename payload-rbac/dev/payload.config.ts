@@ -28,6 +28,29 @@ const buildConfigWithMemoryDB = async () => {
 
   process.env.DATABASE_URL = `${memoryDB.getUri()}&retryWrites=true`;
 
+  const collections = [
+    {
+      slug: "posts",
+      fields: [],
+    },
+    {
+      slug: "media",
+      fields: [],
+      upload: {
+        staticDir: path.resolve(dirname, "media"),
+      },
+    },
+    {
+      slug: "users",
+      auth: true,
+      admin: {
+        useAsTitle: "email",
+        defaultColumns: ["email", "updatedAt", "createdAt"],
+      },
+      fields: [],
+    },
+  ];
+
   return buildConfig({
     admin: {
       importMap: {
@@ -39,28 +62,7 @@ const buildConfigWithMemoryDB = async () => {
         password: devUser.password,
       },
     },
-    collections: [
-      {
-        slug: "posts",
-        fields: [],
-      },
-      {
-        slug: "media",
-        fields: [],
-        upload: {
-          staticDir: path.resolve(dirname, "media"),
-        },
-      },
-      {
-        slug: "users",
-        auth: true,
-        admin: {
-          useAsTitle: "email",
-          defaultColumns: ["email", "updatedAt", "createdAt"],
-        },
-        fields: [],
-      },
-    ],
+    collections,
     db: mongooseAdapter({
       ensureIndexes: true,
       url: process.env.DATABASE_URL || "",

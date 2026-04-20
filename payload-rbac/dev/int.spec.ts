@@ -5,7 +5,6 @@ import config from "@payload-config";
 import { getPayload } from "payload";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
-import { devUser } from "./helpers/credentials";
 import userHasPermission from "../src/security/userHasPermission";
 
 let payload: Payload;
@@ -62,7 +61,6 @@ describe("RBAC Plugin - userHasPermission function", () => {
   let testRoleId: string;
 
   test("should create a test user with a role", async () => {
-    // Create a test user
     const user = await payload.create({
       collection: "users",
       data: {
@@ -72,26 +70,30 @@ describe("RBAC Plugin - userHasPermission function", () => {
     });
     testUserId = user.id as string;
 
-    // Create a role with specific permissions
     const role = await payload.create({
       collection: "roles",
       data: {
         role: "posts-editor",
         users: [user.id],
         permissions: {
-          posts: {
-            read: true,
-            create: true,
-            update: true,
-            delete: false,
-          },
+          posts: { read: true, create: true, update: true, delete: false },
         },
       },
     });
     testRoleId = role.id as string;
 
-    expect(testUserId).toBeDefined();
-    expect(testRoleId).toBeDefined();
+    expect(user.email).toBe("test-rbac-user@example.com");
+    expect(role.role).toBe("posts-editor");
+    expect(role.permissions?.posts).toMatchObject({
+      read: true,
+      create: true,
+      update: true,
+      delete: false,
+    });
+    // verify the user was actually associated with the role
+    expect(role.users).toContainEqual(
+      expect.objectContaining({ id: testUserId }),
+    );
   });
 
   test("should return true when user has read permission", async () => {

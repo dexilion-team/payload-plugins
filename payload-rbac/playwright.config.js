@@ -6,6 +6,10 @@ import { defineConfig, devices } from "@playwright/test";
  */
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "dev/.env") });
 
 /**
@@ -33,7 +37,7 @@ export default defineConfig({
   ],
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:3001",
+    baseURL: "http://localhost:3000",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
@@ -41,6 +45,6 @@ export default defineConfig({
   webServer: {
     command: "pnpm dev",
     reuseExistingServer: true,
-    url: "http://localhost:3001/admin",
+    url: "http://localhost:3000/admin",
   },
 });
