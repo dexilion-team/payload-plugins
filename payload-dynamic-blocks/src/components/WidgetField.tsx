@@ -7,7 +7,7 @@ import type {
 
 import { getTranslation } from "@payloadcms/translations";
 import React, { Fragment, useCallback, useMemo } from "react";
-import { toast } from "sonner";
+
 import {
   Banner,
   BlocksDrawer,
@@ -524,4 +524,6 @@ const BlocksFieldComponent: BlocksFieldClientComponent = (props) => {
   );
 };
 
-export const BlocksField = withCondition(BlocksFieldComponent);
+const BlocksField = withCondition(BlocksFieldComponent);
+
+export default BlocksField;

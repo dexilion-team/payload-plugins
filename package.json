@@ -23,7 +23,9 @@
     "payload": "3.82.1",
     "sharp": "^0.34.5",
     "vite-tsconfig-paths": "6.1.1",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "@faceless-ui/modal": "3.0.0",
+    "@payloadcms/translations": "3.82.1"
   },
   "dependencies": {
     "@dexilion/payload-auditlog": "workspace:*",
