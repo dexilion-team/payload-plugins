@@ -81,7 +81,7 @@ const injectBlocksIntoCollection = (
       type: "json",
       admin: {
         components: {
-          Field: "@dexilion/payload-dynamic-blocks/client/WidgetField",
+          Field: "@dexilion/payload-dynamic-blocks/server/WidgetField",
         },
       },
       hooks: {
