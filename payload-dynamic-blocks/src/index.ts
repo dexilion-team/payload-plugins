@@ -6,7 +6,6 @@ import {
 } from "payload";
 
 import { createWidgetCollection } from "./collections/Widgets";
-import { createBlocksEndpoint } from "./endpoints/blocks";
 
 type CollectionFieldMap = {
   slug: CollectionSlug;
@@ -34,12 +33,6 @@ const dynamicBlocks = ({
     config.collections = [
       ...(config.collections || []),
       createWidgetCollection(),
-    ];
-
-    // Inject blocks endpoint
-    config.endpoints = [
-      ...(config.endpoints || []),
-      createBlocksEndpoint(incomingConfig),
     ];
 
     for (const collectionSlug of collectionsToAugment) {
