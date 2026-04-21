@@ -23,6 +23,24 @@ const WidgetField: BlocksFieldServerComponent = (props) => {
             type: "text",
             label: "Text",
           },
+          {
+            name: "content",
+            type: "richText",
+            label: "Content",
+            required: true,
+            editor: payload.config.editor, // <-- This is required, override from field definition if needed
+            // admin: {
+            //   components: {
+            //     Field: "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField",
+            //   },
+            // },
+          },
+          {
+            name: "featured",
+            type: "relationship",
+            label: "Featured Item",
+            relationTo: "media",
+          },
         ],
       },
     ],

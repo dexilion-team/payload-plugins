@@ -47,6 +47,10 @@ const buildConfigWithMemoryDB = async () => {
             name: "title",
             type: "text",
           },
+          {
+            name: "moreText",
+            type: "richText",
+          },
         ],
       },
       {

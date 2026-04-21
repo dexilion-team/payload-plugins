@@ -165,26 +165,26 @@ export const BlockRow: React.FC<BlocksFieldProps> = ({
       }}
     >
       <Collapsible
-        actions={
-          !readOnly ? (
-            <RowActions
-              addRow={addRow}
-              blocks={blocks}
-              blockType={row.blockType}
-              copyRow={copyRow}
-              duplicateRow={duplicateRow}
-              fields={block.fields}
-              hasMaxRows={hasMaxRows}
-              isSortable={isSortable}
-              labels={labels}
-              moveRow={moveRow}
-              pasteRow={pasteRow}
-              removeRow={removeRow}
-              rowCount={rowCount}
-              rowIndex={rowIndex}
-            />
-          ) : undefined
-        }
+        // actions={
+        //   !readOnly ? (
+        //     <RowActions
+        //       addRow={addRow}
+        //       blocks={blocks}
+        //       blockType={row.blockType}
+        //       copyRow={copyRow}
+        //       duplicateRow={duplicateRow}
+        //       fields={block.fields}
+        //       hasMaxRows={hasMaxRows}
+        //       isSortable={isSortable}
+        //       labels={labels}
+        //       moveRow={moveRow}
+        //       pasteRow={pasteRow}
+        //       removeRow={removeRow}
+        //       rowCount={rowCount}
+        //       rowIndex={rowIndex}
+        //     />
+        //   ) : undefined
+        // }
         className={classNames}
         collapsibleStyle={fieldHasErrors ? "error" : "default"}
         dragHandleProps={
