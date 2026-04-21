@@ -22,9 +22,6 @@ export default defineConfig(() => {
       include: ["dev/**/*.spec.ts"],
       hookTimeout: 60_000,
       testTimeout: 60_000,
-      typecheck: {
-        enabled: false,
-      },
     },
     esbuild: {
       target: "node18",

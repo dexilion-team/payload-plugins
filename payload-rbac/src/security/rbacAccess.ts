@@ -4,12 +4,7 @@ import { PermissionAction } from "../components/admin/PermissionsField";
 // Enable RBAC access control for specific mode of a collection
 export function rbacAccess(principal: string, action: PermissionAction) {
   return async ({ req }: { req: any }) => {
-    console.log(
-      `[RBAC] Checking ${action} on ${principal} for user`,
-      req.user?.id,
-    );
     const result = await userHasPermission({ req, principal, action });
-    console.log(`[RBAC] Result:`, result);
 
     return result;
   };
@@ -42,8 +37,31 @@ export function rbacAccessAll(principal: string) {
 //   // ...
 // });
 export function applyRbacToCollections(collections: any[]) {
-  return collections.map((col) => ({
-    ...col,
-    access: rbacAccessAll(col.slug),
-  }));
+  return collections.map((col) => {
+    const rbac = rbacAccessAll(col.slug);
+    const existing = col.access || {};
+
+    const merged: Record<string, any> = {};
+
+    for (const action of ["create", "read", "update", "delete"] as const) {
+      const rbacFn = rbac[action];
+      const existingFn = existing[action];
+
+      if (existingFn) {
+        // Both must pass
+        merged[action] = async (args: any) => {
+          const rbacResult = await rbacFn(args);
+          if (!rbacResult) return false;
+          return existingFn(args);
+        };
+      } else {
+        merged[action] = rbacFn;
+      }
+    }
+
+    return {
+      ...col,
+      access: merged,
+    };
+  });
 }
