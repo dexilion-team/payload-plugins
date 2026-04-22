@@ -130,7 +130,6 @@ const WidgetField: BlocksFieldServerComponent = (props) => {
           type: "relationship",
           label: "Featured Item",
           relationTo: "media",
-          //hidden: true, // <-- Hack to override validation
         },
       ],
     },
@@ -148,13 +147,6 @@ const WidgetField: BlocksFieldServerComponent = (props) => {
     );
   }
 
-  const clientBlocks: ClientBlock[] = createClientBlocks({
-    blocks,
-    i18n: i18n,
-    defaultIDType: payload.config.db.defaultIDType,
-    importMap: payload.importMap,
-  }) as ClientBlock[];
-
   // Prepare for validation
   const flattenedFields = flattenAllFields({ fields: blocks[0]!.fields });
   payload.blocks = {
@@ -163,6 +155,14 @@ const WidgetField: BlocksFieldServerComponent = (props) => {
       flattenedFields: flattenedFields,
     } as FlattenedBlock,
   };
+
+  // Create client blocks for rendering in the admin UI
+  const clientBlocks: ClientBlock[] = createClientBlocks({
+    blocks,
+    i18n: i18n,
+    defaultIDType: payload.config.db.defaultIDType,
+    importMap: payload.importMap,
+  }) as ClientBlock[];
 
   return (
     <BlocksField

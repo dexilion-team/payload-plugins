@@ -72,22 +72,34 @@ const injectBlocksIntoCollection = (
     {
       name: blockFieldName,
       type: "blocks",
-      blocks: [{ slug: "__placeholder__", fields: [] }],
+      blocks: [{ slug: "__placeholder__", fields: [] }], // <-- Placeholder, invisible block so initial rendering doesn't break.
       admin: {
         components: {
           Field: "@dexilion/payload-dynamic-blocks/server/WidgetField",
         },
       },
       hooks: {
+        afterChange: [
+          async ({ value, data, blockData }) => {
+            console.log(
+              "After change hook triggered for dynamic blocks field",
+              JSON.stringify({ value, data, blockData }),
+            );
+            // Here you could add logic to, for example, validate the blocks or transform them before saving.
+            return value;
+          },
+        ],
         beforeChange: [
-          ({ siblingData }) => {
+          ({ siblingData, value }) => {
             console.log(
               "Before change hook triggered for dynamic blocks field",
             );
+
+            return value;
           },
         ],
         afterRead: [
-          async ({ value }) => {
+          async ({ value, data, blockData }) => {
             console.log("After read hook triggered for dynamic blocks field");
             return value as Block[];
           },
@@ -103,18 +115,18 @@ const injectBlocksIntoCollection = (
     },
   ];
 
-  const beforeReadHook: CollectionBeforeReadHook<{ id: string }> = async ({
-    doc,
-    req,
-  }) => {
-    console.log(JSON.stringify(doc));
-    return doc;
-  };
+  // const beforeReadHook: CollectionBeforeReadHook<{ id: string }> = async ({
+  //   doc,
+  //   req,
+  // }) => {
+  //   console.log("Global before read", JSON.stringify(doc));
+  //   return doc;
+  // };
 
-  collection.hooks = {
-    ...(collection.hooks || {}),
-    beforeRead: [...(collection.hooks?.beforeRead || []), beforeReadHook],
-  };
+  // collection.hooks = {
+  //   ...(collection.hooks || {}),
+  //   beforeRead: [...(collection.hooks?.beforeRead || []), beforeReadHook],
+  // };
 };
 
 export default dynamicBlocks;

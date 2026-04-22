@@ -43,14 +43,14 @@ const buildConfigWithMemoryDB = async () => {
       {
         slug: "posts",
         fields: [
-          {
-            name: "title",
-            type: "text",
-          },
-          {
-            name: "moreText",
-            type: "richText",
-          },
+          // {
+          //   name: "title",
+          //   type: "text",
+          // },
+          // {
+          //   name: "moreText",
+          //   type: "richText",
+          // },
         ],
       },
       {
