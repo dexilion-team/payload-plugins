@@ -71,7 +71,8 @@ const injectBlocksIntoCollection = (
     ...(collection.fields || []),
     {
       name: blockFieldName,
-      type: "json",
+      type: "blocks",
+      blocks: [{ slug: "__placeholder__", fields: [] }],
       admin: {
         components: {
           Field: "@dexilion/payload-dynamic-blocks/server/WidgetField",
