@@ -33,14 +33,6 @@ export const createPostsCollection = ({
       },
     },
     {
-      name: "date",
-      type: "date",
-      required: true,
-      admin: {
-        position: "sidebar",
-      },
-    },
-    {
       name: "titleImage",
       type: "upload",
       relationTo: mediaSlug,
