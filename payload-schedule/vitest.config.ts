@@ -16,6 +16,11 @@ export default defineConfig(() => {
         ignoreConfigErrors: true,
       }),
     ],
+    resolve: {
+      alias: {
+        "@payload-config": path.resolve(dirname, "./dev/payload.config.ts"),
+      },
+    },
     test: {
       environment: "node",
       globals: true,

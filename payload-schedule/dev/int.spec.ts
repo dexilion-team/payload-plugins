@@ -51,11 +51,18 @@ describe("payload-schedule plugin integration tests", () => {
     futureDate.setDate(futureDate.getDate() + 7);
     const scheduledDate = futureDate.toISOString().split("T")[0];
 
+    const user = await payload.find({
+      collection: "users",
+      where: { email: { equals: "dev@payloadcms.com" } },
+    });
+
     const post = await payload.create({
       collection: "posts",
       data: {
         title: "Test Scheduled Post",
         slug: "test-scheduled-post",
+        excerpt: "Test excerpt",
+        author: user.docs[0]!.id,
         content: {
           root: {
             type: "root",
