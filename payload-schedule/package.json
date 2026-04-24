@@ -28,6 +28,7 @@
     "pnpm": "^9 || ^10"
   },
   "devDependencies": {
+    "@dexilion/payload-blog": "workspace:*",
     "@eslint/eslintrc": "^3.3.5",
     "@payloadcms/db-mongodb": "3.82.1",
     "@payloadcms/db-postgres": "3.82.1",

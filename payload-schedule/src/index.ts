@@ -5,6 +5,7 @@ import type {
   Field,
   Payload,
 } from "payload";
+import { ValidationError } from "payload";
 
 export type PayloadSchedulePluginOptions = {
   /**
@@ -48,21 +49,6 @@ const createScheduleField = (
         pickerAppearance: "dayOnly",
         displayFormat: "d MMM yyyy",
       },
-    },
-    validate: (value: string | string[] | Date | null | undefined) => {
-      if (!value) return true;
-
-      const dateValue =
-        value instanceof Date ? value : new Date(value as string);
-      if (isNaN(dateValue.getTime())) return "Invalid date";
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const normalized = new Date(dateValue);
-      normalized.setHours(0, 0, 0, 0);
-      if (normalized < today) return "Scheduled date cannot be in the past";
-
-      return true;
     },
   };
 
@@ -158,6 +144,32 @@ export const schedulePlugin =
           return {
             ...collection,
             fields: [...(collection.fields || []), scheduleField],
+            hooks: {
+              ...collection.hooks,
+              beforeChange: [
+                ...(collection.hooks?.beforeChange ?? []),
+                ({ data, req }: { data: any; req: any }) => {
+                  if (!data[SCHEDULE_FIELD_NAME]) return data;
+                  const startOfToday = new Date();
+                  startOfToday.setUTCHours(0, 0, 0, 0);
+                  if (new Date(data[SCHEDULE_FIELD_NAME]) < startOfToday) {
+                    throw new ValidationError(
+                      {
+                        errors: [
+                          {
+                            path: SCHEDULE_FIELD_NAME,
+                            message: "Scheduled date cannot be in the past",
+                          },
+                        ],
+                        req,
+                      },
+                      req.t,
+                    );
+                  }
+                  return data;
+                },
+              ],
+            },
           };
         }
         return collection;
