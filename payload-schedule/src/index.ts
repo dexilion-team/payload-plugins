@@ -158,6 +158,7 @@ export const schedulePlugin =
                         errors: [
                           {
                             path: SCHEDULE_FIELD_NAME,
+                            label: "Schedule for publication",
                             message: "Scheduled date cannot be in the past",
                           },
                         ],
