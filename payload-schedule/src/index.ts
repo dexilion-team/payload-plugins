@@ -52,10 +52,16 @@ const createScheduleField = (
     validate: (value: string | string[] | Date | null | undefined) => {
       if (!value) return true;
 
-      // Accept a Date object or a string
       const dateValue =
         value instanceof Date ? value : new Date(value as string);
       if (isNaN(dateValue.getTime())) return "Invalid date";
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const normalized = new Date(dateValue);
+      normalized.setHours(0, 0, 0, 0);
+      if (normalized < today) return "Scheduled date cannot be in the past";
+
       return true;
     },
   };
@@ -160,41 +166,32 @@ export const schedulePlugin =
     // Add cron job task to handle scheduled publications
     const scheduleTaskSlug = "publishScheduled" as const;
 
-    const jobs = (config.jobs = config.jobs ?? ({} as any));
-    if (!jobs.tasks) jobs.tasks = [] as any;
-
-    // Check if task already exists before adding
-    const taskExists = (jobs.tasks as any).some(
-      (task: any) => task.slug === scheduleTaskSlug,
+    const existingTasks: any[] = (config.jobs?.tasks as any[]) ?? [];
+    const taskExists = existingTasks.some(
+      (task) => task.slug === scheduleTaskSlug,
     );
 
     if (!taskExists) {
-      // Payload expects the handler to return a TaskHandlerResult.
-      // Returning an empty object satisfies the type.
       const newTask = {
         slug: scheduleTaskSlug,
-        handler: async ({ payload }: { payload: Payload }) => {
+        schedule: [{ cron: "5 0 * * *", queue: "default" }],
+        handler: async ({ req }: { req: any }) => {
+          req.payload.logger.info(
+            `[@dexilion/payload-schedule] publishScheduled handler invoked at ${new Date().toISOString()}`,
+          );
           await handleScheduledPublications({
-            payload,
+            payload: req.payload,
             targetCollections,
             onPublish,
           });
-          // Minimal result to satisfy Payload's TaskHandlerResult type
-          return { output: {} } as any;
+          return { output: {} };
         },
       } as any;
 
-      (jobs.tasks as any).push(newTask);
-
-      // Add a default schedule (midnight daily) if the user hasn't provided one
-      if (!newTask.schedule) {
-        newTask.schedule = [
-          {
-            cron: "0 0 * * *",
-            queue: "default",
-          },
-        ];
-      }
+      config.jobs = {
+        ...(config.jobs ?? {}),
+        tasks: [...existingTasks, newTask],
+      };
     }
 
     return config;
@@ -209,9 +206,11 @@ async function handleScheduledPublications({
   targetCollections: CollectionSlug[];
   onPublish?: PayloadSchedulePluginOptions["onPublish"];
 }) {
-  // Use UTC date for consistent comparison across timezones
   const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
+  // Payload stores day-only dates at noon UTC; compare against end-of-day so
+  // any document scheduled for "today" is caught regardless of stored time component.
+  const endOfDay = new Date(now);
+  endOfDay.setUTCHours(23, 59, 59, 999);
 
   for (const collectionSlug of targetCollections) {
     const collection = payload.config.collections?.find(
@@ -226,9 +225,13 @@ async function handleScheduledPublications({
 
     while (hasMore) {
       try {
-        // Find all draft documents with scheduled date <= today
+        // Find all draft documents with scheduled date <= end of today (UTC).
+        // draft: true is required to query the versions collection where draft-only docs live.
+        // Payload stores day-only dates at noon UTC, so using end-of-day ensures we
+        // catch all documents scheduled for "today" when the cron runs at 00:05.
         const result = await payload.find({
           collection: collectionSlug as CollectionSlug,
+          draft: true,
           where: {
             and: [
               {
@@ -238,7 +241,7 @@ async function handleScheduledPublications({
               },
               {
                 [SCHEDULE_FIELD_NAME]: {
-                  less_than_equal: todayStr,
+                  less_than_equal: endOfDay.toISOString(),
                 },
               },
             ],
@@ -248,23 +251,24 @@ async function handleScheduledPublications({
           depth: 0,
         });
 
+        payload.logger.info(
+          `[@dexilion/payload-schedule] Found ${result.docs.length} documents to publish in "${collectionSlug}" (page ${page})`,
+        );
+
         if (result.docs.length === 0) {
           hasMore = false;
           continue;
         }
 
-        payload.logger.info(
-          `[@dexilion/payload-schedule] Found ${result.docs.length} documents to publish in "${collectionSlug}" (page ${page})`,
-        );
-
         for (const doc of result.docs) {
           try {
-            // Update the document status to published
+            // Publish the document and clear the scheduled date
             const updatedDoc = await payload.update({
               collection: collectionSlug as CollectionSlug,
               id: doc.id,
               data: {
                 _status: "published",
+                [SCHEDULE_FIELD_NAME]: null,
               } as any,
               depth: 0,
             });

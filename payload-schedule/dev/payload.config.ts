@@ -44,7 +44,6 @@ const buildConfigWithMemoryDB = async () => {
         slug: "posts",
         admin: {
           useAsTitle: "title",
-          defaultColumns: ["title", "slug", "updatedAt"],
         },
         fields: [
           {

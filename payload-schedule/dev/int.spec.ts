@@ -43,7 +43,7 @@ describe("payload-schedule plugin integration tests", () => {
     ) as any;
     expect(scheduleTask?.schedule).toBeDefined();
     expect(scheduleTask?.schedule).toHaveLength(1);
-    expect(scheduleTask?.schedule?.[0]?.cron).toBe("0 0 * * *");
+    expect(scheduleTask?.schedule?.[0]?.cron).toBe("5 0 * * *");
   });
 
   test("can create post with scheduledAt date", async () => {
