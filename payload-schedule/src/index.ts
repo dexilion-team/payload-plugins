@@ -44,6 +44,10 @@ const createScheduleField = (
     admin: {
       description: "Set a date to automatically publish this document",
       position: "sidebar",
+      date: {
+        pickerAppearance: "dayOnly",
+        displayFormat: "d MMM yyyy",
+      },
     },
     validate: (value: string | string[] | Date | null | undefined) => {
       if (!value) return true;
@@ -120,8 +124,7 @@ export const schedulePlugin =
 
       const versions = collection.versions;
       const isDraftEnabled =
-        versions === true ||
-        (typeof versions === "object" && versions?.drafts === true);
+        typeof versions === "object" && versions?.drafts === true;
 
       if (!isDraftEnabled) {
         throw new Error(
@@ -155,14 +158,12 @@ export const schedulePlugin =
       }) ?? [];
 
     // Add cron job task to handle scheduled publications
-    const existingTasks = config.jobs?.tasks || [];
-    // Add cron job task to handle scheduled publications
     const scheduleTaskSlug = "publishScheduled" as const;
 
     const jobs = (config.jobs = config.jobs ?? ({} as any));
     if (!jobs.tasks) jobs.tasks = [] as any;
 
-    // Now we can safely inspect the task list
+    // Check if task already exists before adding
     const taskExists = (jobs.tasks as any).some(
       (task: any) => task.slug === scheduleTaskSlug,
     );
@@ -178,14 +179,14 @@ export const schedulePlugin =
             targetCollections,
             onPublish,
           });
-          // Minimal result to satisfy Payload’s TaskHandlerResult type
+          // Minimal result to satisfy Payload's TaskHandlerResult type
           return { output: {} } as any;
         },
       } as any;
 
       (jobs.tasks as any).push(newTask);
 
-      // Add a default schedule (midnight daily) if the user hasn’t provided one
+      // Add a default schedule (midnight daily) if the user hasn't provided one
       if (!newTask.schedule) {
         newTask.schedule = [
           {
@@ -208,10 +209,9 @@ async function handleScheduledPublications({
   targetCollections: CollectionSlug[];
   onPublish?: PayloadSchedulePluginOptions["onPublish"];
 }) {
+  // Use UTC date for consistent comparison across timezones
   const now = new Date();
-  // Set to start of day for comparison
-  now.setHours(0, 0, 0, 0);
-  const todayStr = now.toISOString().split("T")[0] as string;
+  const todayStr = now.toISOString().split("T")[0];
 
   for (const collectionSlug of targetCollections) {
     const collection = payload.config.collections?.find(
@@ -220,74 +220,89 @@ async function handleScheduledPublications({
 
     if (!collection) continue;
 
-    try {
-      // Find all draft documents with scheduled date <= today
-      const result = await payload.find({
-        collection: collectionSlug as CollectionSlug,
-        where: {
-          and: [
-            {
-              _status: {
-                equals: "draft",
+    let hasMore = true;
+    let page = 1;
+    const pageLimit = 100;
+
+    while (hasMore) {
+      try {
+        // Find all draft documents with scheduled date <= today
+        const result = await payload.find({
+          collection: collectionSlug as CollectionSlug,
+          where: {
+            and: [
+              {
+                _status: {
+                  equals: "draft",
+                },
               },
-            },
-            {
-              [SCHEDULE_FIELD_NAME]: {
-                less_than_equal: todayStr,
+              {
+                [SCHEDULE_FIELD_NAME]: {
+                  less_than_equal: todayStr,
+                },
               },
-            },
-          ],
-        },
-        limit: 100,
-        depth: 0,
-      });
+            ],
+          },
+          limit: pageLimit,
+          page,
+          depth: 0,
+        });
 
-      if (result.docs.length === 0) continue;
-
-      payload.logger.info(
-        `[@dexilion/payload-schedule] Found ${result.docs.length} documents to publish in "${collectionSlug}"`,
-      );
-
-      for (const doc of result.docs) {
-        try {
-          // Update the document status to published
-          const updatedDoc = await payload.update({
-            collection: collectionSlug as CollectionSlug,
-            id: doc.id,
-            data: {
-              _status: "published",
-            } as any,
-            depth: 0,
-          });
-
-          payload.logger.info(
-            `[@dexilion/payload-schedule] Published document ${doc.id} in "${collectionSlug}"`,
-          );
-
-          // Call the onPublish callback if provided
-          if (onPublish) {
-            try {
-              await onPublish({
-                doc: updatedDoc,
-                collection,
-                payload,
-              });
-            } catch (callbackError) {
-              payload.logger.error(
-                `[@dexilion/payload-schedule] Error in onPublish callback for document ${doc.id}: ${callbackError}`,
-              );
-            }
-          }
-        } catch (updateError) {
-          payload.logger.error(
-            `[@dexilion/payload-schedule] Failed to publish document ${doc.id} in "${collectionSlug}": ${updateError}`,
-          );
+        if (result.docs.length === 0) {
+          hasMore = false;
+          continue;
         }
+
+        payload.logger.info(
+          `[@dexilion/payload-schedule] Found ${result.docs.length} documents to publish in "${collectionSlug}" (page ${page})`,
+        );
+
+        for (const doc of result.docs) {
+          try {
+            // Update the document status to published
+            const updatedDoc = await payload.update({
+              collection: collectionSlug as CollectionSlug,
+              id: doc.id,
+              data: {
+                _status: "published",
+              } as any,
+              depth: 0,
+            });
+
+            payload.logger.info(
+              `[@dexilion/payload-schedule] Published document ${doc.id} in "${collectionSlug}"`,
+            );
+
+            // Call the onPublish callback if provided
+            if (onPublish) {
+              try {
+                await onPublish({
+                  doc: updatedDoc,
+                  collection,
+                  payload,
+                });
+              } catch (callbackError) {
+                payload.logger.error(
+                  `[@dexilion/payload-schedule] Error in onPublish callback for document ${doc.id}: ${callbackError}`,
+                );
+              }
+            }
+          } catch (updateError) {
+            payload.logger.error(
+              `[@dexilion/payload-schedule] Failed to publish document ${doc.id} in "${collectionSlug}": ${updateError}`,
+            );
+          }
+        }
+
+        // Check if there are more pages to process
+        hasMore = result.docs.length === pageLimit;
+        page++;
+      } catch (queryError) {
+        payload.logger.error(
+          `[@dexilion/payload-schedule] Error querying collection "${collectionSlug}": ${queryError}`,
+        );
+        hasMore = false;
       }
-    } catch (queryError) {
-      payload.logger.error(
-        `[@dexilion/payload-schedule] Error querying collection "${collectionSlug}": ${queryError}`,
-      );
     }
   }
 }

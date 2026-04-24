@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json",
   "exclude": [],
   "include": [
     "**/*.js",
@@ -11,16 +11,16 @@
     "../src/**/*.ts",
     "../src/**/*.tsx",
     "next.config.mjs",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
   ],
   "compilerOptions": {
     "paths": {
       "@payload-config": ["./payload.config.ts"],
       "plugin-package-name-placeholder": ["../src/index.ts"],
       "plugin-package-name-placeholder/client": ["../src/exports/client.ts"],
-      "plugin-package-name-placeholder/rsc": ["../src/exports/rsc.ts"]
+      "plugin-package-name-placeholder/rsc": ["../src/exports/rsc.ts"],
     },
     "noEmit": true,
-    "emitDeclarationOnly": false
-  }
+    "emitDeclarationOnly": false,
+  },
 }

@@ -1,8 +1,9 @@
-import type { Payload } from "payload";
+import type { CollectionSlug, Payload } from "payload";
 
 import config from "@payload-config";
 import { getPayload } from "payload";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { schedulePlugin } from "../src";
 
 let payload: Payload;
 
@@ -37,7 +38,9 @@ describe("payload-schedule plugin integration tests", () => {
 
   test("should have schedule configured for publishScheduled task", async () => {
     const tasks = payload.config.jobs?.tasks || [];
-    const scheduleTask = tasks.find((t) => t.slug === "publishScheduled");
+    const scheduleTask = tasks.find(
+      (t) => t.slug === "publishScheduled",
+    ) as any;
     expect(scheduleTask?.schedule).toBeDefined();
     expect(scheduleTask?.schedule).toHaveLength(1);
     expect(scheduleTask?.schedule?.[0]?.cron).toBe("0 0 * * *");
@@ -53,19 +56,36 @@ describe("payload-schedule plugin integration tests", () => {
       data: {
         title: "Test Scheduled Post",
         slug: "test-scheduled-post",
-        content: [],
+        content: {
+          root: {
+            type: "root",
+            children: [
+              {
+                type: "paragraph",
+                children: [{ type: "text", text: "Test content", version: 1 }],
+                direction: null,
+                format: "",
+                indent: 0,
+                version: 1,
+              },
+            ],
+            direction: null,
+            format: "",
+            indent: 0,
+            version: 1,
+          },
+        },
         scheduledAt: scheduledDate,
         _status: "draft",
       },
     });
 
-    expect(post.scheduledAt).toBe(scheduledDate);
+    expect(post.scheduledAt?.slice(0, 10)).toBe(scheduledDate);
     expect(post._status).toBe("draft");
   });
 
   test("should throw error when collection is not draft-enabled", () => {
     expect(() => {
-      const { schedulePlugin } = require("../src");
       const testConfig = {
         collections: [
           {
@@ -78,14 +98,13 @@ describe("payload-schedule plugin integration tests", () => {
 
       schedulePlugin({
         enabled: true,
-        collections: ["nonDraftCollection"],
+        collections: ["nonDraftCollection" as CollectionSlug],
       })(testConfig as any);
     }).toThrow("not draft-enabled");
   });
 
   test("should throw error when collection does not exist", () => {
     expect(() => {
-      const { schedulePlugin } = require("../src");
       const testConfig = {
         collections: [
           {
@@ -98,13 +117,12 @@ describe("payload-schedule plugin integration tests", () => {
 
       schedulePlugin({
         enabled: true,
-        collections: ["nonExistentCollection"],
+        collections: ["nonExistentCollection" as CollectionSlug],
       })(testConfig as any);
     }).toThrow("not found in Payload config");
   });
 
   test("should not modify config when plugin is disabled", () => {
-    const { schedulePlugin } = require("../src");
     const testConfig = {
       collections: [
         {

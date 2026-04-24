@@ -19,8 +19,8 @@ export default defineConfig(() => {
     test: {
       environment: "node",
       globals: true,
-      include: ["test/**/*.test.ts"],
-      setupFiles: ["test/vitest.setup.ts"],
+      include: ["dev/int.spec.ts"],
+      setupFiles: [],
       hookTimeout: 30_000,
       testTimeout: 30_000,
     },

@@ -2,12 +2,8 @@ import { expect, test } from "@playwright/test";
 
 test.describe("payload-schedule plugin e2e tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Login to admin panel
     await page.goto("/admin");
-    await page.fill("#field-email", "dev@payloadcms.com");
-    await page.fill("#field-password", "test");
-    await page.click(".form-submit button");
-    await page.waitForURL("/admin");
+    await page.waitForURL(/\/admin/);
   });
 
   test("should show scheduledAt field in posts collection", async ({
@@ -44,7 +40,7 @@ test.describe("payload-schedule plugin e2e tests", () => {
     // Set a future scheduled date
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7);
-    const dateStr = futureDate.toISOString().split("T")[0];
+    const dateStr = futureDate.toISOString().split("T")[0]!;
     await page.fill("#field-scheduledAt", dateStr);
 
     // Save as draft
