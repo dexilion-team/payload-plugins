@@ -10,16 +10,20 @@ test.describe("payload-schedule plugin e2e tests", () => {
     page,
   }) => {
     // Navigate to posts collection
-    await page.click('a[href="/admin/collections/posts"]');
-    await page.waitForURL("/admin/collections/posts");
+    await page.goto("/admin/collections/posts");
 
     // Create a new post
-    await page.click('button:has-text("Create")');
+    await page
+      .locator('a[href="/admin/collections/posts/create"]')
+      .nth(1)
+      .click();
     await page.waitForURL("/admin/collections/posts/create");
 
     // Check that scheduledAt field is visible in sidebar
     await expect(
-      page.locator('.field-input[name="scheduledAt"]'),
+      page.locator(
+        "#field-scheduledAt .react-datepicker__input-container input",
+      ),
     ).toBeVisible();
 
     // Check the label
@@ -30,18 +34,32 @@ test.describe("payload-schedule plugin e2e tests", () => {
 
   test("can create post with scheduled date", async ({ page }) => {
     // Navigate to posts collection and create new post
-    await page.click('a[href="/admin/collections/posts"]');
-    await page.click('button:has-text("Create")');
+    await page.goto("/admin/collections/posts");
+    await page
+      .locator('a[href="/admin/collections/posts/create"]')
+      .nth(1)
+      .click();
 
     // Fill in required fields
     await page.fill("#field-title", "Test Scheduled Post");
     await page.fill("#field-slug", "test-scheduled-post-e2e");
 
+    // Textarea
+    await page.fill("#field-excerpt", "Some excerpt text");
+
+    // Lexical editor (contenteditable)
+    await page.locator('[data-lexical-editor="true"]').click();
+    await page
+      .locator('[data-lexical-editor="true"]')
+      .fill("Some body content");
+
     // Set a future scheduled date
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7);
     const dateStr = futureDate.toISOString().split("T")[0]!;
-    await page.fill("#field-scheduledAt", dateStr);
+    await page
+      .locator("#field-scheduledAt .react-datepicker__input-container input")
+      .fill(dateStr);
 
     // Save as draft
     await page.click('button:has-text("Save")');
