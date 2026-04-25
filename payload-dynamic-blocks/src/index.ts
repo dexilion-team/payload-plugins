@@ -1,9 +1,4 @@
-import {
-  Block,
-  CollectionBeforeReadHook,
-  CollectionSlug,
-  Config,
-} from "payload";
+import { CollectionSlug, Config } from "payload";
 
 import { createWidgetCollection } from "./collections/Widgets";
 
@@ -67,8 +62,58 @@ const injectBlocksIntoCollection = (
     );
   }
 
+  // Collection-level beforeChange hook to capture dynamic block data into the json field.
+  // This fires before field-level processing, so it sees raw submitted data regardless
+  // of whether block types are configured in the schema.
+  collection.hooks = {
+    ...(collection.hooks || {}),
+    beforeChange: [
+      ...(collection.hooks?.beforeChange || []),
+      async ({ data }) => {
+        if (data) {
+          const blocksValue = data[blockFieldName];
+          if (Array.isArray(blocksValue)) {
+            data[contentFieldName] = blocksValue;
+          }
+        }
+        return data;
+      },
+    ],
+    afterRead: [
+      ...(collection.hooks?.afterRead || []),
+      async ({ doc }) => {
+        const contentValue = doc[contentFieldName];
+        if (Array.isArray(contentValue)) {
+          doc[blockFieldName] = contentValue;
+        }
+        return doc;
+      },
+    ],
+  };
+
+  // Placeholders - needed to import client components
+  config.blocks = config.blocks || [];
+  config.blocks.push({
+    custom: {
+      origin: "@dexilion/payload-dynamic-blocks",
+    },
+    slug: "__dynamic_block_placeholder__",
+    fields: [
+      {
+        name: "placeholderRichText",
+        type: "richText",
+        hidden: true,
+        virtual: true,
+        admin: {
+          hidden: true,
+        },
+      },
+    ],
+  });
+
   collection.fields = [
     ...(collection.fields || []),
+    // The "frontend" field that content editors interact with, rendered as blocks.
     {
       name: blockFieldName,
       type: "blocks",
@@ -99,13 +144,13 @@ const injectBlocksIntoCollection = (
           },
         ],
         afterRead: [
-          async ({ value, data, blockData }) => {
-            console.log("After read hook triggered for dynamic blocks field");
-            return value as Block[];
+          async ({ value }) => {
+            return value;
           },
         ],
       },
     },
+    // The "backend" field that stores the actual block data as JSON.
     {
       name: contentFieldName,
       type: "json",
@@ -114,19 +159,6 @@ const injectBlocksIntoCollection = (
       },
     },
   ];
-
-  // const beforeReadHook: CollectionBeforeReadHook<{ id: string }> = async ({
-  //   doc,
-  //   req,
-  // }) => {
-  //   console.log("Global before read", JSON.stringify(doc));
-  //   return doc;
-  // };
-
-  // collection.hooks = {
-  //   ...(collection.hooks || {}),
-  //   beforeRead: [...(collection.hooks?.beforeRead || []), beforeReadHook],
-  // };
 };
 
 export default dynamicBlocks;
