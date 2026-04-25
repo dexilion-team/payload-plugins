@@ -117,37 +117,11 @@ const injectBlocksIntoCollection = (
     {
       name: blockFieldName,
       type: "blocks",
-      blocks: [{ slug: "__placeholder__", fields: [] }], // <-- Placeholder, invisible block so initial rendering doesn't break.
+      blocks: [],
       admin: {
         components: {
           Field: "@dexilion/payload-dynamic-blocks/server/WidgetField",
         },
-      },
-      hooks: {
-        afterChange: [
-          async ({ value, data, blockData }) => {
-            console.log(
-              "After change hook triggered for dynamic blocks field",
-              JSON.stringify({ value, data, blockData }),
-            );
-            // Here you could add logic to, for example, validate the blocks or transform them before saving.
-            return value;
-          },
-        ],
-        beforeChange: [
-          ({ siblingData, value }) => {
-            console.log(
-              "Before change hook triggered for dynamic blocks field",
-            );
-
-            return value;
-          },
-        ],
-        afterRead: [
-          async ({ value }) => {
-            return value;
-          },
-        ],
       },
     },
     // The "backend" field that stores the actual block data as JSON.
