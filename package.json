@@ -16,6 +16,7 @@
     "@payloadcms/ui": "3.82.1",
     "@playwright/test": "1.58.2",
     "cross-env": "10.1.0",
+    "dotenv": "17.4.2",
     "mongodb-memory-server": "10.1.4",
     "next": "^16.2.3",
     "payload": "3.82.1",

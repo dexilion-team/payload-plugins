@@ -25,9 +25,9 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1, //process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
+  reporter: [["html", { open: "never" }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   projects: [
     {
@@ -44,7 +44,8 @@ export default defineConfig({
   },
   webServer: {
     command: "pnpm dev",
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     url: "http://localhost:3000/admin",
+    stderr: "pipe",
   },
 });
