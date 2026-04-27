@@ -19,6 +19,25 @@ export const seed = async (payload: Payload) => {
     });
   }
 
+  const { totalDocs: widgetCount } = await payload.count({
+    collection: "widgets",
+  });
+
+  if (!widgetCount) {
+    await payload.create({
+      collection: "widgets",
+      data: {
+        name: "basic",
+        widget:
+          `<>\n` +
+          `  <Text name="title" label="Title" required />\n` +
+          `  <RichText name="body" label="Body" />\n` +
+          `  <Relationship name="image" label="Image" relationTo="media" />\n` +
+          `</>`,
+      },
+    });
+  }
+
   payload.logger.info("   ");
   payload.logger.info("+-----------------------------------------------------");
   payload.logger.info("|   ");

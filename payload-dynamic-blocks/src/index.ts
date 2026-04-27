@@ -1,5 +1,6 @@
 import {
   BlocksField,
+  FilterOptions,
   CollectionConfig,
   CollectionSlug,
   Config,

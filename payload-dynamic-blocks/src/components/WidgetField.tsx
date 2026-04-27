@@ -1,5 +1,6 @@
 import {
   Block,
+  BlocksField,
   BlocksFieldServerComponent,
   ClientBlock,
   ClientFieldSchemaMap,
@@ -11,8 +12,9 @@ import {
   FlattenedBlock,
   PayloadRequest,
 } from "payload";
-import { BlocksField } from "@payloadcms/ui";
+import { BlocksField as BlocksFieldUI } from "@payloadcms/ui";
 import { WIDGET_COLLECTION_NAME } from "../constants";
+import { parseWidgetFields } from "../utils/parseWidgetFields";
 
 function addBlockFieldsToSchemaMap(
   fieldSchemaMap: FieldSchemaMap,
@@ -102,6 +104,11 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     fieldSchemaMap,
     clientFieldSchemaMap,
     req,
+    data,
+    siblingData,
+    id,
+    user,
+    field,
   } = props;
 
   const widgets = await payload.find({
@@ -117,9 +124,16 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     return null; // No widget definitions, render nothing
   }
 
-  // TODO: Support filterOptions for dynamic blocks too
+  let blocks: Block[] = widgets.docs.map((doc: any): Block => {
+    const parsedFields = parseWidgetFields(doc.widget ?? "");
 
-  const blocks: Block[] = widgets.docs.map((doc: any): Block => {
+    // Inject the editor config for all richText fields
+    const fields: Field[] = parsedFields.map((f) =>
+      f.type === "richText"
+        ? ({ ...f, editor: payload.config.editor, admin: {} } as Field)
+        : (f as Field),
+    );
+
     return {
       slug: doc.name,
       labels: {
@@ -127,29 +141,23 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
         plural: doc.name,
       },
       dbName: doc.name, // Needed but unused
-      fields: [
-        {
-          name: "text",
-          type: "text",
-          label: "Text",
-        },
-        {
-          name: "content",
-          type: "richText",
-          label: "Content",
-          required: true,
-          editor: payload.config.editor, // <-- This is required, override from field definition if needed
-          admin: {},
-        },
-        {
-          name: "featured",
-          type: "relationship",
-          label: "Featured Item",
-          relationTo: "media",
-        },
-      ],
+      fields,
     };
   });
+
+  // Apply filterOptions if defined on the field
+  const filterOptions = (field as BlocksField).filterOptions;
+  if (filterOptions != null) {
+    const filterResult =
+      typeof filterOptions === "function"
+        ? await filterOptions({ id: id!, data, req, siblingData, user })
+        : filterOptions;
+
+    if (filterResult !== true) {
+      const allowed = new Set(filterResult as string[]);
+      blocks = blocks.filter((b) => allowed.has(b.slug));
+    }
+  }
 
   // Populate fieldSchemaMap and clientFieldSchemaMap with dynamic block fields
   // so renderFieldFn can resolve schema paths like `posts.blocks.exampleBlock.text`
@@ -163,14 +171,17 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     );
   }
 
-  // Prepare for validation
-  const flattenedFields = flattenAllFields({ fields: blocks[0]!.fields });
-  payload.blocks = {
-    exampleBlock: {
-      ...blocks[0],
-      flattenedFields: flattenedFields,
-    } as FlattenedBlock,
-  };
+  // Register all dynamic blocks in payload.blocks so Payload can resolve them
+  // during form state building and validation
+  payload.blocks = Object.fromEntries(
+    blocks.map((block) => [
+      block.slug,
+      {
+        ...block,
+        flattenedFields: flattenAllFields({ fields: block.fields }),
+      } as FlattenedBlock,
+    ]),
+  );
 
   // Create client blocks for rendering in the admin UI
   const clientBlocks: ClientBlock[] = createClientBlocks({
@@ -181,7 +192,7 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
   }) as ClientBlock[];
 
   return (
-    <BlocksField
+    <BlocksFieldUI
       path={props.path}
       field={{
         ...props.clientField,
