@@ -1,22 +1,17 @@
 import { CollectionSlug, Config } from "payload";
 
 import { createWidgetCollection } from "./collections/Widgets";
-
-type CollectionFieldMap = {
-  slug: CollectionSlug;
-  blockFieldName?: string;
-  contentFieldName?: string;
-};
+import { richTextFeature } from "./features/richText";
 
 interface PluginOptions {
-  collections: CollectionSlug[] | CollectionFieldMap[];
+  collections: CollectionSlug[];
   enable?: boolean;
+  features?: {
+    richText?: boolean;
+  };
 }
 
-const dynamicBlocks = ({
-  collections: collectionsToAugment,
-  enable,
-}: PluginOptions) => {
+const dynamicBlocks = ({ collections, enable, features }: PluginOptions) => {
   return async (incomingConfig: Config): Promise<Config> => {
     if (enable === false) {
       return incomingConfig;
@@ -30,8 +25,8 @@ const dynamicBlocks = ({
       createWidgetCollection(),
     ];
 
-    for (const collectionSlug of collectionsToAugment) {
-      injectBlocksIntoCollection(collectionSlug, config);
+    for (const slug of collections) {
+      injectBlocksIntoCollection(slug, config, features);
     }
 
     return config;
@@ -39,19 +34,21 @@ const dynamicBlocks = ({
 };
 
 const injectBlocksIntoCollection = (
-  collectionSlug: CollectionSlug | CollectionFieldMap,
+  slug: CollectionSlug,
   config: Config,
+  fieldName: string,
+  features?: PluginOptions["features"],
 ) => {
-  const slug =
-    typeof collectionSlug === "string" ? collectionSlug : collectionSlug.slug;
-  const blockFieldName =
-    typeof collectionSlug === "string"
-      ? "blocks"
-      : collectionSlug.blockFieldName || "blocks";
-  const contentFieldName =
-    typeof collectionSlug === "string"
-      ? "content"
-      : collectionSlug.contentFieldName || "content";
+  // const slug =
+  //   typeof collectionSlug === "string" ? collectionSlug : collectionSlug.slug;
+  // const blockFieldName =
+  //   typeof collectionSlug === "string"
+  //     ? "blocks"
+  //     : collectionSlug.blockFieldName || "blocks";
+  // const contentFieldName =
+  //   typeof collectionSlug === "string"
+  //     ? "content"
+  //     : collectionSlug.contentFieldName || "content";
   const collection = config.collections?.find(
     (collection) => collection.slug === slug,
   );
@@ -71,9 +68,9 @@ const injectBlocksIntoCollection = (
       ...(collection.hooks?.beforeChange || []),
       async ({ data }) => {
         if (data) {
-          const blocksValue = data[blockFieldName];
+          const blocksValue = data[`${fieldName}_blocks`];
           if (Array.isArray(blocksValue)) {
-            data[contentFieldName] = blocksValue;
+            data[fieldName] = blocksValue;
           }
         }
         return data;
@@ -82,34 +79,31 @@ const injectBlocksIntoCollection = (
     afterRead: [
       ...(collection.hooks?.afterRead || []),
       async ({ doc }) => {
-        const contentValue = doc[contentFieldName];
+        const contentValue = doc[fieldName];
         if (Array.isArray(contentValue)) {
-          doc[blockFieldName] = contentValue;
+          doc[`${fieldName}_blocks`] = contentValue;
         }
         return doc;
       },
     ],
   };
 
-  // Placeholders - needed to import client components
+  // Resolve requested features
+  if (features?.richText ?? true) {
+    config = richTextFeature(config);
+  }
+
+  // Placeholder block - at least one block type must exist to avoid crash
   config.blocks = config.blocks || [];
-  config.blocks.push({
-    custom: {
-      origin: "@dexilion/payload-dynamic-blocks",
-    },
-    slug: "__dynamic_block_placeholder__",
-    fields: [
-      {
-        name: "placeholderRichText",
-        type: "richText",
-        hidden: true,
-        virtual: true,
-        admin: {
-          hidden: true,
-        },
+  if (config.blocks.length === 0) {
+    config.blocks.push({
+      custom: {
+        origin: "@dexilion/payload-dynamic-blocks",
       },
-    ],
-  });
+      slug: "__dynamic_block_placeholder__",
+      fields: [],
+    });
+  }
 
   collection.fields = [
     ...(collection.fields || []),

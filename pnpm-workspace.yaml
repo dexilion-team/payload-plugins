@@ -10,6 +10,7 @@ packages:
   - payload-sync
   - payload-auditlog
   - payload-cron-job-org
+  - payload-dynamic-blocks
 
 autoInstallPeers: false
 
