@@ -12,6 +12,7 @@ import {
   PayloadRequest,
 } from "payload";
 import { BlocksField } from "@payloadcms/ui";
+import { WIDGET_COLLECTION_NAME } from "../constants";
 
 function addBlockFieldsToSchemaMap(
   fieldSchemaMap: FieldSchemaMap,
@@ -92,7 +93,7 @@ function addBlockFieldsToSchemaMap(
   }
 }
 
-const WidgetField: BlocksFieldServerComponent = (props) => {
+const WidgetField: BlocksFieldServerComponent = async (props) => {
   const {
     payload,
     i18n,
@@ -103,14 +104,29 @@ const WidgetField: BlocksFieldServerComponent = (props) => {
     req,
   } = props;
 
-  const blocks: Block[] = [
-    {
-      slug: "exampleBlock",
+  const widgets = await payload.find({
+    collection: WIDGET_COLLECTION_NAME,
+    disableErrors: true,
+    pagination: false,
+  });
+
+  if (widgets.docs.length === 0) {
+    payload.logger.error(
+      `No widget definitions found in the "${WIDGET_COLLECTION_NAME}" collection. Please add widget definitions to this collection to use dynamic blocks.`,
+    );
+    return null; // No widget definitions, render nothing
+  }
+
+  // TODO: Support filterOptions for dynamic blocks too
+
+  const blocks: Block[] = widgets.docs.map((doc: any): Block => {
+    return {
+      slug: doc.name,
       labels: {
-        singular: "Example Block",
-        plural: "Example Blocks",
+        singular: doc.name,
+        plural: doc.name,
       },
-      dbName: "exampleBlock",
+      dbName: doc.name, // Needed but unused
       fields: [
         {
           name: "text",
@@ -132,8 +148,8 @@ const WidgetField: BlocksFieldServerComponent = (props) => {
           relationTo: "media",
         },
       ],
-    },
-  ];
+    };
+  });
 
   // Populate fieldSchemaMap and clientFieldSchemaMap with dynamic block fields
   // so renderFieldFn can resolve schema paths like `posts.blocks.exampleBlock.text`

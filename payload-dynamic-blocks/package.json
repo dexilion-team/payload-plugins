@@ -11,23 +11,20 @@
       "import": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./client/WidgetFieldClient": {
-      "types": "./src/components/WidgetFieldClient.tsx",
-      "import": "./src/components/WidgetFieldClient.tsx",
-      "default": "./src/components/WidgetFieldClient.tsx"
-    },
-    "./server/WidgetField": {
+    "./WidgetField": {
       "types": "./src/components/WidgetField.tsx",
       "import": "./src/components/WidgetField.tsx",
       "default": "./src/components/WidgetField.tsx"
+    },
+    "./WidgetCell": {
+      "types": "./src/components/WidgetCell.tsx",
+      "import": "./src/components/WidgetCell.tsx",
+      "default": "./src/components/WidgetCell.tsx"
     }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "sideEffects": [
-    "*.scss",
-    "*.css"
-  ],
+  "sideEffects": false,
   "peerDependencies": {
     "@payloadcms/ui": "3.82.1",
     "payload": "3.82.1",
@@ -62,6 +59,7 @@
     "eslint-config-next": "16.2.2",
     "graphql": "^16.8.1",
     "monaco-editor": ">= 0.25.0 < 1",
+    "mongodb": "^7.2.0",
     "mongodb-memory-server": "10.1.4",
     "next": "^16.2",
     "npm-run-all2": "^8",
@@ -106,15 +104,15 @@
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
       },
-      "./client/WidgetFieldClient": {
-        "types": "./src/components/WidgetFieldClient.js",
-        "import": "./src/components/WidgetFieldClient.js",
-        "default": "./src/components/WidgetFieldClient.js"
-      },
-      "./server/WidgetField": {
+      "./WidgetField": {
         "types": "./src/components/WidgetField.js",
         "import": "./src/components/WidgetField.js",
         "default": "./src/components/WidgetField.js"
+      },
+      "./WidgetCell": {
+        "types": "./src/components/WidgetCell.js",
+        "import": "./src/components/WidgetCell.js",
+        "default": "./src/components/WidgetCell.js"
       }
     },
     "main": "./dist/index.js",

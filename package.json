@@ -16,6 +16,7 @@
     "@payloadcms/ui": "3.82.1",
     "@types/react": "^19.2.14",
     "cross-env": "10.1.0",
+    "mongodb": "^7.2.0",
     "mongodb-memory-server": "10.1.4",
     "next": "^16.2.3",
     "node-addon-api": "^8.7.0",

@@ -1,4 +1,10 @@
-import { CollectionSlug, Config } from "payload";
+import {
+  BlocksField,
+  CollectionConfig,
+  CollectionSlug,
+  Config,
+  Field,
+} from "payload";
 
 import { createWidgetCollection } from "./collections/Widgets";
 import { richTextFeature } from "./features/richText";
@@ -19,49 +25,117 @@ const dynamicBlocks = ({ collections, enable, features }: PluginOptions) => {
 
     const config = { ...incomingConfig };
 
+    // Resolve requested features
+    if (features?.richText ?? true) {
+      richTextFeature(config);
+    }
+
     // Inject the Widgets collection
     config.collections = [
       ...(config.collections || []),
       createWidgetCollection(),
     ];
 
+    // Finally resolve the dynamic blocks fields
     for (const slug of collections) {
-      injectBlocksIntoCollection(slug, config, features);
+      setupDynamicBlocksFields(slug, config);
     }
 
     return config;
   };
 };
 
-const injectBlocksIntoCollection = (
-  slug: CollectionSlug,
-  config: Config,
-  fieldName: string,
-  features?: PluginOptions["features"],
-) => {
-  // const slug =
-  //   typeof collectionSlug === "string" ? collectionSlug : collectionSlug.slug;
-  // const blockFieldName =
-  //   typeof collectionSlug === "string"
-  //     ? "blocks"
-  //     : collectionSlug.blockFieldName || "blocks";
-  // const contentFieldName =
-  //   typeof collectionSlug === "string"
-  //     ? "content"
-  //     : collectionSlug.contentFieldName || "content";
+/**
+ * Parse and resolve all dynamic blocks fields into frontend
+ * and backend fields and hooks.
+ */
+const setupDynamicBlocksFields = (slug: CollectionSlug, config: Config) => {
   const collection = config.collections?.find(
     (collection) => collection.slug === slug,
   );
 
   if (!collection) {
     throw new Error(
-      `[@dexilion/payload-dynamic-blocks] Collection with slug "${slug}" not found. Skipping dynamic block injection for this collection.`,
+      `[@dexilion/payload-dynamic-blocks] Collection with slug "${slug}" not ` +
+        `found. Skipping dynamic block injection for this collection.`,
     );
   }
 
-  // Collection-level beforeChange hook to capture dynamic block data into the json field.
-  // This fires before field-level processing, so it sees raw submitted data regardless
-  // of whether block types are configured in the schema.
+  applyToDynamicBlocksFields(
+    collection.fields || [],
+    (fieldName, fields, field) => {
+      // Frontend
+      setupFrontendForField(field, fields, slug);
+
+      // TODO: Support nested dynamic blocks (blocks inside blocks) - currently only top-level blocks fields are supported
+
+      // Backend
+      setupPersistenceForField(collection, fieldName);
+    },
+  );
+};
+
+const setupFrontendForField = (
+  field: BlocksField,
+  fields: Field[],
+  collectionSlug: CollectionSlug,
+) => {
+  if ((field.blocks ?? []).length !== 0) {
+    throw new Error(
+      `[@dexilion/payload-dynamic-blocks] The dynamic "blocks" field ` +
+        `"${field.name}" in collection "${collectionSlug}" must not have any block ` +
+        `types defined if 'custom: { dynamic: true }' is set.`,
+    );
+  }
+
+  // Placeholder block - at least one block type must exist to avoid crash
+  field.blocks = [{ slug: "__unused__", fields: [] }];
+
+  if (!field.admin) {
+    field.admin = {};
+  }
+
+  if (!field.admin.components) {
+    field.admin.components = {};
+  }
+
+  if (!field.admin.components.Cell) {
+    field.admin.components.Cell = {
+      path: "@dexilion/payload-dynamic-blocks/WidgetCell",
+    };
+  }
+
+  if (!field.admin.components.Field) {
+    field.admin.components.Field = {
+      path: "@dexilion/payload-dynamic-blocks/WidgetField",
+    };
+  }
+
+  field.virtual = true; // This is not the field we'll persist
+  const originalName = field.name;
+  field.name = `${originalName}_blocks`; // Need to move the virtual field
+
+  // Add the actual field that will be persisted as JSON
+  fields.push({
+    name: originalName,
+    type: "json",
+    admin: {
+      hidden: true,
+    },
+  });
+};
+
+/**
+ * Make sure the collection is configured for dynamic blocks
+ */
+const setupPersistenceForField = (
+  collection: CollectionConfig,
+  fieldName: string,
+): CollectionConfig => {
+  // Collection-level beforeChange hook to capture dynamic block data into
+  // the json field. This fires before field-level processing, so it sees
+  // raw submitted data regardless of whether block types are configured
+  // in the schema.
   collection.hooks = {
     ...(collection.hooks || {}),
     beforeChange: [
@@ -88,45 +162,40 @@ const injectBlocksIntoCollection = (
     ],
   };
 
-  // Resolve requested features
-  if (features?.richText ?? true) {
-    config = richTextFeature(config);
-  }
+  return collection;
+};
 
-  // Placeholder block - at least one block type must exist to avoid crash
-  config.blocks = config.blocks || [];
-  if (config.blocks.length === 0) {
-    config.blocks.push({
-      custom: {
-        origin: "@dexilion/payload-dynamic-blocks",
-      },
-      slug: "__dynamic_block_placeholder__",
-      fields: [],
-    });
-  }
+/**
+ * Recursively walks a field tree and returns the names of all `blocks` fields
+ * that have `custom: { dynamic: true }`.
+ */
+const applyToDynamicBlocksFields = (
+  fields: Field[],
+  transform: (fieldName: string, fields: Field[], field: BlocksField) => void,
+) => {
+  for (const field of fields) {
+    // Blocks field types cannot have blocks child fields,
+    // so this check is sufficient to identify dynamic blocks fields.
+    if (
+      "name" in field &&
+      field.type === "blocks" &&
+      (field.custom as Record<string, unknown> | undefined)?.dynamic === true
+    ) {
+      transform(field.name, fields, field);
+    }
 
-  collection.fields = [
-    ...(collection.fields || []),
-    // The "frontend" field that content editors interact with, rendered as blocks.
-    {
-      name: blockFieldName,
-      type: "blocks",
-      blocks: [],
-      admin: {
-        components: {
-          Field: "@dexilion/payload-dynamic-blocks/server/WidgetField",
-        },
-      },
-    },
-    // The "backend" field that stores the actual block data as JSON.
-    {
-      name: contentFieldName,
-      type: "json",
-      admin: {
-        hidden: true,
-      },
-    },
-  ];
+    // Recurse into container fields (group, array, collapsible, row, …)
+    if ("fields" in field && Array.isArray(field.fields)) {
+      applyToDynamicBlocksFields(field.fields, transform);
+    }
+
+    // Recurse into tabs
+    if (field.type === "tabs") {
+      for (const tab of field.tabs) {
+        applyToDynamicBlocksFields(tab.fields, transform);
+      }
+    }
+  }
 };
 
 export default dynamicBlocks;
