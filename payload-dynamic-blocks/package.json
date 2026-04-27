@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-dynamic-blocks",
-  "version": "3.82.1",
+  "version": "3.82.1-alpha.0",
   "description": "Dynamic blocks for Payload CMS, allowing for flexible content structures.",
   "author": "Dexilion",
   "license": "MIT",
