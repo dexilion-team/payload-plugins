@@ -11,6 +11,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
     "@payloadcms/db-mongodb": "3.82.1",
+    "@payloadcms/db-sqlite": "3.82.1",
     "@payloadcms/next": "3.82.1",
     "@payloadcms/richtext-lexical": "3.82.1",
     "@payloadcms/ui": "3.82.1",
