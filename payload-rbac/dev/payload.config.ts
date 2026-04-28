@@ -1,6 +1,5 @@
-import { mongooseAdapter } from "@payloadcms/db-mongodb";
+import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
-import { MongoMemoryReplSet } from "mongodb-memory-server";
 import path from "path";
 import { buildConfig } from "payload";
 import { rbacPlugin } from "../src";
@@ -10,7 +9,6 @@ import { fileURLToPath } from "url";
 import { devUser } from "./helpers/credentials";
 import { testEmailAdapter } from "./helpers/testEmailAdapter";
 import { seed } from "./seed";
-import { applyRbacToCollections } from "../src/security/rbacAccess";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -19,17 +17,7 @@ if (!process.env.ROOT_DIR) {
   process.env.ROOT_DIR = dirname;
 }
 
-const buildConfigWithMemoryDB = async () => {
-  const memoryDB = await MongoMemoryReplSet.create({
-    replSet: {
-      count: 3,
-      dbName: "payloadmemory",
-    },
-  });
-
-  process.env.DATABASE_URL = `${memoryDB.getUri()}&retryWrites=true`;
-
-  const collections = [
+const collections = [
     {
       slug: "posts",
       fields: [],
@@ -52,7 +40,7 @@ const buildConfigWithMemoryDB = async () => {
     },
   ];
 
-  return buildConfig({
+export default buildConfig({
     admin: {
       importMap: {
         autoGenerate: true,
@@ -64,10 +52,11 @@ const buildConfigWithMemoryDB = async () => {
       },
     },
     // Example usage of the RBAC plugin
-    collections: applyRbacToCollections(collections),
-    db: mongooseAdapter({
-      ensureIndexes: true,
-      url: process.env.DATABASE_URL || "",
+    collections,
+    db: sqliteAdapter({
+      client: {
+        url: process.env.DATABASE_URI ?? "file:./dev/dev.db",
+      },
     }),
     editor: lexicalEditor(),
     email: testEmailAdapter,
@@ -80,7 +69,4 @@ const buildConfigWithMemoryDB = async () => {
     typescript: {
       outputFile: path.resolve(dirname, "payload-types.ts"),
     },
-  });
-};
-
-export default buildConfigWithMemoryDB();
+});

@@ -36,32 +36,33 @@ export function rbacAccessAll(principal: string) {
 //   collections: applyRbacToCollections(collections),
 //   // ...
 // });
-export function applyRbacToCollections(collections: any[]) {
-  return collections.map((col) => {
-    const rbac = rbacAccessAll(col.slug);
-    const existing = col.access || {};
+export function applyRbacToCollection(col: any): any {
+  const rbac = rbacAccessAll(col.slug);
+  const existing = col.access || {};
 
-    const merged: Record<string, any> = {};
+  const merged: Record<string, any> = {};
 
-    for (const action of ["create", "read", "update", "delete"] as const) {
-      const rbacFn = rbac[action];
-      const existingFn = existing[action];
+  for (const action of ["create", "read", "update", "delete"] as const) {
+    const rbacFn = rbac[action];
+    const existingFn = existing[action];
 
-      if (existingFn) {
-        // Both must pass
-        merged[action] = async (args: any) => {
-          const rbacResult = await rbacFn(args);
-          if (!rbacResult) return false;
-          return existingFn(args);
-        };
-      } else {
-        merged[action] = rbacFn;
-      }
+    if (existingFn) {
+      merged[action] = async (args: any) => {
+        const rbacResult = await rbacFn(args);
+        if (!rbacResult) return false;
+        return existingFn(args);
+      };
+    } else {
+      merged[action] = rbacFn;
     }
+  }
 
-    return {
-      ...col,
-      access: merged,
-    };
-  });
+  return {
+    ...col,
+    access: merged,
+  };
+}
+
+export function applyRbacToCollections(collections: any[]) {
+  return collections.map(applyRbacToCollection);
 }

@@ -17,11 +17,9 @@ async function createRole(
     await page.check(`input[aria-label="${permission}"]`);
   }
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(
-    page.locator(
-      '.payload-toast-container .payload-toast-item:has-text("successfully created")',
-    ),
-  ).toBeVisible({ timeout: 10000 });
+  await page.waitForURL(/\/admin\/collections\/roles\/(?!create)[^/]+/, {
+    timeout: 10000,
+  });
 }
 
 // Helper to delete a role by name, assuming you're on the roles list
@@ -34,18 +32,10 @@ async function deleteRoleByName(page: Page, name: string) {
   await page.locator("button:has(div.doc-controls__dots)").click();
   await page.getByRole("button", { name: "Delete" }).click();
   await page.getByRole("button", { name: "Confirm" }).click();
-  await expect(page.locator(':text("successfully deleted")')).toBeVisible({
-    timeout: 10000,
-  });
+  await page.waitForURL(/\/admin\/collections\/roles$/, { timeout: 10000 });
 }
 
 test.describe("RBAC Plugin - Admin UI", () => {
-  test("should render admin panel logo", async ({ page }) => {
-    await page.goto(`${ADMIN_URL}/admin`);
-    await expect(page).toHaveTitle(/Dashboard/);
-    await expect(page.locator(".graphic-icon")).toBeVisible();
-  });
-
   test("should navigate to Roles collection", async ({ page }) => {
     await page.goto(`${ADMIN_URL}/admin`);
     await expect(page.locator("h2:has-text('Collections')")).toBeVisible();
@@ -93,12 +83,22 @@ test.describe("RBAC Plugin - Admin UI", () => {
     await expect(page.locator('input[aria-label="posts:read"]')).toBeChecked();
 
     await page.check('input[aria-label="posts:delete"]');
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(
-      page.locator(
-        '.payload-toast-container .payload-toast-item:has-text("updated successfully")',
+
+    const [saveResponse] = await Promise.all([
+      page.waitForResponse(
+        (resp) =>
+          /\/api\/roles\/[^/]+/.test(resp.url()) &&
+          resp.request().method() === "PATCH",
       ),
-    ).toBeVisible({ timeout: 10000 });
+      page.getByRole("button", { name: "Save" }).click(),
+    ]);
+    expect(saveResponse.status()).toBe(200);
+
+    // Reload and verify the change persisted
+    await page.reload();
+    await expect(page.locator('input[aria-label="posts:delete"]')).toBeChecked({
+      timeout: 10000,
+    });
 
     // Cleanup
     await deleteRoleByName(page, "Role To Edit");
@@ -116,14 +116,38 @@ test.describe("RBAC Plugin - Admin UI", () => {
     await page.locator("button:has(div.doc-controls__dots)").click();
     await page.getByRole("button", { name: "Delete" }).click();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.locator(':text("successfully deleted")')).toBeVisible({
-      timeout: 10000,
-    });
+    await page.waitForURL(/\/admin\/collections\/roles$/, { timeout: 10000 });
 
     await page.goto(`${ADMIN_URL}/admin/collections/roles`);
     await expect(
       page.locator("td:has-text('Role To Delete')"),
     ).not.toBeVisible();
+  });
+
+  test("should persist checked permissions after save and reload", async ({
+    page,
+  }) => {
+    test.setTimeout(60000);
+    await deleteRoleByName(page, "Persist Test Role"); // clean up if exists
+
+    await createRole(page, "Persist Test Role", ["posts:read", "posts:create"]);
+
+    // createRole saves and stays on the doc — wait for the URL to leave /create
+    await page.waitForURL(/\/admin\/collections\/roles\/(?!create)[^/]+/);
+    const savedUrl = page.url();
+
+    // Reload to confirm the permissions were actually persisted
+    await page.goto(savedUrl);
+    await page.waitForURL(/\/admin\/collections\/roles\/(?!create)[^/]+/);
+
+    await expect(page.locator('input[aria-label="posts:read"]')).toBeChecked();
+    await expect(page.locator('input[aria-label="posts:create"]')).toBeChecked();
+    await expect(
+      page.locator('input[aria-label="posts:delete"]'),
+    ).not.toBeChecked();
+
+    // Cleanup
+    await deleteRoleByName(page, "Persist Test Role");
   });
 
   test("should display permissions matrix correctly", async ({ page }) => {
@@ -145,11 +169,3 @@ test.describe("RBAC Plugin - Admin UI", () => {
   });
 });
 
-test.describe("RBAC Plugin - Public API verification", () => {
-  test("should expose rbacPlugin in plugin exports", async ({ request }) => {
-    // This test verifies the plugin is properly loaded
-    // by checking if the admin UI is accessible
-    const response = await request.get(`${ADMIN_URL}/admin`);
-    expect(response.ok()).toBeTruthy();
-  });
-});

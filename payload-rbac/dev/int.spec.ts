@@ -18,6 +18,12 @@ beforeAll(async () => {
   payload = await getPayload({ config });
 });
 
+describe("RBAC Plugin - Plugin registration", () => {
+  test("should register the roles collection", () => {
+    expect(payload.collections["roles"]).toBeDefined();
+  });
+});
+
 describe("RBAC Plugin - Roles Collection", () => {
   test("should create a role with permissions", async () => {
     const role = await payload.create({
@@ -301,27 +307,26 @@ describe("RBAC Plugin - Users collection has roles field", () => {
   });
 });
 
-describe("RBAC Plugin - Integration with collection access", () => {
+describe("RBAC Plugin - Collection access enforcement", () => {
   let restrictedUserId: string;
   let restrictedRoleId: string;
+  let noRolesUserId: string;
 
-  test("should enforce RBAC when used with collection access control", async () => {
-    // Create a user with only read access to posts
-    const user = await payload.create({
+  beforeAll(async () => {
+    const restrictedUser = await payload.create({
       collection: "users",
       data: {
         email: "restricted-user@test.com",
         password: "testpassword123",
       },
     });
-    restrictedUserId = user.id as string;
+    restrictedUserId = restrictedUser.id as string;
 
-    // Create a role with only read permission
     const role = await payload.create({
       collection: "roles",
       data: {
         role: "posts-reader-only",
-        users: [user.id],
+        users: [restrictedUser.id],
         permissions: {
           posts: {
             read: true,
@@ -334,40 +339,50 @@ describe("RBAC Plugin - Integration with collection access", () => {
     });
     restrictedRoleId = role.id as string;
 
-    // Authenticate as the restricted user
-    const authResult = await payload.login({
+    const noRolesUser = await payload.create({
       collection: "users",
       data: {
-        email: "restricted-user@test.com",
+        email: "no-roles-user@test.com",
         password: "testpassword123",
       },
     });
+    noRolesUserId = noRolesUser.id as string;
+  });
 
-    expect(authResult.user).toBeDefined();
+  afterAll(async () => {
+    await payload.delete({ collection: "users", id: restrictedUserId });
+    await payload.delete({ collection: "users", id: noRolesUserId });
+    await payload.delete({ collection: "roles", id: restrictedRoleId });
+  });
 
-    // Try to create a post (should fail due to RBAC)
-    // Note: This test demonstrates the expected behavior when RBAC is integrated
-    // The actual enforcement depends on the plugin user implementing access control
-
-    // Try to read posts (should succeed)
-    const { docs: posts } = await payload.find({
+  test("should allow read when user has read permission", async () => {
+    const { docs } = await payload.find({
       collection: "posts",
       overrideAccess: false,
       req: { user: { id: restrictedUserId } } as any,
     });
 
-    expect(posts).toBeDefined();
+    expect(docs).toBeDefined();
   });
 
-  test("cleanup restricted user", async () => {
-    await payload.delete({
-      collection: "users",
-      id: restrictedUserId,
-    });
+  test("should deny create when user lacks create permission", async () => {
+    await expect(
+      payload.create({
+        collection: "posts",
+        overrideAccess: false,
+        req: { user: { id: restrictedUserId } } as any,
+        data: {},
+      }),
+    ).rejects.toThrow();
+  });
 
-    await payload.delete({
-      collection: "roles",
-      id: restrictedRoleId,
-    });
+  test("should deny access entirely when user has no roles", async () => {
+    await expect(
+      payload.find({
+        collection: "posts",
+        overrideAccess: false,
+        req: { user: { id: noRolesUserId } } as any,
+      }),
+    ).rejects.toThrow();
   });
 });
