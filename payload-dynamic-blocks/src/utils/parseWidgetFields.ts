@@ -80,36 +80,20 @@ function extractValue(node: Node | null | undefined): unknown {
 }
 
 /**
- * Parses the JSX-like widget code stored in the `widget` code field and
- * returns an array of Payload field config objects.
- *
- * Component names map to Payload field types:
- * `<Text name="title" />` - `{ type: "text", name: "title" }`
- * `<RichText name="body" required />` - `{ type: "richText", name: "body", required: true }`
- *
- * The `Blocks` component is explicitly disallowed and will be ignored.
+ * Field types that collect their JSX children as a `fields` array.
  */
-export function parseWidgetFields(widgetCode: string): Omit<Field, "editor">[] {
-  // Wrap in a JSX fragment so multiple sibling elements are valid
-  let ast;
-  try {
-    ast = parse(`${widgetCode}`, {
-      plugins: ["jsx"],
-      sourceType: "module",
-    });
-  } catch {
-    // Malformed JSX — return empty fields rather than crashing
-    return [];
-  }
+const CONTAINER_FIELD_TYPES = new Set(["array", "collapsible", "group", "row"]);
 
-  const fragment = (ast.program.body[0] as any)?.expression as
-    | JSXFragment
-    | undefined;
-  if (!fragment || fragment.type !== "JSXFragment") return [];
-
+/**
+ * Parses a list of JSX children nodes into an array of Payload field configs.
+ * Called recursively for container fields whose JSX children become `fields`.
+ */
+function parseJSXChildren(
+  children: JSXFragment["children"],
+): Omit<Field, "editor">[] {
   const fields: Omit<Field, "editor">[] = [];
 
-  for (const child of fragment.children) {
+  for (const child of children) {
     if (child.type !== "JSXElement") continue;
 
     const opening = (child as JSXElement).openingElement;
@@ -118,6 +102,12 @@ export function parseWidgetFields(widgetCode: string): Omit<Field, "editor">[] {
 
     // Explicitly block nested blocks
     if (componentName === "Blocks") continue;
+
+    // HTML tags (lowercase) are transparent wrappers — recurse and flatten children
+    if (componentName.charAt(0) === componentName.charAt(0).toLowerCase()) {
+      fields.push(...parseJSXChildren((child as JSXElement).children));
+      continue;
+    }
 
     const fieldType = COMPONENT_TO_FIELD_TYPE[componentName];
     if (!fieldType) continue;
@@ -144,8 +134,50 @@ export function parseWidgetFields(widgetCode: string): Omit<Field, "editor">[] {
       }
     }
 
+    // Recurse into children for container field types
+    if (CONTAINER_FIELD_TYPES.has(fieldType)) {
+      const nestedChildren = (child as JSXElement).children;
+      if (nestedChildren.length > 0) {
+        fieldConfig.fields = parseJSXChildren(nestedChildren);
+      }
+    }
+
     fields.push(fieldConfig as unknown as Omit<Field, "editor">);
   }
 
   return fields;
+}
+
+/**
+ * Parses the JSX-like widget code stored in the `widget` code field and
+ * returns an array of Payload field config objects.
+ *
+ * Component names map to Payload field types:
+ * `<Text name="title" />` → `{ type: "text", name: "title" }`
+ * `<RichText name="body" required />` → `{ type: "richText", name: "body", required: true }`
+ * `<Group name="meta"><Text name="title" /></Group>` → `{ type: "group", name: "meta", fields: [{ type: "text", name: "title" }] }`
+ *
+ * The `Blocks` component is explicitly disallowed and will be ignored.
+ */
+export function parseWidgetFields(widgetCode: string): Omit<Field, "editor">[] {
+  // Wrap in a JSX fragment so multiple sibling elements are valid
+  let ast;
+  try {
+    ast = parse(`<>${widgetCode}</>`, {
+      plugins: ["jsx"],
+      sourceType: "module",
+    });
+  } catch {
+    // Malformed JSX — return empty fields rather than crashing
+    throw new Error(
+      "Failed to parse widget code. Please ensure the JSX syntax is correct.",
+    );
+  }
+
+  const fragment = (ast.program.body[0] as any)?.expression as
+    | JSXFragment
+    | undefined;
+  if (!fragment || fragment.type !== "JSXFragment") return [];
+
+  return parseJSXChildren(fragment.children);
 }
