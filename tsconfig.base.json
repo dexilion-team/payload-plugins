@@ -7,11 +7,7 @@
     "target": "ES2022",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ES2022"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "rootDir": "./",
     "allowJs": true,
     "esModuleInterop": true,
@@ -34,6 +30,8 @@
   "include": [
     "./src/**/*.ts",
     "./src/**/*.tsx",
+    "./*/src/**/*.ts",
+    "./*/src/**/*.tsx",
     "./dev/next-env.d.ts",
     ".next/dev/types/**/*.ts"
   ]
