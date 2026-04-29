@@ -13,6 +13,7 @@ packages:
   - payload-schedule
   - payload-dynamic-blocks
   - next-theme-builder
+  - payload-wysiwyg-blocks
 
 autoInstallPeers: false
 
