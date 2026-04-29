@@ -12,9 +12,9 @@ import {
   FlattenedBlock,
   PayloadRequest,
 } from "payload";
-import { BlocksField as BlocksFieldUI } from "@payloadcms/ui";
 import { WIDGET_COLLECTION_NAME } from "../constants";
 import { parseWidgetFields } from "../utils/parseWidgetFields";
+import CustomBlockRenderer from "./CustomBlockRenderer";
 
 function addBlockFieldsToSchemaMap(
   fieldSchemaMap: FieldSchemaMap,
@@ -192,14 +192,10 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
   }) as ClientBlock[];
 
   return (
-    <BlocksFieldUI
+    <CustomBlockRenderer
+      blocks={clientBlocks}
       path={props.path}
-      field={{
-        ...props.clientField,
-        blocks: clientBlocks,
-      }}
       schemaPath={schemaPath}
-      permissions={permissions}
     />
   );
 };
