@@ -94,6 +94,10 @@ function parseJSXChildren(
   const fields: Omit<Field, "editor">[] = [];
 
   for (const child of children) {
+    if (child.type === "JSXFragment") {
+      fields.push(...parseJSXChildren((child as JSXFragment).children));
+      continue;
+    }
     if (child.type !== "JSXElement") continue;
 
     const opening = (child as JSXElement).openingElement;
