@@ -1,6 +1,10 @@
 "use client";
 
-import type { ClientBlock, ClientField, StaticLabel } from "payload";
+import type {
+  ClientBlock,
+  ClientField,
+  // StaticLabel
+} from "payload";
 import { useCallback } from "react";
 import {
   BlocksDrawer,
@@ -8,28 +12,36 @@ import {
   DraggableSortable,
   DraggableSortableItem,
   DrawerToggler,
-  FieldLabel,
+  // FieldLabel,
+  TextField,
+  FieldPathContext,
   fieldBaseClass,
   useDrawerSlug,
   useField,
   useForm,
 } from "@payloadcms/ui";
 
-function TextInput({ field, path }: { field: ClientField & { name: string }; path: string }) {
-  const { value, setValue } = useField<string>({ path });
-  const label = ("label" in field ? field.label : field.name) as StaticLabel;
-  return (
-    <div className={[fieldBaseClass, "text"].join(" ")}>
-      <FieldLabel htmlFor={path} label={label} path={path} />
-      <input
-        id={path}
-        onChange={(e) => setValue(e.target.value)}
-        type="text"
-        value={value ?? ""}
-      />
-    </div>
-  );
-}
+// function TextInput({
+//   field,
+//   path,
+// }: {
+//   field: ClientField & { name: string };
+//   path: string;
+// }) {
+//   const { value, setValue } = useField<string>({ path });
+//   const label = ("label" in field ? field.label : field.name) as StaticLabel;
+//   return (
+//     <div className={[fieldBaseClass, "text"].join(" ")}>
+//       <FieldLabel htmlFor={path} label={label} path={path} />
+//       <input
+//         id={path}
+//         onChange={(e) => setValue(e.target.value)}
+//         type="text"
+//         value={value ?? ""}
+//       />
+//     </div>
+//   );
+// }
 
 function renderField(field: ClientField, rowPath: string) {
   if (!("name" in field)) return null;
@@ -37,7 +49,11 @@ function renderField(field: ClientField, rowPath: string) {
 
   switch (field.type) {
     case "text":
-      return <TextInput key={fieldPath} field={field} path={fieldPath} />;
+      return (
+        <FieldPathContext.Provider value="">
+          <TextField field={field as any} path={fieldPath} />
+        </FieldPathContext.Provider>
+      );
     default:
       return null;
   }
@@ -99,6 +115,8 @@ export default function CustomBlockRenderer({
             if (!blockConfig) return null;
 
             const rowPath = `${path}.${i}`;
+
+            const rowSchemaPath = `${schemaPath}.${blockConfig.slug}`;
 
             return (
               <DraggableSortableItem id={row.id} key={row.id}>
