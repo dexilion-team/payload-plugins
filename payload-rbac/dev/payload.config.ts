@@ -1,6 +1,5 @@
-import { mongooseAdapter } from "@payloadcms/db-mongodb";
+import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
-import { MongoMemoryReplSet } from "mongodb-memory-server";
 import path from "path";
 import { buildConfig } from "payload";
 import { rbacPlugin } from "../src";
@@ -18,17 +17,30 @@ if (!process.env.ROOT_DIR) {
   process.env.ROOT_DIR = dirname;
 }
 
-const buildConfigWithMemoryDB = async () => {
-  const memoryDB = await MongoMemoryReplSet.create({
-    replSet: {
-      count: 3,
-      dbName: "payloadmemory",
+const collections = [
+    {
+      slug: "posts",
+      fields: [],
     },
-  });
+    {
+      slug: "media",
+      fields: [],
+      upload: {
+        staticDir: path.resolve(dirname, "media"),
+      },
+    },
+    {
+      slug: "users",
+      auth: true,
+      admin: {
+        useAsTitle: "email",
+        defaultColumns: ["email", "updatedAt", "createdAt"],
+      },
+      fields: [],
+    },
+  ];
 
-  process.env.DATABASE_URL = `${memoryDB.getUri()}&retryWrites=true`;
-
-  return buildConfig({
+export default buildConfig({
     admin: {
       importMap: {
         autoGenerate: true,
@@ -39,31 +51,12 @@ const buildConfigWithMemoryDB = async () => {
         password: devUser.password,
       },
     },
-    collections: [
-      {
-        slug: "posts",
-        fields: [],
+    // Example usage of the RBAC plugin
+    collections,
+    db: sqliteAdapter({
+      client: {
+        url: process.env.DATABASE_URI ?? "file:./dev/dev.db",
       },
-      {
-        slug: "media",
-        fields: [],
-        upload: {
-          staticDir: path.resolve(dirname, "media"),
-        },
-      },
-      {
-        slug: "users",
-        auth: true,
-        admin: {
-          useAsTitle: "email",
-          defaultColumns: ["email", "updatedAt", "createdAt"],
-        },
-        fields: [],
-      },
-    ],
-    db: mongooseAdapter({
-      ensureIndexes: true,
-      url: process.env.DATABASE_URL || "",
     }),
     editor: lexicalEditor(),
     email: testEmailAdapter,
@@ -76,7 +69,4 @@ const buildConfigWithMemoryDB = async () => {
     typescript: {
       outputFile: path.resolve(dirname, "payload-types.ts"),
     },
-  });
-};
-
-export default buildConfigWithMemoryDB();
+});

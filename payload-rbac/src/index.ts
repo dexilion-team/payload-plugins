@@ -1,5 +1,6 @@
 import { CollectionSlug, Config } from "payload";
 import { Roles } from "./collections/Roles";
+import { applyRbacToCollection } from "./security/rbacAccess";
 
 export const rbacPlugin =
   () =>
@@ -30,6 +31,10 @@ export const rbacPlugin =
       admin: {
         hidden: false,
       },
+    });
+
+    config.collections = config.collections.map((col) => {
+      return applyRbacToCollection(col);
     });
 
     return config;

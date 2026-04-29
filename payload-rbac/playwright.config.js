@@ -6,7 +6,11 @@ import { defineConfig, devices } from "@playwright/test";
  */
 import dotenv from "dotenv";
 import path from "path";
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, "dev/.env") });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -23,7 +27,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
+  reporter: [["html", { open: "never" }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   projects: [
     {
@@ -40,7 +44,8 @@ export default defineConfig({
   },
   webServer: {
     command: "pnpm dev",
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     url: "http://localhost:3000/admin",
+    stderr: "pipe",
   },
 });

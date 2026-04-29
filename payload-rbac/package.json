@@ -26,7 +26,7 @@
     "@payloadcms/ui": "3"
   },
   "devDependencies": {
-    "@payloadcms/db-mongodb": "3.82.1",
+    "@payloadcms/db-sqlite": "3.82.1",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
@@ -49,7 +49,11 @@
     "generate:types": "pnpm dev:generate-types",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "vitest run",
+    "test": "pnpm test:int && pnpm test:e2e",
+    "test:int": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
     "test:watch": "vitest"
   },
   "files": [
