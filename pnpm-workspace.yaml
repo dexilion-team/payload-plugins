@@ -17,7 +17,6 @@ autoInstallPeers: false
 ignoredBuiltDependencies:
   - "@swc/core"
   - esbuild
-  - mongodb-memory-server
   - unrs-resolver
 onlyBuiltDependencies:
   - sharp
