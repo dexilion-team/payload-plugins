@@ -3,6 +3,4 @@ node_modules
 tsconfig.tsbuildinfo
 pnpm-lock.yaml
 .env
-test-results/
-playwright-report/
 dev.db
