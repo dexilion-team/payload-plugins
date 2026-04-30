@@ -50,7 +50,7 @@ function renderField(field: ClientField, rowPath: string) {
   switch (field.type) {
     case "text":
       return (
-        <FieldPathContext.Provider value="">
+        <FieldPathContext.Provider key={fieldPath} value={fieldPath}>
           <TextField field={field as any} path={fieldPath} />
         </FieldPathContext.Provider>
       );
