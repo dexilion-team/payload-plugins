@@ -32,6 +32,9 @@ export const Roles: CollectionConfig = {
       type: "relationship",
       relationTo: "users",
       hasMany: true,
+      filterOptions: {
+        id: { not_equals: 1 },
+      },
     },
     {
       name: "permissions",

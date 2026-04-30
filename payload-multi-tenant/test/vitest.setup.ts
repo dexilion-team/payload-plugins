@@ -1,10 +1,9 @@
 import globalPayload, { buildConfig, Payload } from "payload";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, beforeAll } from "vitest";
-import { mongooseAdapter } from "@payloadcms/db-mongodb";
+import { sqliteAdapter } from "@payloadcms/db-sqlite";
+
 import { multiTenantPlugin } from "../src/index";
 
-let mongo: MongoMemoryServer | null = await MongoMemoryServer.create();
 let payload: Payload | null = null;
 
 beforeAll(async () => {
@@ -14,8 +13,10 @@ beforeAll(async () => {
     admin: {
       user: "users",
     },
-    db: mongooseAdapter({
-      url: mongo!.getUri()!,
+    db: sqliteAdapter({
+      client: {
+        url: ":memory:",
+      },
     }),
     collections: [
       {
@@ -61,5 +62,4 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await payload?.destroy();
-  await mongo!.stop();
 });

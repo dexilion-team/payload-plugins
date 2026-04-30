@@ -1,8 +1,9 @@
 import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
+
 import path from "path";
 import { buildConfig } from "payload";
-import { myPlugin } from "../src";
+import dynamicBlocks from "../src";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
 
@@ -31,7 +32,19 @@ export default buildConfig({
   collections: [
     {
       slug: "posts",
-      fields: [],
+      fields: [
+        {
+          name: "content",
+          label: "Content",
+          labels: {
+            singular: "Content Block",
+            plural: "Content Blocks",
+          },
+          type: "blocks",
+          blocks: [],
+          custom: { dynamic: true },
+        },
+      ],
     },
     {
       slug: "media",
@@ -61,8 +74,8 @@ export default buildConfig({
     await seed(payload);
   },
   plugins: [
-    myPlugin({
-      // Configure your plugin options here
+    dynamicBlocks({
+      collections: ["posts"],
     }),
   ],
   secret: process.env.PAYLOAD_SECRET || "test-secret_key",
