@@ -2,7 +2,15 @@ import type { CollectionSlug, Payload } from "payload";
 
 import config from "@payload-config";
 import { getPayload } from "payload";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "vitest";
 import { schedulePlugin } from "../src";
 
 let payload: Payload;
@@ -16,6 +24,20 @@ beforeAll(async () => {
 });
 
 describe("payload-schedule plugin integration tests", () => {
+  beforeEach(async () => {
+    await payload.delete({
+      collection: "posts",
+      where: { slug: { equals: "test-scheduled-post" } },
+    });
+  });
+
+  afterEach(async () => {
+    await payload.delete({
+      collection: "posts",
+      where: { slug: { equals: "test-scheduled-post" } },
+    });
+  });
+
   test("should add scheduledAt field to configured collection", async () => {
     const postsCollection = payload.config.collections.find(
       (c) => c.slug === "posts",
@@ -61,6 +83,7 @@ describe("payload-schedule plugin integration tests", () => {
       data: {
         title: "Test Scheduled Post",
         slug: "test-scheduled-post",
+        // @ts-ignore - Excerpt field is defined in the blog plugin, which is used in our config
         excerpt: "Test excerpt",
         author: user.docs[0]!.id,
         content: {

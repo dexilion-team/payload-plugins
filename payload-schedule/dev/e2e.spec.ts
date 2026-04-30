@@ -28,7 +28,7 @@ test.describe("payload-schedule plugin e2e tests", () => {
 
     // Check the label
     await expect(
-      page.locator('label:has-text("Schedule for publication")'),
+      page.locator('label:has-text("Publication Date")'),
     ).toBeVisible();
   });
 

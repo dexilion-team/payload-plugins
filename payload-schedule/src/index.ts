@@ -41,7 +41,7 @@ const createScheduleField = (
   const baseField: Field = {
     name: SCHEDULE_FIELD_NAME,
     type: "date",
-    label: "Schedule for publication",
+    label: "Publication Date",
     admin: {
       description: "Set a date to automatically publish this document",
       position: "sidebar",
@@ -149,17 +149,21 @@ export const schedulePlugin =
               beforeChange: [
                 ...(collection.hooks?.beforeChange ?? []),
                 ({ data, req }: { data: any; req: any }) => {
-                  if (!data[SCHEDULE_FIELD_NAME]) return data;
+                  if (!data[SCHEDULE_FIELD_NAME]) {
+                    return data;
+                  }
+
                   const startOfToday = new Date();
                   startOfToday.setUTCHours(0, 0, 0, 0);
+
                   if (new Date(data[SCHEDULE_FIELD_NAME]) < startOfToday) {
                     throw new ValidationError(
                       {
                         errors: [
                           {
                             path: SCHEDULE_FIELD_NAME,
-                            label: "Schedule for publication",
-                            message: "Scheduled date cannot be in the past",
+                            label: "Publication Date",
+                            message: "Publication date cannot be in the past",
                           },
                         ],
                         req,
