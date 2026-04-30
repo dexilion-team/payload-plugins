@@ -3,6 +3,7 @@ import {
   BlocksField,
   BlocksFieldServerComponent,
   ClientBlock,
+  ClientField,
   ClientFieldSchemaMap,
   createClientBlocks,
   createClientField,
@@ -15,6 +16,7 @@ import {
 import { WIDGET_COLLECTION_NAME } from "../constants";
 import { parseWidgetFields } from "../utils/parseWidgetFields";
 import CustomBlockRenderer from "./CustomBlockRenderer";
+import { RenderFields } from "./RenderFields";
 
 function addBlockFieldsToSchemaMap(
   fieldSchemaMap: FieldSchemaMap,
@@ -100,6 +102,7 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     payload,
     i18n,
     schemaPath,
+    path,
     permissions,
     fieldSchemaMap,
     clientFieldSchemaMap,
@@ -194,8 +197,9 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
   return (
     <CustomBlockRenderer
       blocks={clientBlocks}
-      path={props.path}
+      path={path}
       schemaPath={schemaPath}
+      permissions={permissions}
     />
   );
 };

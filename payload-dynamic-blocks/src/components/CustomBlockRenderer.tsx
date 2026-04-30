@@ -3,6 +3,7 @@
 import type {
   ClientBlock,
   ClientField,
+  SanitizedFieldPermissions,
   // StaticLabel
 } from "payload";
 import { useCallback } from "react";
@@ -16,10 +17,12 @@ import {
   TextField,
   FieldPathContext,
   fieldBaseClass,
+  RichTextField,
   useDrawerSlug,
   useField,
   useForm,
 } from "@payloadcms/ui";
+import { RenderFields } from "./RenderFields";
 
 // function TextInput({
 //   field,
@@ -54,6 +57,12 @@ function renderField(field: ClientField, rowPath: string) {
           <TextField field={field as any} path={fieldPath} />
         </FieldPathContext.Provider>
       );
+    case "richText":
+      return (
+        <FieldPathContext.Provider key={fieldPath} value={fieldPath}>
+          <RichTextField field={field as any} path={fieldPath} />
+        </FieldPathContext.Provider>
+      );
     default:
       return null;
   }
@@ -63,16 +72,22 @@ export default function CustomBlockRenderer({
   blocks,
   path: pathFromProps,
   schemaPath: schemaPathFromProps,
+  permissions,
 }: {
   blocks: ClientBlock[];
   path: string;
   schemaPath?: string;
+  permissions:
+    | {
+        [fieldName: string]: SanitizedFieldPermissions;
+      }
+    | SanitizedFieldPermissions;
 }) {
   const drawerSlug = useDrawerSlug("blocks-drawer");
 
-  const { addFieldRow, moveFieldRow, removeFieldRow } = useForm();
+  const { addFieldRow } = useForm();
 
-  const { path, rows = [] } = useField<number>({
+  const { path, rows: blockRows = [] } = useField<number>({
     hasRows: true,
     potentiallyStalePath: pathFromProps,
   });
@@ -87,54 +102,29 @@ export default function CustomBlockRenderer({
     [addFieldRow, path, schemaPath],
   );
 
-  const removeRow = useCallback(
-    (rowIndex: number) => {
-      removeFieldRow({ path, rowIndex });
-    },
-    [path, removeFieldRow],
-  );
-
-  const moveRow = useCallback(
-    (moveFromIndex: number, moveToIndex: number) => {
-      moveFieldRow({ moveFromIndex, moveToIndex, path });
-    },
-    [moveFieldRow, path],
-  );
-
   return (
     <div className={[fieldBaseClass, "blocks-field"].join(" ")}>
-      {rows.length > 0 && (
-        <DraggableSortable
-          ids={rows.map((row) => row.id)}
-          onDragEnd={({ moveFromIndex, moveToIndex }) =>
-            moveRow(moveFromIndex, moveToIndex)
-          }
-        >
-          {rows.map((row, i) => {
-            const blockConfig = blocks.find((b) => b.slug === row.blockType);
-            if (!blockConfig) return null;
+      {blockRows.length > 0 &&
+        blockRows.map((row, i) => {
+          const blockConfig = blocks.find((b) => b.slug === row.blockType);
+          if (!blockConfig) return null;
 
-            const rowPath = `${path}.${i}`;
+          const rowPath = `${path}.${i}`;
+          const rowSchemaPath = `${schemaPath}.${blockConfig.slug}`;
 
-            const rowSchemaPath = `${schemaPath}.${blockConfig.slug}`;
-
-            return (
-              <DraggableSortableItem id={row.id} key={row.id}>
-                {() => (
-                  <div>
-                    {(blockConfig.fields as ClientField[]).map((field) =>
-                      renderField(field, rowPath),
-                    )}
-                    <button onClick={() => removeRow(i)} type="button">
-                      Remove
-                    </button>
-                  </div>
-                )}
-              </DraggableSortableItem>
-            );
-          })}
-        </DraggableSortable>
-      )}
+          return (
+            <div key={rowPath}>
+              {/* This is a block renderer */}
+              <RenderFields
+                fields={blockConfig.fields as ClientField[]}
+                parentIndexPath={rowPath}
+                parentPath={rowPath}
+                parentSchemaPath={rowSchemaPath}
+                permissions={permissions}
+              />
+            </div>
+          );
+        })}
       <DrawerToggler className="blocks-field__drawer-toggler" slug={drawerSlug}>
         <Button
           buttonStyle="icon-label"
@@ -148,7 +138,7 @@ export default function CustomBlockRenderer({
       </DrawerToggler>
       <BlocksDrawer
         addRow={addRow}
-        addRowIndex={rows.length}
+        addRowIndex={blockRows.length}
         blocks={blocks}
         drawerSlug={drawerSlug}
         labels={{ singular: "Block", plural: "Blocks" }}
