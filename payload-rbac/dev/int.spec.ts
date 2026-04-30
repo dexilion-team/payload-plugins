@@ -25,7 +25,9 @@ describe("RBAC Plugin - Plugin registration", () => {
 });
 
 describe("RBAC Plugin - Roles Collection", () => {
-  test("should create a role with permissions", async () => {
+  let createdRoleId: string;
+
+  beforeAll(async () => {
     const role = await payload.create({
       collection: "roles",
       data: {
@@ -39,6 +41,20 @@ describe("RBAC Plugin - Roles Collection", () => {
           },
         },
       },
+    });
+    createdRoleId = role.id as string;
+  });
+
+  afterAll(async () => {
+    if (createdRoleId) {
+      await payload.delete({ collection: "roles", id: createdRoleId });
+    }
+  });
+
+  test("should create a role with permissions", async () => {
+    const role = await payload.findByID({
+      collection: "roles",
+      id: createdRoleId,
     });
 
     expect(role.role).toBe("test-editor");
@@ -64,8 +80,9 @@ describe("RBAC Plugin - Roles Collection", () => {
 describe("RBAC Plugin - userHasPermission function", () => {
   let testUserId: string;
   let testRoleId: string;
+  let mediaRoleId: string;
 
-  test("should create a test user with a role", async () => {
+  beforeAll(async () => {
     const user = await payload.create({
       collection: "users",
       data: {
@@ -86,6 +103,43 @@ describe("RBAC Plugin - userHasPermission function", () => {
       },
     });
     testRoleId = role.id as string;
+
+    const mediaRole = await payload.create({
+      collection: "roles",
+      data: {
+        role: "media-viewer",
+        users: [user.id],
+        permissions: {
+          media: {
+            read: true,
+            create: false,
+            update: false,
+            delete: false,
+          },
+        },
+      },
+    });
+    mediaRoleId = mediaRole.id as string;
+  });
+
+  afterAll(async () => {
+    for (const id of [testRoleId, mediaRoleId].filter(Boolean)) {
+      await payload.delete({ collection: "roles", id });
+    }
+    if (testUserId) {
+      await payload.delete({ collection: "users", id: testUserId });
+    }
+  });
+
+  test("should create a test user with a role", async () => {
+    const user = await payload.findByID({
+      collection: "users",
+      id: testUserId,
+    });
+    const role = await payload.findByID({
+      collection: "roles",
+      id: testRoleId,
+    });
 
     expect(user.email).toBe("test-rbac-user@example.com");
     expect(role.role).toBe("posts-editor");
@@ -190,23 +244,6 @@ describe("RBAC Plugin - userHasPermission function", () => {
   });
 
   test("should check permissions for multiple principals", async () => {
-    // Create another role for media collection
-    await payload.create({
-      collection: "roles",
-      data: {
-        role: "media-viewer",
-        users: [testUserId],
-        permissions: {
-          media: {
-            read: true,
-            create: false,
-            update: false,
-            delete: false,
-          },
-        },
-      },
-    });
-
     const mockReq = {
       user: { id: testUserId },
       payload,
@@ -252,33 +289,12 @@ describe("RBAC Plugin - userHasPermission function", () => {
 
     expect(hasPermission).toBe(true);
   });
-
-  test("cleanup test data", async () => {
-    // Clean up test user
-    await payload.delete({
-      collection: "users",
-      id: testUserId,
-    });
-
-    // Clean up test roles
-    const { docs: roles } = await payload.find({
-      collection: "roles",
-      where: {
-        role: { in: ["test-editor", "posts-editor", "media-viewer"] },
-      },
-    });
-
-    for (const role of roles) {
-      await payload.delete({
-        collection: "roles",
-        id: role.id,
-      });
-    }
-  });
 });
 
 describe("RBAC Plugin - Users collection has roles field", () => {
-  test("should have roles field on users collection", async () => {
+  let userId: string;
+
+  beforeAll(async () => {
     const user = await payload.create({
       collection: "users",
       data: {
@@ -286,24 +302,27 @@ describe("RBAC Plugin - Users collection has roles field", () => {
         password: "testpassword123",
       },
     });
+    userId = user.id as string;
+  });
 
+  afterAll(async () => {
+    if (userId) {
+      await payload.delete({ collection: "users", id: userId });
+    }
+  });
+
+  test("should have roles field on users collection", async () => {
     // The users collection should now have a roles relationship field
     // We can verify this by checking if we can update the user with roles
     const updatedUser = await payload.update({
       collection: "users",
-      id: user.id,
+      id: userId,
       data: {
         roles: [], // Empty array initially
       },
     });
 
     expect(updatedUser).toBeDefined();
-
-    // Cleanup
-    await payload.delete({
-      collection: "users",
-      id: user.id,
-    });
   });
 });
 

@@ -10,7 +10,7 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, "dev/.env") });
+dotenv.config({ path: path.resolve(__dirname, "dev/.env"), quiet: true });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
