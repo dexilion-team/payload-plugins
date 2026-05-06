@@ -144,37 +144,6 @@ export const schedulePlugin =
           return {
             ...collection,
             fields: [...(collection.fields || []), scheduleField],
-            hooks: {
-              ...collection.hooks,
-              beforeChange: [
-                ...(collection.hooks?.beforeChange ?? []),
-                ({ data, req }: { data: any; req: any }) => {
-                  if (!data[SCHEDULE_FIELD_NAME]) {
-                    return data;
-                  }
-
-                  const startOfToday = new Date();
-                  startOfToday.setUTCHours(0, 0, 0, 0);
-
-                  if (new Date(data[SCHEDULE_FIELD_NAME]) < startOfToday) {
-                    throw new ValidationError(
-                      {
-                        errors: [
-                          {
-                            path: SCHEDULE_FIELD_NAME,
-                            label: "Publication Date",
-                            message: "Publication date cannot be in the past",
-                          },
-                        ],
-                        req,
-                      },
-                      req.t,
-                    );
-                  }
-                  return data;
-                },
-              ],
-            },
           };
         }
         return collection;
