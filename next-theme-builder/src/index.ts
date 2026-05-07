@@ -54,6 +54,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
+import chokidar from "chokidar";
 import * as sass from "sass";
 
 // ---------------------------------------------------------------------------
@@ -707,7 +708,7 @@ function collectCssFromFile(
       themeCache.set(absPath, { finalCss, finalMap: map, classMap });
     } catch (error) {
       console.error(
-        `[@dexilion/payload-tenant-theming] Failed to compile ${absPath} imported from ${tsxPath}. ${error}`,
+        `[@dexilion/next-theme-builder] Failed to compile ${absPath} imported from ${tsxPath}. ${error}`,
       );
       continue;
     }
@@ -984,4 +985,54 @@ export default function themeCssLoader(
   }
 
   this.callback(null, source, originalMap);
+}
+
+/**
+ * If you need watching for all CSS and asset files to trigger rebuilds on
+ * change without relying on the request-time staleness check (e.g. for a
+ * development-only file watcher), you can use this helper to set up a chokidar
+ * watcher on the themes directory.
+ *
+ * @param options Optional configuration for the watcher
+ */
+export function themeAssetWatcher(options?: ThemeCssLoaderOptions) {
+  const themesDir = options?.themesDir ?? "src/themes";
+  const outputDir = options?.outputDir ?? "public/themes";
+  const bufferedWrite = options?.bufferedWrite ?? true;
+  const assetsSubdir = options?.assetsSubdir ?? "assets";
+  const absThemesDir = path.resolve(CWD, themesDir);
+  const absOutputDir = path.resolve(CWD, outputDir);
+  const dir = path.join(CWD, themesDir);
+  const watcher = chokidar.watch(dir, {
+    ignoreInitial: true,
+  });
+
+  watcher.on("all", (event: string, changedPath: string) => {
+    if (!changedPath.endsWith(".css") && !changedPath.endsWith(".scss")) {
+      return;
+    }
+
+    const themeName = extractThemeName(changedPath, absThemesDir);
+    if (!themeName) {
+      return;
+    }
+
+    try {
+      const themeCache = new Map<string, ThemeCacheEntry>();
+      compilationCache.set(themeName, themeCache);
+      rebuildTheme(
+        themeName,
+        themeCache,
+        absThemesDir,
+        absOutputDir,
+        bufferedWrite,
+        assetsSubdir,
+      );
+      themeLastRebuild.set(themeName, Date.now());
+    } catch (error) {
+      console.error(
+        `[@dexilion/next-theme-builder] Failed to rebuild theme "${themeName}": ${error}`,
+      );
+    }
+  });
 }

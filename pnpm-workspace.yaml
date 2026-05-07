@@ -12,6 +12,7 @@ packages:
   - payload-cron-job-org
   - payload-schedule
   - payload-dynamic-blocks
+  - next-theme-builder
 
 autoInstallPeers: false
 
