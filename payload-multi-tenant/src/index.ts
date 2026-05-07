@@ -82,33 +82,45 @@ export const multiTenantPlugin =
       config.collections.push(tenantsCollection);
     }
 
-    // Add tenantField relation to auth collection
-    authCollection.fields.push({
-      name: tenantFieldName,
-      label: options.tenantFieldLabelOnAuthCollection ?? "Tenants",
-      type: "join",
-      collection: tenantsCollection.slug as CollectionSlug,
-      on: tenantFieldName,
-      admin: {
-        allowCreate: false,
-      },
-    });
+    if (
+      !authCollection.fields.some(
+        (field) => "name" in field && field.name === tenantFieldName,
+      )
+    ) {
+      // Add tenantField relation to auth collection
+      authCollection.fields.push({
+        name: tenantFieldName,
+        label: options.tenantFieldLabelOnAuthCollection ?? "Tenants",
+        type: "join",
+        collection: tenantsCollection.slug as CollectionSlug,
+        on: tenantFieldName,
+        admin: {
+          allowCreate: false,
+        },
+      });
+    }
 
-    // Add join field to tenants collection linking to auth collection
-    tenantsCollection.fields.push({
-      name: tenantFieldName,
-      label: options.tenantFieldLabelOnTenantsCollection ?? "Users",
-      type: "relationship",
-      relationTo: authCollection.slug as CollectionSlug,
-      hasMany: true,
-      required: false,
-      admin: {
-        disableListColumn: true,
-      },
-      hooks: {
-        afterChange: [setTenantPreference],
-      },
-    });
+    if (
+      !tenantsCollection.fields.some(
+        (field) => "name" in field && field.name === tenantFieldName,
+      )
+    ) {
+      // Add join field to tenants collection linking to auth collection
+      tenantsCollection.fields.push({
+        name: tenantFieldName,
+        label: options.tenantFieldLabelOnTenantsCollection ?? "Users",
+        type: "relationship",
+        relationTo: authCollection.slug as CollectionSlug,
+        hasMany: true,
+        required: false,
+        admin: {
+          disableListColumn: true,
+        },
+        hooks: {
+          afterChange: [setTenantPreference],
+        },
+      });
+    }
 
     // Set access control on tenants collection
     tenantsCollection.access = {
