@@ -254,7 +254,6 @@ async function handleScheduledPublications({
               id: doc.id,
               data: {
                 _status: "published",
-                [SCHEDULE_FIELD_NAME]: null,
               } as any,
               depth: 0,
             });
