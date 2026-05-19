@@ -124,6 +124,28 @@ const CWD = process.cwd();
 const NODE_MODULES = path.join(CWD, "node_modules");
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
+/**
+ * Strip BOMs and zero-width / invisible Unicode characters that can break
+ * CSS parsing when Sass injects them (e.g. UTF-8 BOM \uFEFF when the source
+ * SCSS contains non-ASCII characters like em-dashes or bullets).
+ *
+ * Removes:
+ *  - BOMs:          U+FEFF, U+FFFE
+ *  - Zero-width:    U+200B, U+200C, U+200D, U+2060
+ *  - Word joiner:   U+2060
+ *  - Narrow no-break: U+202F
+ *  - Non-joining:   U+200C, U+200D
+ *  - Directional:   U+200E (LRE), U+200F (RLE), U+202A-U+202E (embeddings/overrides)
+ *  - Directional marks: U+2066-U+2069
+ *  - Soft hyphen:   U+00AD
+ */
+const STRIP_CHARS_RE =
+  /[\uFEFF\uFFFE\u200B-\u200F\u202A-\u202F\u2060-\u2069\u00AD]/g;
+
+function sanitizeCss(css: string): string {
+  return css.replace(STRIP_CHARS_RE, "");
+}
+
 // ---------------------------------------------------------------------------
 // Module-level persistent state — survives HMR cycles, reset on server restart
 // ---------------------------------------------------------------------------
@@ -811,7 +833,7 @@ function rebuildTheme(
     }
     fs.writeFileSync(
       outFile,
-      chunks.map((c) => c.css).join("\n") + sourceMappingComment,
+      chunks.map((c) => sanitizeCss(c.css || "")).join("\n") + sourceMappingComment,
       "utf8",
     );
     if (!IS_PRODUCTION) {
@@ -829,8 +851,9 @@ function rebuildTheme(
     try {
       let first = true;
       for (const entry of themeCache.values()) {
+        const css = sanitizeCss(entry.finalCss ?? "");
         if (!first) fs.writeSync(fd, "\n");
-        fs.writeSync(fd, entry.finalCss ?? "");
+        fs.writeSync(fd, css);
         first = false;
         // Strip finalCss/finalMap now that they have been written to disk.
         // classMap is all that is needed for subsequent warm-start source rewrites.
