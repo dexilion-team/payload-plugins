@@ -1,7 +1,12 @@
 import type { CollectionSlug, ListViewServerProps } from "payload";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
-import { getActiveTenantIDFromUser } from "../utils";
+import {
+  getActiveTenantIDFromUser,
+  parseCookie,
+  TENANT_COOKIE_NAME,
+} from "../utils";
 
 type GlobalCollectionRedirectProps = ListViewServerProps & {
   collectionSlug: CollectionSlug;
@@ -52,11 +57,17 @@ const GlobalCollectionRedirect = async ({
   tenantsSlug,
   user,
 }: GlobalCollectionRedirectProps) => {
+  // Read tenant ID from cookie (client-authoritative)
+  const h = await headers();
+  const cookieValue = parseCookie(h.get("cookie"), TENANT_COOKIE_NAME);
+  const cookieTenantId = cookieValue ? Number(cookieValue) : null;
+
   const tenantID = await getActiveTenantIDFromUser({
     payload,
     tenantFieldName,
     tenantsSlug,
     user,
+    cookieTenantId: Number.isFinite(cookieTenantId!) ? cookieTenantId : null,
   });
 
   if (tenantID == null) {

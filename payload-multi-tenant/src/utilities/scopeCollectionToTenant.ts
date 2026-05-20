@@ -1,7 +1,7 @@
 import { CollectionConfig, CollectionSlug } from "payload";
-import { getPreference } from "@dexilion/payload-utils";
 import { hasNamedField } from "../utils";
 import { swizzleTenantFilteringInAccessControl } from "../access/swizzleTenantFilteringInAccessControl";
+import { getActiveTenantIDFromReq } from "../utils";
 
 export const scopeCollectionToTenant = (
   collection: CollectionConfig,
@@ -29,16 +29,21 @@ export const scopeCollectionToTenant = (
         hidden: true,
       },
       defaultValue: async ({ req }) => {
-        const preference = await getPreference<number | undefined>({
+        const activeTenantID = await getActiveTenantIDFromReq(
           req,
-          key: "admin-tenant-select",
-        });
+          tenantFieldName,
+          tenantsSlug,
+        );
+
+        if (activeTenantID != null) {
+          return activeTenantID;
+        }
 
         const tenants = req.user?.[
           tenantFieldName as keyof typeof req.user
         ] as any;
 
-        return preference ?? tenants?.[0]?.id;
+        return tenants?.[0]?.id;
       },
     });
   } else {
@@ -71,6 +76,7 @@ export const scopeCollectionToTenant = (
   collection.access = swizzleTenantFilteringInAccessControl({
     access: originalAccess,
     tenantFieldName,
+    tenantsSlug,
     debug,
   });
 };

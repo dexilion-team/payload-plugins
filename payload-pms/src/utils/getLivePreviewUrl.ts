@@ -1,6 +1,19 @@
 import { getPreference } from "@dexilion/payload-utils";
 import { CollectionSlug, PayloadRequest } from "payload";
 
+const TENANT_COOKIE_NAME = "payload-tenant-id";
+
+function parseCookie(
+  cookieHeader: string | null | undefined,
+  name: string,
+): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(
+    new RegExp("(?:^|;)\\s*" + name + "\\s*=\\s*([^;]+)"),
+  );
+  return match ? match[1].trim() : null;
+}
+
 export const getLivePreviewUrl =
   ({
     livePreviewBasePath,
@@ -11,10 +24,25 @@ export const getLivePreviewUrl =
   }) =>
   async ({ req, data }: { req: PayloadRequest; data: any }) => {
     const { payload, headers } = req;
-    const tenantId = (await getPreference({
-      req,
-      key: "admin-tenant-select",
-    })) as number;
+
+    // Client-authoritative: check cookie first
+    const cookieValue = parseCookie(headers.get("cookie"), TENANT_COOKIE_NAME);
+    let tenantId: number | undefined;
+    if (cookieValue) {
+      const parsed = Number(cookieValue);
+      if (Number.isFinite(parsed)) {
+        tenantId = parsed;
+      }
+    }
+
+    // Fallback to DB preference
+    if (!tenantId) {
+      tenantId = (await getPreference({
+        req,
+        key: "admin-tenant-select",
+      })) as number;
+    }
+
     if (!tenantId) {
       console.warn(
         "[@dexilion/payload-pms] No tenant selected for live preview. Please set the 'admin-tenant-select' preference.",
