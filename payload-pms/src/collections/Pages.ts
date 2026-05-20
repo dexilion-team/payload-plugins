@@ -269,11 +269,17 @@ export const createPagesCollection = ({
       },
       hooks: {
         beforeChange: [
-          async ({ siblingData }) => {
+          async ({ siblingData, value }) => {
+            if (!siblingData) {
+              return value;
+            }
+
             const title = siblingData?.generalTab?.title || "";
             const path = siblingData?.generalTab?.path || "";
 
             siblingData.display = title ? `${title} [${path}]` : "<New Page>";
+
+            return value;
           },
         ],
       },
