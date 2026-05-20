@@ -206,8 +206,9 @@ export const createPagesCollection = ({
                 ];
               }, [] as Block[]),
               required: true,
-              filterOptions: async ({ req }) => {
-                const themeName = await getThemeName({ req });
+              filterOptions: async ({ req, data }) => {
+                const tenantId = extractTenantIdFromDoc(data);
+                const themeName = await getThemeName({ req, tenantId });
                 if (!themeName) {
                   return [];
                 }
