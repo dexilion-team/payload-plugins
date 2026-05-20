@@ -15,6 +15,7 @@ import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
 import getThemeName from "../utils/getThemeName";
 import { stripSnapshot } from "../utils/stripSnapshot";
 import { getLivePreviewUrl } from "../utils/getLivePreviewUrl";
+import { extractTenantIdFromDoc } from "../utils/extractTenantId";
 
 export type PagesConfig = {
   slug?: string;
@@ -152,18 +153,19 @@ export const createPagesCollection = ({
               },
               hooks: {
                 afterRead: [
-                  async ({ siblingData, req }) => {
+                  async ({ siblingData, data, req }) => {
                     if (!req.user) {
                       return undefined;
                     }
 
-                    const themeName = await getThemeName({ req });
+                    const tenantId = extractTenantIdFromDoc(data);
+                    const themeName = await getThemeName({ req, tenantId });
                     const layout = siblingData?.layout;
                     return layout ? `${themeName}-${layout}` : undefined;
                   },
                 ],
                 beforeChange: [
-                  async ({ value, siblingData, req }) => {
+                  async ({ value, siblingData, data, req }) => {
                     if (!req.user) {
                       console.error(
                         "[@dexilion/payload-pms] Unable to set layout beforeChange: no user in request",
@@ -171,7 +173,8 @@ export const createPagesCollection = ({
                       return;
                     }
 
-                    const themeName = await getThemeName({ req });
+                    const tenantId = extractTenantIdFromDoc(data);
+                    const themeName = await getThemeName({ req, tenantId });
                     siblingData.layout = value?.replace(`${themeName}-`, "");
                   },
                 ],
@@ -217,12 +220,13 @@ export const createPagesCollection = ({
               },
               hooks: {
                 afterRead: [
-                  async ({ siblingData, req }) => {
+                  async ({ siblingData, data, req }) => {
                     if (!req.user) {
                       return [];
                     }
 
-                    const themeName = await getThemeName({ req });
+                    const tenantId = extractTenantIdFromDoc(data);
+                    const themeName = await getThemeName({ req, tenantId });
                     return (siblingData?.content || []).map((block: any) => ({
                       ...block,
                       blockType: `${themeName}-${block.blockType}`,
@@ -230,7 +234,7 @@ export const createPagesCollection = ({
                   },
                 ],
                 beforeChange: [
-                  async ({ siblingData, req }) => {
+                  async ({ siblingData, data, req }) => {
                     if (!req.user) {
                       console.error(
                         "[@dexilion/payload-pms] Unable to set widgets content beforeChange: no user in request",
@@ -238,7 +242,8 @@ export const createPagesCollection = ({
                       return;
                     }
 
-                    const themeName = await getThemeName({ req });
+                    const tenantId = extractTenantIdFromDoc(data);
+                    const themeName = await getThemeName({ req, tenantId });
                     const widgets = siblingData?.widgets || [];
 
                     siblingData.content = widgets.map((widget: any) => ({

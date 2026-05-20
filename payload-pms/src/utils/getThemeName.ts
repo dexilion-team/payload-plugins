@@ -13,11 +13,34 @@ type UserWithTenants = {
 };
 
 /**
- * Get the theme name for the current tenant
+ * Get the theme name for the current tenant.
+ *
+ * Pass `tenantId` to resolve via the document's own tenant (preferred).
+ * Falls back to the `admin-tenant-select` user preference when not provided.
  */
-const getThemeName = async ({ req }: { req: PayloadRequest }) => {
+const getThemeName = async ({
+  req,
+  tenantId: explicitTenantId,
+}: {
+  req: PayloadRequest;
+  tenantId?: string;
+}) => {
   if (!req.user) {
     return null;
+  }
+
+  // If the caller knows the tenant ID from the document itself, skip the
+  // user-preference lookup entirely to avoid theme/tenant mismatch on autosave.
+  if (explicitTenantId) {
+    const tenant = await req.payload.findByID({
+      collection: "tenants",
+      id: Number(explicitTenantId),
+      disableErrors: true,
+    });
+    if (tenant) {
+      const themeName = "theme" in tenant && (tenant.theme as string);
+      if (themeName) return themeName;
+    }
   }
 
   const preference = await getPreferences<string>(
