@@ -273,9 +273,7 @@ export const createPagesCollection = ({
             const title = siblingData?.generalTab?.title || "";
             const path = siblingData?.generalTab?.path || "";
 
-            if (siblingData) {
-              siblingData.display = title ? `${title} [${path}]` : "<New Page>";
-            }
+            return title ? `${title} [${path}]` : "<New Page>";
           },
         ],
       },
