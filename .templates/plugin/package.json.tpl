@@ -46,7 +46,6 @@
     "eslint": "^10.1.0",
     "eslint-config-next": "16.2.2",
     "graphql": "^16.8.1",
-    "mongodb-memory-server": "10.1.4",
     "monaco-editor": ">= 0.25.0 < 1",
     "next": "^16.2",
     "npm-run-all2": "^8",

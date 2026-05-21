@@ -147,6 +147,7 @@ export const createPagesCollection = ({
                 ];
               }, [] as Option[]),
               admin: {
+                readOnly: false,
                 components: {
                   Field: "@dexilion/payload-pms/admin/LayoutVariantSelect",
                 },
@@ -195,6 +196,9 @@ export const createPagesCollection = ({
                 t("plugin-pms:widgetsLabel"),
               type: "blocks",
               virtual: true,
+              admin: {
+                readOnly: false,
+              },
               blocks: Object.keys(blocks).reduce((acc, key) => {
                 const blockOptions = blocks[key] || [];
                 return [
