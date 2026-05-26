@@ -10,6 +10,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./WysiwygField": {
+      "types": "./src/components/WysiwygField.tsx",
+      "import": "./src/components/WysiwygField.tsx",
+      "default": "./src/components/WysiwygField.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -20,7 +25,9 @@
   ],
   "peerDependencies": {
     "payload": "3.82.1",
-    "@payloadcms/ui": "3.82.1"
+    "@payloadcms/ui": "3.82.1",
+    "@payloadcms/richtext-lexical": "3.82.1",
+    "@dexilion/payload-dynamic-blocks": "workspace:*"
   },
   "engines": {
     "node": "^25.9.0 || ^24.14.1 || ^22.22.2 ",
@@ -28,6 +35,7 @@
   },
   "devDependencies": {
     "@dexilion/payload-dynamic-blocks": "workspace:*",
+    "@dexilion/payload-pms": "workspace:*",
     "@eslint/eslintrc": "^3.3.5",
     "@payloadcms/db-mongodb": "3.82.1",
     "@payloadcms/db-postgres": "3.82.1",

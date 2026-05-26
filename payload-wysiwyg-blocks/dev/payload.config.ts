@@ -4,7 +4,7 @@ import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import path from "path";
 import { buildConfig } from "payload";
 import dynamicBlocks from "@dexilion/payload-dynamic-blocks";
-import wysiwygBlocks from "../src";
+import wysiwygBlocks, { wysiwygBlocksOverride } from "../src";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
 
@@ -63,6 +63,7 @@ export default buildConfig({
     dynamicBlocks({
       collections: ["pages"],
     }),
+    wysiwygBlocksOverride(),
   ],
   secret: process.env.PAYLOAD_SECRET || "test-secret_key",
   sharp,

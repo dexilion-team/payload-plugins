@@ -1,3 +1,15 @@
 {
-  "extends": "../../tsconfig.base.json"
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx"
+  ],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "paths": {
+      "@dexilion/payload-pms/RichText": ["../payload-pms/src/components/RichText/index.tsx"],
+      "@dexilion/payload-dynamic-blocks/parseWidgetFields": ["../payload-dynamic-blocks/src/utils/parseWidgetFields.ts"],
+      "@dexilion/payload-dynamic-blocks/RenderField": ["../payload-dynamic-blocks/src/components/RenderField.tsx"]
+    }
+  }
 }

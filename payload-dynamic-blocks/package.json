@@ -20,6 +20,16 @@
       "types": "./src/components/WidgetCell.tsx",
       "import": "./src/components/WidgetCell.tsx",
       "default": "./src/components/WidgetCell.tsx"
+    },
+    "./parseWidgetFields": {
+      "types": "./src/utils/parseWidgetFields.ts",
+      "import": "./src/utils/parseWidgetFields.ts",
+      "default": "./src/utils/parseWidgetFields.ts"
+    },
+    "./RenderField": {
+      "types": "./src/components/RenderField.tsx",
+      "import": "./src/components/RenderField.tsx",
+      "default": "./src/components/RenderField.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -113,6 +123,11 @@
         "types": "./src/components/WidgetCell.js",
         "import": "./src/components/WidgetCell.js",
         "default": "./src/components/WidgetCell.js"
+      },
+      "./parseWidgetFields": {
+        "types": "./dist/utils/parseWidgetFields.d.ts",
+        "import": "./dist/utils/parseWidgetFields.js",
+        "default": "./dist/utils/parseWidgetFields.js"
       }
     },
     "main": "./dist/index.js",
