@@ -1,4 +1,4 @@
-import { Config, Field } from "payload";
+import { Config } from "payload";
 
 interface PluginOptions {
   enable?: boolean;
@@ -36,32 +36,6 @@ const wysiwygBlocks = ({ enable }: PluginOptions = {}) => {
         ],
       },
     ];
-
-    return config;
-  };
-};
-
-// Run after dynamicBlocks — overrides the Field component on content_blocks
-// with the WYSIWYG renderer. Must be added last in the plugins array.
-export const wysiwygBlocksOverride = () => {
-  return (incomingConfig: Config): Config => {
-    const config = { ...incomingConfig };
-    const pagesCollection = config.collections?.find((c) => c.slug === "pages");
-
-    if (pagesCollection) {
-      const contentField = pagesCollection.fields?.find(
-        (f): f is Extract<Field, { name: string }> =>
-          "name" in f && f.name === "content_blocks",
-      );
-
-      if (contentField && contentField.type === "blocks") {
-        if (!contentField.admin) contentField.admin = {};
-        if (!contentField.admin.components) contentField.admin.components = {};
-        contentField.admin.components.Field = {
-          path: "@dexilion/payload-wysiwyg-blocks/WysiwygField",
-        };
-      }
-    }
 
     return config;
   };

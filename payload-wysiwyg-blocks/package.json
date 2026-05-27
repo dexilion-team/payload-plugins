@@ -10,11 +10,6 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
-    },
-    "./WysiwygField": {
-      "types": "./src/components/WysiwygField.tsx",
-      "import": "./src/components/WysiwygField.tsx",
-      "default": "./src/components/WysiwygField.tsx"
     }
   },
   "main": "./src/index.ts",

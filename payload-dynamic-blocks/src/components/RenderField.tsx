@@ -7,6 +7,7 @@ import type {
   SanitizedFieldPermissions,
 } from "payload";
 
+import { useState } from "react";
 import {
   HiddenField,
   ArrayField,
@@ -23,7 +24,6 @@ import {
   PointField,
   RadioGroupField,
   RelationshipField,
-  RichTextField,
   RowField,
   SelectField,
   TabsField,
@@ -33,12 +33,51 @@ import {
   UploadField,
   useFormFields,
 } from "@payloadcms/ui";
+import { RichText } from "@dexilion/payload-pms/RichText";
 
 type RenderFieldProps = {
   clientFieldConfig: ClientField;
   permissions: SanitizedFieldPermissions;
 } & FieldPaths &
   Pick<ClientComponentProps, "forceRender" | "readOnly" | "schemaPath">;
+
+function RichTextPreviewField({
+  path,
+  editorComponent,
+}: {
+  path: string;
+  editorComponent: React.ReactNode;
+}) {
+  const [editing, setEditing] = useState(false);
+  const value = useFormFields(([fields]) => fields?.[path]?.value);
+
+  if (editing) {
+    return (
+      <div className="wysiwyg-editor-inline">
+        <button
+          className="wysiwyg-editor-inline__close"
+          onClick={() => setEditing(false)}
+        >
+          ✕
+        </button>
+        {editorComponent}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="wysiwyg-preview__richtext"
+      onClick={() => setEditing(true)}
+    >
+      {value ? (
+        <RichText content={value as any} />
+      ) : (
+        <p className="wysiwyg-preview__placeholder">Click to edit…</p>
+      )}
+    </div>
+  );
+}
 
 export function RenderField({
   clientFieldConfig,
@@ -69,8 +108,17 @@ export function RenderField({
     return <HiddenField {...baseFieldProps} path={path} />;
   }
 
-  if (CustomField !== undefined) {
+  if (CustomField !== undefined && clientFieldConfig.type !== "richText") {
     return CustomField || null;
+  }
+
+  if (clientFieldConfig.type === "richText") {
+    return (
+      <RichTextPreviewField
+        path={path}
+        editorComponent={CustomField ?? null}
+      />
+    );
   }
 
   const iterableFieldProps = {
@@ -181,15 +229,6 @@ export function RenderField({
     case "relationship":
       return (
         <RelationshipField
-          {...baseFieldProps}
-          field={clientFieldConfig}
-          path={path}
-        />
-      );
-
-    case "richText":
-      return (
-        <RichTextField
           {...baseFieldProps}
           field={clientFieldConfig}
           path={path}

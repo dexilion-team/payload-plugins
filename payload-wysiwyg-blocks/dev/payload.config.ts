@@ -2,9 +2,9 @@ import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 
 import path from "path";
-import { buildConfig } from "payload";
+import { buildConfig, CollectionSlug } from "payload";
 import dynamicBlocks from "@dexilion/payload-dynamic-blocks";
-import wysiwygBlocks, { wysiwygBlocksOverride } from "../src";
+import wysiwygBlocks from "../src";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
 
@@ -61,9 +61,8 @@ export default buildConfig({
   plugins: [
     wysiwygBlocks({}),
     dynamicBlocks({
-      collections: ["pages"],
+      collections: ["pages" as CollectionSlug],
     }),
-    wysiwygBlocksOverride(),
   ],
   secret: process.env.PAYLOAD_SECRET || "test-secret_key",
   sharp,
