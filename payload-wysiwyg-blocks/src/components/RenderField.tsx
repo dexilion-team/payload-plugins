@@ -112,15 +112,6 @@ export function RenderField({
     return CustomField || null;
   }
 
-  if (clientFieldConfig.type === "richText") {
-    return (
-      <RichTextPreviewField
-        path={path}
-        editorComponent={CustomField ?? null}
-      />
-    );
-  }
-
   const iterableFieldProps = {
     ...baseFieldProps,
     indexPath,
@@ -232,6 +223,14 @@ export function RenderField({
           {...baseFieldProps}
           field={clientFieldConfig}
           path={path}
+        />
+      );
+
+    case "richText":
+      return (
+        <RichTextPreviewField
+          path={path}
+          editorComponent={CustomField ?? null}
         />
       );
 
