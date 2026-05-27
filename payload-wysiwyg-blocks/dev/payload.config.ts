@@ -59,7 +59,7 @@ export default buildConfig({
     await seed(payload);
   },
   plugins: [
-    wysiwygBlocks({}),
+    wysiwygBlocks({ wysiwyg: true }),
     dynamicBlocks({
       collections: ["pages" as CollectionSlug],
     }),

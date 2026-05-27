@@ -12,9 +12,9 @@ import {
   FlattenedBlock,
   PayloadRequest,
 } from "payload";
-import { BlocksField as BlocksFieldUI } from "@payloadcms/ui";
-import { WIDGET_COLLECTION_NAME } from "../constants";
-import { parseWidgetFields } from "../utils/parseWidgetFields";
+import { parseWidgetFields } from "@dexilion/payload-dynamic-blocks/parseWidgetFields";
+import { WIDGET_COLLECTION_NAME } from "@dexilion/payload-dynamic-blocks/constants";
+import WysiwygBlockRenderer from "./WysiwygBlockRenderer";
 
 function addBlockFieldsToSchemaMap(
   fieldSchemaMap: FieldSchemaMap,
@@ -95,11 +95,12 @@ function addBlockFieldsToSchemaMap(
   }
 }
 
-const WidgetField: BlocksFieldServerComponent = async (props) => {
+const WysiwygField: BlocksFieldServerComponent = async (props) => {
   const {
     payload,
     i18n,
     schemaPath,
+    path,
     permissions,
     fieldSchemaMap,
     clientFieldSchemaMap,
@@ -118,16 +119,12 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
   });
 
   if (widgets.docs.length === 0) {
-    payload.logger.error(
-      `No widget definitions found in the "${WIDGET_COLLECTION_NAME}" collection. Please add widget definitions to this collection to use dynamic blocks.`,
-    );
-    return null; // No widget definitions, render nothing
+    return null;
   }
 
   let blocks: Block[] = widgets.docs.map((doc: any): Block => {
     const parsedFields = parseWidgetFields(doc.widget ?? "");
 
-    // Inject the editor config for all richText fields
     const fields: Field[] = parsedFields.map((f) =>
       f.type === "richText"
         ? ({ ...f, editor: payload.config.editor, admin: {} } as Field)
@@ -136,16 +133,12 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
 
     return {
       slug: doc.name,
-      labels: {
-        singular: doc.name,
-        plural: doc.name,
-      },
-      dbName: doc.name, // Needed but unused
+      labels: { singular: doc.name, plural: doc.name },
+      dbName: doc.name,
       fields,
     };
   });
 
-  // Apply filterOptions if defined on the field
   const filterOptions = (field as BlocksField).filterOptions;
   if (filterOptions != null) {
     const filterResult =
@@ -159,8 +152,6 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     }
   }
 
-  // Populate fieldSchemaMap and clientFieldSchemaMap with dynamic block fields
-  // so renderFieldFn can resolve schema paths like `posts.blocks.exampleBlock.text`
   for (const block of blocks) {
     addBlockFieldsToSchemaMap(
       fieldSchemaMap,
@@ -171,8 +162,6 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     );
   }
 
-  // Register all dynamic blocks in payload.blocks so Payload can resolve them
-  // during form state building and validation
   payload.blocks = Object.fromEntries(
     blocks.map((block) => [
       block.slug,
@@ -183,25 +172,21 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     ]),
   );
 
-  // Create client blocks for rendering in the admin UI
   const clientBlocks: ClientBlock[] = createClientBlocks({
     blocks,
-    i18n: i18n,
+    i18n,
     defaultIDType: payload.config.db.defaultIDType,
     importMap: payload.importMap,
   }) as ClientBlock[];
 
   return (
-    <BlocksFieldUI
-      path={props.path}
-      field={{
-        ...props.clientField,
-        blocks: clientBlocks,
-      }}
+    <WysiwygBlockRenderer
+      blocks={clientBlocks}
+      path={path}
       schemaPath={schemaPath}
       permissions={permissions}
     />
   );
 };
 
-export default WidgetField;
+export default WysiwygField;

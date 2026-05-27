@@ -1,74 +1,19 @@
 "use client";
 
-import type {
-  ClientBlock,
-  ClientField,
-  SanitizedFieldPermissions,
-  // StaticLabel
-} from "payload";
+import type { ClientBlock, ClientField, SanitizedFieldPermissions } from "payload";
 import { useCallback } from "react";
 import {
   BlocksDrawer,
   Button,
-  DraggableSortable,
-  DraggableSortableItem,
   DrawerToggler,
-  // FieldLabel,
-  TextField,
-  FieldPathContext,
   fieldBaseClass,
-  RichTextField,
   useDrawerSlug,
   useField,
   useForm,
 } from "@payloadcms/ui";
 import { RenderFields } from "./RenderFields";
 
-// function TextInput({
-//   field,
-//   path,
-// }: {
-//   field: ClientField & { name: string };
-//   path: string;
-// }) {
-//   const { value, setValue } = useField<string>({ path });
-//   const label = ("label" in field ? field.label : field.name) as StaticLabel;
-//   return (
-//     <div className={[fieldBaseClass, "text"].join(" ")}>
-//       <FieldLabel htmlFor={path} label={label} path={path} />
-//       <input
-//         id={path}
-//         onChange={(e) => setValue(e.target.value)}
-//         type="text"
-//         value={value ?? ""}
-//       />
-//     </div>
-//   );
-// }
-
-function renderField(field: ClientField, rowPath: string) {
-  if (!("name" in field)) return null;
-  const fieldPath = `${rowPath}.${field.name}`;
-
-  switch (field.type) {
-    case "text":
-      return (
-        <FieldPathContext.Provider key={fieldPath} value={fieldPath}>
-          <TextField field={field as any} path={fieldPath} />
-        </FieldPathContext.Provider>
-      );
-    case "richText":
-      return (
-        <FieldPathContext.Provider key={fieldPath} value={fieldPath}>
-          <RichTextField field={field as any} path={fieldPath} />
-        </FieldPathContext.Provider>
-      );
-    default:
-      return null;
-  }
-}
-
-export default function CustomBlockRenderer({
+export default function WysiwygBlockRenderer({
   blocks,
   path: pathFromProps,
   schemaPath: schemaPathFromProps,
@@ -78,13 +23,10 @@ export default function CustomBlockRenderer({
   path: string;
   schemaPath?: string;
   permissions:
-    | {
-        [fieldName: string]: SanitizedFieldPermissions;
-      }
+    | { [fieldName: string]: SanitizedFieldPermissions }
     | SanitizedFieldPermissions;
 }) {
   const drawerSlug = useDrawerSlug("blocks-drawer");
-
   const { addFieldRow } = useForm();
 
   const { path, rows: blockRows = [] } = useField<number>({
@@ -114,7 +56,6 @@ export default function CustomBlockRenderer({
 
           return (
             <div key={rowPath}>
-              {/* This is a block renderer */}
               <RenderFields
                 fields={blockConfig.fields as ClientField[]}
                 parentIndexPath={rowPath}

@@ -10,6 +10,11 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./WysiwygField": {
+      "types": "./src/components/WysiwygField.tsx",
+      "import": "./src/components/WysiwygField.tsx",
+      "default": "./src/components/WysiwygField.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -23,6 +28,9 @@
     "@payloadcms/ui": "3.82.1",
     "@payloadcms/richtext-lexical": "3.82.1",
     "@dexilion/payload-dynamic-blocks": "workspace:*"
+  },
+  "dependencies": {
+    "@dexilion/payload-pms": "workspace:*"
   },
   "engines": {
     "node": "^25.9.0 || ^24.14.1 || ^22.22.2 ",
@@ -91,6 +99,11 @@
         "import": "./dist/index.js",
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
+      },
+      "./WysiwygField": {
+        "types": "./dist/components/WysiwygField.d.ts",
+        "import": "./dist/components/WysiwygField.js",
+        "default": "./dist/components/WysiwygField.js"
       }
     },
     "main": "./dist/index.js",
