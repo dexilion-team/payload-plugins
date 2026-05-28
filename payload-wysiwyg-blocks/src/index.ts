@@ -1,11 +1,12 @@
-import { BlocksField, Config, Field } from "payload";
+import { BlocksField, Config, Field, LivePreviewConfig } from "payload";
 
 interface PluginOptions {
   enable?: boolean;
   wysiwyg?: boolean;
+  livePreview?: LivePreviewConfig;
 }
 
-const wysiwygBlocks = ({ enable, wysiwyg = false }: PluginOptions = {}) => {
+const wysiwygBlocks = ({ enable, wysiwyg = false, livePreview }: PluginOptions = {}) => {
   return (incomingConfig: Config): Config => {
     if (enable === false) {
       return incomingConfig;
@@ -17,6 +18,7 @@ const wysiwygBlocks = ({ enable, wysiwyg = false }: PluginOptions = {}) => {
       ...(config.collections || []),
       {
         slug: "pages",
+        ...(livePreview ? { admin: { livePreview } } : {}),
         fields: [
           {
             name: "title",
@@ -63,7 +65,7 @@ const overrideDynamicBlocksFields = (fields: Field[]) => {
       if (!blocksField.admin) blocksField.admin = {};
       if (!blocksField.admin.components) blocksField.admin.components = {};
       blocksField.admin.components.Field = {
-        path: "@dexilion/payload-wysiwyg-blocks/WysiwygField",
+        path: "@dexilion/payload-wysiwyg-blocks/LivePreview",
       };
     }
 

@@ -31,7 +31,7 @@ export const seed = async (payload: Payload) => {
         widget:
           `<>\n` +
           `  <Text name="title" label="Title" required />\n` +
-          `  <RichText name="body" label="Body" />\n` +
+          `  <RichText name="body" label="Body" defaultValue={{"root":{"type":"root","format":"","indent":0,"version":1,"children":[{"type":"paragraph","format":"","indent":0,"version":1,"children":[{"type":"text","format":0,"style":"","mode":"normal","detail":0,"text":"Click here to edit...","version":1}],"textFormat":0,"textStyle":"","direction":"ltr"}],"direction":"ltr"}}} />\n` +
           `  <Relationship name="image" label="Image" relationTo="media" />\n` +
           `</>`,
       },

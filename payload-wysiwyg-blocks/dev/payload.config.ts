@@ -59,7 +59,15 @@ export default buildConfig({
     await seed(payload);
   },
   plugins: [
-    wysiwygBlocks({ wysiwyg: true }),
+    wysiwygBlocks({
+      wysiwyg: true,
+      livePreview: {
+        url: ({ data, req }) => {
+          const base = req.headers.get("origin") ?? "http://localhost:3000";
+          return `${base}/admin/preview/${data.id}`;
+        },
+      },
+    }),
     dynamicBlocks({
       collections: ["pages" as CollectionSlug],
     }),

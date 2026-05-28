@@ -15,6 +15,16 @@
       "types": "./src/components/WysiwygField.tsx",
       "import": "./src/components/WysiwygField.tsx",
       "default": "./src/components/WysiwygField.tsx"
+    },
+    "./LivePreview": {
+      "types": "./src/components/LivePreview.tsx",
+      "import": "./src/components/LivePreview.tsx",
+      "default": "./src/components/LivePreview.tsx"
+    },
+    "./LivePreviewClient": {
+      "types": "./src/components/LivePreviewClient.tsx",
+      "import": "./src/components/LivePreviewClient.tsx",
+      "default": "./src/components/LivePreviewClient.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -24,10 +34,10 @@
     "*.css"
   ],
   "peerDependencies": {
-    "payload": "3.82.1",
-    "@payloadcms/ui": "3.82.1",
+    "@dexilion/payload-dynamic-blocks": "workspace:*",
     "@payloadcms/richtext-lexical": "3.82.1",
-    "@dexilion/payload-dynamic-blocks": "workspace:*"
+    "@payloadcms/ui": "3.82.1",
+    "payload": "3.82.1"
   },
   "dependencies": {
     "@dexilion/payload-pms": "workspace:*"
@@ -44,6 +54,7 @@
     "@payloadcms/db-postgres": "3.82.1",
     "@payloadcms/db-sqlite": "3.82.1",
     "@payloadcms/eslint-config": "3.28.0",
+    "@payloadcms/live-preview-react": "^3.85.0",
     "@payloadcms/next": "3.82.1",
     "@payloadcms/richtext-lexical": "3.82.1",
     "@payloadcms/ui": "3.82.1",
@@ -104,6 +115,11 @@
         "types": "./dist/components/WysiwygField.d.ts",
         "import": "./dist/components/WysiwygField.js",
         "default": "./dist/components/WysiwygField.js"
+      },
+      "./LivePreview": {
+        "types": "./dist/components/LivePreview.d.ts",
+        "import": "./dist/components/LivePreview.js",
+        "default": "./dist/components/LivePreview.js"
       }
     },
     "main": "./dist/index.js",
