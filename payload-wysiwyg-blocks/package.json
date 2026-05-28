@@ -25,6 +25,16 @@
       "types": "./src/components/LivePreviewClient.tsx",
       "import": "./src/components/LivePreviewClient.tsx",
       "default": "./src/components/LivePreviewClient.tsx"
+    },
+    "./BlockPreview": {
+      "types": "./src/components/BlockPreview.tsx",
+      "import": "./src/components/BlockPreview.tsx",
+      "default": "./src/components/BlockPreview.tsx"
+    },
+    "./LivePage": {
+      "types": "./src/components/LivePage.tsx",
+      "import": "./src/components/LivePage.tsx",
+      "default": "./src/components/LivePage.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -35,6 +45,7 @@
   ],
   "peerDependencies": {
     "@dexilion/payload-dynamic-blocks": "workspace:*",
+    "@payloadcms/live-preview-react": ">=3",
     "@payloadcms/richtext-lexical": "3.82.1",
     "@payloadcms/ui": "3.82.1",
     "payload": "3.82.1"
@@ -54,7 +65,6 @@
     "@payloadcms/db-postgres": "3.82.1",
     "@payloadcms/db-sqlite": "3.82.1",
     "@payloadcms/eslint-config": "3.28.0",
-    "@payloadcms/live-preview-react": "^3.85.0",
     "@payloadcms/next": "3.82.1",
     "@payloadcms/richtext-lexical": "3.82.1",
     "@payloadcms/ui": "3.82.1",
@@ -120,6 +130,21 @@
         "types": "./dist/components/LivePreview.d.ts",
         "import": "./dist/components/LivePreview.js",
         "default": "./dist/components/LivePreview.js"
+      },
+      "./LivePreviewClient": {
+        "types": "./dist/components/LivePreviewClient.d.ts",
+        "import": "./dist/components/LivePreviewClient.js",
+        "default": "./dist/components/LivePreviewClient.js"
+      },
+      "./BlockPreview": {
+        "types": "./dist/components/BlockPreview.d.ts",
+        "import": "./dist/components/BlockPreview.js",
+        "default": "./dist/components/BlockPreview.js"
+      },
+      "./LivePage": {
+        "types": "./dist/components/LivePage.d.ts",
+        "import": "./dist/components/LivePage.js",
+        "default": "./dist/components/LivePage.js"
       }
     },
     "main": "./dist/index.js",
