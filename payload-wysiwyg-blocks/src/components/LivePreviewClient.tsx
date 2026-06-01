@@ -39,9 +39,11 @@ function FloatingEditor({
   // Nothing to show if Payload hasn't injected the editor yet
   if (!editorComponent) return null;
 
-  const iframeTop = iframeRef.current?.getBoundingClientRect().top ?? 0;
-  const top = iframeTop + target.rect.top + 16;
-  const left = target.rect.left + 24;
+  const iframeRect = iframeRef.current?.getBoundingClientRect();
+  const iframeTop = iframeRect?.top ?? 0;
+  const iframeLeft = iframeRect?.left ?? 0;
+  const top = iframeTop + target.rect.top;
+  const left = iframeLeft + target.rect.left;
   const width = Math.max(target.rect.width, 480);
 
   useEffect(() => {
@@ -58,6 +60,7 @@ function FloatingEditor({
   return (
     <div
       ref={floatRef}
+      className="wysiwyg-floating-editor"
       style={{
         position: "fixed",
         top,
@@ -87,6 +90,7 @@ function FloatingEditor({
       >
         ✕
       </button>
+      <style>{`.wysiwyg-floating-editor .field-label { display: none; }`}</style>
       <FieldPathContext value={target.path}>
         {editorComponent}
       </FieldPathContext>
