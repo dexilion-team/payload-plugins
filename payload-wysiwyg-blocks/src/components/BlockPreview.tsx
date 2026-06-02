@@ -74,6 +74,7 @@ function RichTextPreview({
       style={{
         cursor: "pointer",
         minHeight: "2rem",
+        overflow: "hidden",
         backgroundImage: `linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px)`,
         backgroundRepeat: "repeat-x, repeat-x, repeat-y, repeat-y",
         backgroundSize: "20px 2px, 20px 2px, 2px 20px, 2px 20px",

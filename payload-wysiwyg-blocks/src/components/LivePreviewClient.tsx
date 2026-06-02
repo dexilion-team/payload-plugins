@@ -56,8 +56,9 @@ function FloatingEditor({
   useEffect(() => {
     const el = floatRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      postSpacer(entry.contentRect.height);
+    const ro = new ResizeObserver(() => {
+      const overflow = Math.max(0, el.offsetHeight - target.rect.height);
+      postSpacer(overflow);
     });
     ro.observe(el);
     return () => {
