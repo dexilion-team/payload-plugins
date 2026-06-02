@@ -6,6 +6,18 @@ import type { SerializedEditorState } from "@payloadcms/richtext-lexical/lexical
 
 export type PreviewField = { type: string; name: string; [key: string]: unknown };
 
+if (typeof window !== "undefined") {
+  window.addEventListener("scroll", () => {
+    window.parent.postMessage({ type: "wysiwyg-scroll", scrollY: window.scrollY }, "*");
+  }, { passive: true });
+
+  window.addEventListener("message", (e) => {
+    if (e.data?.type !== "wysiwyg-wheel") return;
+    const scroller = document.scrollingElement ?? document.documentElement;
+    scroller?.scrollBy({ top: e.data.deltaY, behavior: "instant" });
+  });
+}
+
 function RichTextPreview({
   value,
   blockIndex,
@@ -47,13 +59,21 @@ function RichTextPreview({
   }, [path]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    // The field wrapper div's previous sibling is the field above us in the same block
+    const fieldWrapper = el.parentElement;
+    const prevFieldWrapper = fieldWrapper?.previousElementSibling;
+    const prevFieldLastChild = prevFieldWrapper?.lastElementChild;
+    const aboveMargin = prevFieldLastChild
+      ? parseFloat(getComputedStyle(prevFieldLastChild).marginBottom)
+      : 0;
     window.parent.postMessage(
       {
         type: "wysiwyg-edit",
         path,
         rect: {
-          top: rect.top + window.scrollY,
+          top: rect.top + window.scrollY + aboveMargin,
           left: rect.left + window.scrollX,
           width: rect.width,
           height: rect.height,
