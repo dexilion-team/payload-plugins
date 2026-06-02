@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import type { SerializedEditorState } from "@payloadcms/richtext-lexical/lexical";
 
@@ -16,12 +17,41 @@ function RichTextPreview({
   fieldName: string;
   contentPath: string;
 }) {
+  const divRef = useRef<HTMLDivElement>(null);
+  const path = `${contentPath}.${blockIndex}.${fieldName}`;
+
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type !== "wysiwyg-spacer" || e.data.path !== path) return;
+      const el = divRef.current;
+      if (!el) return;
+
+      const height: number = e.data.height ?? 0;
+
+      el.style.opacity = height > 0 ? "0" : "";
+      el.style.pointerEvents = height > 0 ? "none" : "";
+
+      let spacer = el.nextElementSibling as HTMLDivElement | null;
+      if (spacer?.dataset.wysiwygSpacer !== path) {
+        spacer = document.createElement("div");
+        spacer.dataset.wysiwygSpacer = path;
+        spacer.style.transition = "height 0.15s ease";
+        el.after(spacer);
+      }
+
+      spacer.style.height = `${height}px`;
+      if (height === 0) spacer.remove();
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [path]);
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     window.parent.postMessage(
       {
         type: "wysiwyg-edit",
-        path: `${contentPath}.${blockIndex}.${fieldName}`,
+        path,
         rect: {
           top: rect.top + window.scrollY,
           left: rect.left + window.scrollX,
@@ -39,6 +69,7 @@ function RichTextPreview({
 
   return (
     <div
+      ref={divRef}
       onClick={handleClick}
       style={{
         cursor: "pointer",
