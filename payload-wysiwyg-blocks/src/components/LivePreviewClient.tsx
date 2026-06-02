@@ -45,9 +45,9 @@ function FloatingEditor({
   const left = target.rect.left;
   const width = Math.max(target.rect.width, 480);
 
-  const postSpacer = (height: number) => {
+  const postSpacer = (height: number, active: boolean) => {
     iframeRef.current?.contentWindow?.postMessage(
-      { type: "wysiwyg-spacer", path: target.path, height },
+      { type: "wysiwyg-spacer", path: target.path, height, active },
       "*",
     );
   };
@@ -57,12 +57,12 @@ function FloatingEditor({
     if (!el) return;
     const ro = new ResizeObserver(() => {
       const overflow = Math.max(0, el.offsetHeight - target.rect.height);
-      postSpacer(overflow);
+      postSpacer(overflow, true);
     });
     ro.observe(el);
     return () => {
       ro.disconnect();
-      postSpacer(0);
+      postSpacer(0, false);
     };
   }, [target.path]);
 

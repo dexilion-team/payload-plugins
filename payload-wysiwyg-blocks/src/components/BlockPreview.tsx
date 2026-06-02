@@ -39,9 +39,10 @@ function RichTextPreview({
       if (!el) return;
 
       const height: number = e.data.height ?? 0;
+      const active: boolean = e.data.active ?? false;
 
-      el.style.opacity = height > 0 ? "0" : "";
-      el.style.pointerEvents = height > 0 ? "none" : "";
+      el.style.opacity = active ? "0" : "";
+      el.style.pointerEvents = active ? "none" : "";
 
       let spacer = el.nextElementSibling as HTMLDivElement | null;
       if (spacer?.dataset.wysiwygSpacer !== path) {
