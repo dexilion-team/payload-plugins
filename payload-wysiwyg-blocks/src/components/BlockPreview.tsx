@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import type { SerializedEditorState } from "@payloadcms/richtext-lexical/lexical";
 
@@ -84,8 +84,57 @@ function RichTextPreview({
     );
   };
 
-  const html = value
-    ? convertLexicalToHTML({ data: value as SerializedEditorState })
+  const [populatedValue, setPopulatedValue] = useState<SerializedEditorState | null>(
+    value as SerializedEditorState ?? null,
+  );
+
+  useEffect(() => {
+    if (!value) return;
+    const state = value as SerializedEditorState;
+
+    const uploadNodes: { node: any; relationTo: string; id: string }[] = [];
+    const walk = (nodes: any[]) => {
+      for (const node of nodes) {
+        if (node.type === "upload" && node.relationTo && (typeof node.value === "string" || typeof node.value === "number")) {
+          uploadNodes.push({ node, relationTo: node.relationTo, id: String(node.value) });
+        }
+        if (node.children) walk(node.children);
+      }
+    };
+    walk(state.root?.children ?? []);
+
+    if (uploadNodes.length === 0) {
+      setPopulatedValue(state);
+      return;
+    }
+
+    Promise.all(
+      uploadNodes.map(({ relationTo, id }) =>
+        fetch(`/api/${relationTo}/${id}?depth=0`)
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+      ),
+    ).then((docs) => {
+      const clone = JSON.parse(JSON.stringify(state));
+      const walkClone = (nodes: any[]) => {
+        for (const node of nodes) {
+          if (node.type === "upload" && node.relationTo) {
+            const match = uploadNodes.find((u) => u.id === String(node.value));
+            if (match) {
+              const idx = uploadNodes.indexOf(match);
+              if (docs[idx]) node.value = docs[idx];
+            }
+          }
+          if (node.children) walkClone(node.children);
+        }
+      };
+      walkClone(clone.root?.children ?? []);
+      setPopulatedValue(clone);
+    });
+  }, [value]);
+
+  const html = populatedValue
+    ? convertLexicalToHTML({ data: populatedValue })
     : null;
 
   return (

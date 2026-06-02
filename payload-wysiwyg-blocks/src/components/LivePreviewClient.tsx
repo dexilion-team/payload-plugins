@@ -69,6 +69,7 @@ function FloatingEditor({
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
       if (floatRef.current && !floatRef.current.contains(e.relatedTarget as Node)) {
+        if (floatRef.current.contains(document.activeElement)) return;
         onClose();
       }
     };
