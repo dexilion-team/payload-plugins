@@ -46,6 +46,26 @@ function FloatingEditor({
   const left = iframeLeft + target.rect.left;
   const width = Math.max(target.rect.width, 480);
 
+  const postSpacer = (height: number) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "wysiwyg-spacer", path: target.path, height },
+      "*",
+    );
+  };
+
+  useEffect(() => {
+    const el = floatRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      postSpacer(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      postSpacer(0);
+    };
+  }, [target.path]);
+
   useEffect(() => {
     const handleMouseLeave = (e: MouseEvent) => {
       if (floatRef.current && !floatRef.current.contains(e.relatedTarget as Node)) {
@@ -67,10 +87,10 @@ function FloatingEditor({
         left,
         width: Math.max(width, 480),
         zIndex: 1000,
-        background: "var(--theme-elevation-0, #1a1a1a)",
-        border: "1px solid var(--theme-elevation-200, #333)",
+        background: "transparent",
+        color: "var(--theme-text)",
+        border: "2px dashed var(--theme-elevation-200, #333)",
         borderRadius: "6px",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
         padding: "2.5rem 1rem 1rem",
       }}
     >
@@ -90,7 +110,10 @@ function FloatingEditor({
       >
         ✕
       </button>
-      <style>{`.wysiwyg-floating-editor .field-label { display: none; }`}</style>
+      <style>{`
+        .wysiwyg-floating-editor .field-label { display: none; }
+        .wysiwyg-floating-editor .ContentEditable__root * { color: #000; }
+      `}</style>
       <FieldPathContext value={target.path}>
         {editorComponent}
       </FieldPathContext>
