@@ -25,23 +25,36 @@ type EditTarget = {
 function FloatingEditor({
   target,
   iframeRef,
-  iframeScrollY,
+  initialScrollY,
   onClose,
 }: {
   target: EditTarget;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
-  iframeScrollY: number;
+  initialScrollY: number;
   onClose: () => void;
 }) {
   const editorComponent = useFormFields(
     ([fields]) => fields?.[target.path]?.customComponents?.Field ?? null,
   );
   const floatRef = useRef<HTMLDivElement>(null);
+  const scrollYRef = useRef(initialScrollY);
+
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type !== "wysiwyg-scroll") return;
+      scrollYRef.current = e.data.scrollY;
+      if (floatRef.current) {
+        floatRef.current.style.top = `${target.rect.top - e.data.scrollY}px`;
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [target.rect.top]);
 
   // Nothing to show if Payload hasn't injected the editor yet
   if (!editorComponent) return null;
 
-  const top = target.rect.top - iframeScrollY;
+  const top = target.rect.top - initialScrollY;
   const left = target.rect.left;
   const width = Math.max(target.rect.width, 480);
 
@@ -104,6 +117,7 @@ function FloatingEditor({
         border: "2px dashed var(--theme-elevation-200, #333)",
         borderRadius: "6px",
         padding: "2.5rem 1rem 1rem",
+        transition: "top 80ms linear",
       }}
     >
       <button
@@ -149,7 +163,7 @@ export function LivePreviewClient({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeReady, setIframeReady] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
-  const [iframeScrollY, setIframeScrollY] = useState(0);
+  const iframeScrollYRef = useRef(0);
   const [formState] = useAllFormFields();
   const { id, collectionSlug } = useDocumentInfo();
   const drawerSlug = useDrawerSlug("blocks-drawer");
@@ -175,7 +189,7 @@ export function LivePreviewClient({
         setEditTarget({ path: event.data.path, rect: event.data.rect });
       }
       if (event.data?.type === "wysiwyg-scroll") {
-        setIframeScrollY(event.data.scrollY);
+        iframeScrollYRef.current = event.data.scrollY;
       }
     };
     window.addEventListener("message", handler);
@@ -211,7 +225,7 @@ export function LivePreviewClient({
             <FloatingEditor
               target={editTarget}
               iframeRef={iframeRef}
-              iframeScrollY={iframeScrollY}
+              initialScrollY={iframeScrollYRef.current}
               onClose={() => setEditTarget(null)}
             />
           )}
