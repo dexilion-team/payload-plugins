@@ -25,10 +25,12 @@ type EditTarget = {
 function FloatingEditor({
   target,
   iframeRef,
+  iframeScrollY,
   onClose,
 }: {
   target: EditTarget;
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  iframeScrollY: number;
   onClose: () => void;
 }) {
   const editorComponent = useFormFields(
@@ -39,11 +41,8 @@ function FloatingEditor({
   // Nothing to show if Payload hasn't injected the editor yet
   if (!editorComponent) return null;
 
-  const iframeRect = iframeRef.current?.getBoundingClientRect();
-  const iframeTop = iframeRect?.top ?? 0;
-  const iframeLeft = iframeRect?.left ?? 0;
-  const top = iframeTop + target.rect.top;
-  const left = iframeLeft + target.rect.left;
+  const top = target.rect.top - iframeScrollY;
+  const left = target.rect.left;
   const width = Math.max(target.rect.width, 480);
 
   const postSpacer = (height: number) => {
@@ -75,7 +74,18 @@ function FloatingEditor({
     };
     const el = floatRef.current;
     el?.addEventListener("mouseleave", handleMouseLeave);
-    return () => el?.removeEventListener("mouseleave", handleMouseLeave);
+    const stopScroll = (e: WheelEvent) => {
+      e.preventDefault();
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "wysiwyg-wheel", deltaY: e.deltaY },
+        "*",
+      );
+    };
+    el?.addEventListener("wheel", stopScroll, { passive: false });
+    return () => {
+      el?.removeEventListener("mouseleave", handleMouseLeave);
+      el?.removeEventListener("wheel", stopScroll);
+    };
   }, [onClose]);
 
   return (
@@ -83,7 +93,7 @@ function FloatingEditor({
       ref={floatRef}
       className="wysiwyg-floating-editor"
       style={{
-        position: "fixed",
+        position: "absolute",
         top,
         left,
         width: Math.max(width, 480),
@@ -138,6 +148,7 @@ export function LivePreviewClient({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeReady, setIframeReady] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+  const [iframeScrollY, setIframeScrollY] = useState(0);
   const [formState] = useAllFormFields();
   const { id, collectionSlug } = useDocumentInfo();
   const drawerSlug = useDrawerSlug("blocks-drawer");
@@ -162,6 +173,9 @@ export function LivePreviewClient({
       if (event.data?.type === "wysiwyg-edit") {
         setEditTarget({ path: event.data.path, rect: event.data.rect });
       }
+      if (event.data?.type === "wysiwyg-scroll") {
+        setIframeScrollY(event.data.scrollY);
+      }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
@@ -180,7 +194,7 @@ export function LivePreviewClient({
   return (
     <div className={[fieldBaseClass, "blocks-field"].join(" ")}>
       {url && (
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", overflow: "hidden" }}>
           <iframe
             ref={iframeRef}
             src={url}
@@ -196,6 +210,7 @@ export function LivePreviewClient({
             <FloatingEditor
               target={editTarget}
               iframeRef={iframeRef}
+              iframeScrollY={iframeScrollY}
               onClose={() => setEditTarget(null)}
             />
           )}
