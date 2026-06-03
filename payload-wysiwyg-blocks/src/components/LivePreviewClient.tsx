@@ -186,6 +186,7 @@ function FloatingEditor({
       <style>{`
         .wysiwyg-floating-editor .field-label { display: none; }
         .wysiwyg-floating-editor .ContentEditable__root * { color: #000; }
+        .wysiwyg-floating-editor .radio-input__label { color: #000; }
       `}</style>
       <FieldPathContext value={target.path}>
         {target.fieldType === "upload" && uploadFieldConfig ? (

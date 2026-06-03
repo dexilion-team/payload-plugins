@@ -43,9 +43,20 @@ function useSpacerOpacity(path: string) {
       if (e.data?.type !== "wysiwyg-spacer" || e.data.path !== path) return;
       const el = ref.current;
       if (!el) return;
+      const height: number = e.data.height ?? 0;
       const active: boolean = e.data.active ?? false;
       el.style.opacity = active ? "0" : "";
       el.style.pointerEvents = active ? "none" : "";
+
+      let spacer = el.nextElementSibling as HTMLDivElement | null;
+      if (spacer?.dataset.wysiwygSpacer !== path) {
+        spacer = document.createElement("div");
+        spacer.dataset.wysiwygSpacer = path;
+        spacer.style.transition = "height 0.15s ease";
+        el.after(spacer);
+      }
+      spacer.style.height = `${height}px`;
+      if (height === 0) spacer.remove();
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
@@ -216,7 +227,7 @@ function RichTextPreview({
       {html ? (
         <div dangerouslySetInnerHTML={{ __html: html }} />
       ) : (
-        <p>Click here to edit...</p>
+        <p>Click here to edit rich text…</p>
       )}
     </div>
   );
@@ -302,7 +313,7 @@ function UploadPreview({
           style={{ display: "block", maxWidth: "100%" }}
         />
       ) : (
-        <p style={{ margin: 0, position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", whiteSpace: "nowrap" }}>Click here to set image…</p>
+        <p style={{ margin: 0, position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", whiteSpace: "nowrap" }}>Click here to upload an image…</p>
       )}
     </div>
   );
@@ -398,6 +409,16 @@ function RenderField({
         />
       );
     case "text":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType="text"
+          placeholder={`Click here to edit text…`}
+        />
+      );
     case "email":
       return (
         <FieldPreview
@@ -405,8 +426,8 @@ function RenderField({
           blockIndex={blockIndex}
           fieldName={field.name}
           contentPath={contentPath}
-          fieldType={field.type}
-          placeholder={`Click to edit ${field.name}…`}
+          fieldType="email"
+          placeholder={`Click here to enter an email address…`}
         />
       );
     case "textarea":
@@ -417,7 +438,7 @@ function RenderField({
           fieldName={field.name}
           contentPath={contentPath}
           fieldType="textarea"
-          placeholder={`Click to edit ${field.name}…`}
+          placeholder={`Click here to edit text…`}
         />
       );
     case "number":
@@ -428,7 +449,7 @@ function RenderField({
           fieldName={field.name}
           contentPath={contentPath}
           fieldType="number"
-          placeholder="Click to set number…"
+          placeholder="Click here to enter a number…"
         />
       );
     case "date":
@@ -439,7 +460,7 @@ function RenderField({
           fieldName={field.name}
           contentPath={contentPath}
           fieldType="date"
-          placeholder="Click to set date…"
+          placeholder="Click here to pick a date…"
           renderValue={(v) => new Date(v as string).toLocaleDateString()}
         />
       );
@@ -451,11 +472,22 @@ function RenderField({
           fieldName={field.name}
           contentPath={contentPath}
           fieldType="checkbox"
-          placeholder="Click to set…"
+          placeholder="Click here to toggle checkbox…"
           renderValue={(v) => (v ? "✓ checked" : "✗ unchecked")}
         />
       );
     case "select":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType="select"
+          placeholder="Click here to select an option…"
+          options={field.options as { label: string; value: string }[] | undefined}
+        />
+      );
     case "radio":
       return (
         <FieldPreview
@@ -463,8 +495,8 @@ function RenderField({
           blockIndex={blockIndex}
           fieldName={field.name}
           contentPath={contentPath}
-          fieldType={field.type}
-          placeholder="Click to select…"
+          fieldType="radio"
+          placeholder="Click here to select a radio option…"
           options={field.options as { label: string; value: string }[] | undefined}
         />
       );
