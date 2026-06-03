@@ -115,14 +115,7 @@ function FloatingEditor({
   }, [target.path]);
 
   useEffect(() => {
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (floatRef.current && !floatRef.current.contains(e.relatedTarget as Node)) {
-        if (floatRef.current.contains(document.activeElement)) return;
-        onClose();
-      }
-    };
     const el = floatRef.current;
-    el?.addEventListener("mouseleave", handleMouseLeave);
     const stopScroll = (e: WheelEvent) => {
       e.preventDefault();
       iframeRef.current?.contentWindow?.postMessage(
@@ -132,7 +125,6 @@ function FloatingEditor({
     };
     el?.addEventListener("wheel", stopScroll, { passive: false });
     return () => {
-      el?.removeEventListener("mouseleave", handleMouseLeave);
       el?.removeEventListener("wheel", stopScroll);
     };
   }, [onClose]);
