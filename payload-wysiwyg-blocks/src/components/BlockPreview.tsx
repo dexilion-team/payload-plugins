@@ -4,12 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
 import type { SerializedEditorState } from "@payloadcms/richtext-lexical/lexical";
 
-export type PreviewField = { type: string; name: string; [key: string]: unknown };
+export type PreviewField = {
+  type: string;
+  name: string;
+  [key: string]: unknown;
+};
 
 if (typeof window !== "undefined") {
-  window.addEventListener("scroll", () => {
-    window.parent.postMessage({ type: "wysiwyg-scroll", scrollY: window.scrollY }, "*");
-  }, { passive: true });
+  window.addEventListener(
+    "scroll",
+    () => {
+      window.parent.postMessage(
+        { type: "wysiwyg-scroll", scrollY: window.scrollY },
+        "*",
+      );
+    },
+    { passive: true },
+  );
 
   window.addEventListener("message", (e) => {
     if (e.data?.type !== "wysiwyg-wheel") return;
@@ -84,9 +95,10 @@ function RichTextPreview({
     );
   };
 
-  const [populatedValue, setPopulatedValue] = useState<SerializedEditorState | null>(
-    value as SerializedEditorState ?? null,
-  );
+  const [populatedValue, setPopulatedValue] =
+    useState<SerializedEditorState | null>(
+      (value as SerializedEditorState) ?? null,
+    );
 
   useEffect(() => {
     if (!value) return;
@@ -95,8 +107,16 @@ function RichTextPreview({
     const uploadNodes: { node: any; relationTo: string; id: string }[] = [];
     const walk = (nodes: any[]) => {
       for (const node of nodes) {
-        if (node.type === "upload" && node.relationTo && (typeof node.value === "string" || typeof node.value === "number")) {
-          uploadNodes.push({ node, relationTo: node.relationTo, id: String(node.value) });
+        if (
+          node.type === "upload" &&
+          node.relationTo &&
+          (typeof node.value === "string" || typeof node.value === "number")
+        ) {
+          uploadNodes.push({
+            node,
+            relationTo: node.relationTo,
+            id: String(node.value),
+          });
         }
         if (node.children) walk(node.children);
       }
@@ -160,6 +180,124 @@ function RichTextPreview({
   );
 }
 
+function UploadPreview({
+  value,
+  blockIndex,
+  fieldName,
+  contentPath,
+  relationTo,
+}: {
+  value: unknown;
+  blockIndex: number;
+  fieldName: string;
+  contentPath: string;
+  relationTo?: string | string[];
+}) {
+  const path = `${contentPath}.${blockIndex}.${fieldName}`;
+  const divRef = useRef<HTMLDivElement>(null);
+
+  const [mediaDoc, setMediaDoc] = useState<{
+    url?: string;
+    alt?: string;
+    width?: number;
+    height?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type !== "wysiwyg-spacer" || e.data.path !== path) return;
+      const el = divRef.current;
+      if (!el) return;
+      const active: boolean = e.data.active ?? false;
+      el.style.opacity = active ? "0" : "";
+      el.style.pointerEvents = active ? "none" : "";
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [path]);
+
+  useEffect(() => {
+    if (!value) {
+      setMediaDoc(null);
+      return;
+    }
+    if (typeof value === "object" && (value as any).url) {
+      setMediaDoc(value as any);
+      return;
+    }
+    const id =
+      typeof value === "number" || typeof value === "string" ? value : null;
+    if (!id) {
+      setMediaDoc(null);
+      return;
+    }
+    fetch(`/api/media/${id}?depth=0`)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then(setMediaDoc);
+  }, [value]);
+
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type !== "wysiwyg-upload-updated" || e.data.path !== path)
+        return;
+      if (e.data.doc?.url) setMediaDoc(e.data.doc);
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [path]);
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    window.parent.postMessage(
+      {
+        type: "wysiwyg-edit",
+        fieldType: "upload",
+        relationTo,
+        path,
+        rect: {
+          top: rect.top + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          height: rect.height,
+        },
+      },
+      "*",
+    );
+  };
+
+  return (
+    <div
+      ref={divRef}
+      onClick={handleClick}
+      style={{
+        cursor: "pointer",
+        minHeight: "8rem",
+        width: "100%",
+        position: "relative",
+        backgroundImage: `linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px)`,
+        backgroundRepeat: "repeat-x, repeat-x, repeat-y, repeat-y",
+        backgroundSize: "20px 2px, 20px 2px, 2px 20px, 2px 20px",
+        backgroundPosition: "0 0, 0 100%, 0 0, 100% 0",
+        display: "block",
+      }}
+    >
+      {mediaDoc?.url ? (
+        <img
+          src={mediaDoc.url}
+          alt={mediaDoc.alt ?? ""}
+          width={mediaDoc.width}
+          height={mediaDoc.height}
+          style={{ display: "block", maxWidth: "100%" }}
+        />
+      ) : (
+        <p style={{ margin: 0, position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", whiteSpace: "nowrap" }}>Click here to set image…</p>
+      )}
+    </div>
+  );
+}
+
 function RenderField({
   field,
   value,
@@ -188,6 +326,17 @@ function RenderField({
           contentPath={contentPath}
         />
       );
+    case "relationship":
+    case "upload":
+      return (
+        <UploadPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          relationTo={field.relationTo as string | string[] | undefined}
+        />
+      );
     case "text":
     case "textarea":
     case "email":
@@ -196,8 +345,6 @@ function RenderField({
     case "checkbox":
     case "select":
     case "radio":
-    case "relationship":
-    case "upload":
     case "json":
     case "code":
     case "point":
@@ -228,7 +375,7 @@ export function BlockPreview({
   renderField?: (field: PreviewField, value: unknown) => React.ReactNode;
 }) {
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {fields.map((field) => (
         <div key={field.name}>
           <RenderField

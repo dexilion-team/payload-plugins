@@ -1,6 +1,6 @@
 "use client";
 
-import type { ClientBlock, SanitizedFieldPermissions } from "payload";
+import type { ClientBlock, ClientUploadField, SanitizedFieldPermissions } from "payload";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { reduceFieldsToValues } from "payload/shared";
 import {
@@ -15,10 +15,13 @@ import {
   useField,
   useForm,
   useFormFields,
+  UploadField,
 } from "@payloadcms/ui";
 
 type EditTarget = {
   path: string;
+  fieldType?: string;
+  relationTo?: string | string[];
   rect: { top: number; left: number; width: number; height: number };
 };
 
@@ -36,6 +39,9 @@ function FloatingEditor({
   const editorComponent = useFormFields(
     ([fields]) => fields?.[target.path]?.customComponents?.Field ?? null,
   );
+  const uploadValue = useFormFields(
+    ([fields]) => target.fieldType === "upload" ? fields?.[target.path]?.value : undefined,
+  );
   const floatRef = useRef<HTMLDivElement>(null);
   const scrollYRef = useRef(initialScrollY);
 
@@ -44,19 +50,39 @@ function FloatingEditor({
       if (e.data?.type !== "wysiwyg-scroll") return;
       scrollYRef.current = e.data.scrollY;
       if (floatRef.current) {
-        floatRef.current.style.top = `${target.rect.top - e.data.scrollY}px`;
+        const iframeTop = iframeRef.current?.offsetTop ?? 0;
+        floatRef.current.style.top = `${target.rect.top - e.data.scrollY + iframeTop}px`;
       }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [target.rect.top]);
 
-  // Nothing to show if Payload hasn't injected the editor yet
-  if (!editorComponent) return null;
+  useEffect(() => {
+    if (target.fieldType !== "upload" || !uploadValue) return;
+    const id = typeof uploadValue === "number" || typeof uploadValue === "string" ? uploadValue : null;
+    if (!id) return;
+    fetch(`/api/media/${id}?depth=0`)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((doc) => {
+        if (doc) {
+          iframeRef.current?.contentWindow?.postMessage(
+            { type: "wysiwyg-upload-updated", path: target.path, doc },
+            "*",
+          );
+        }
+      });
+  }, [uploadValue, target.fieldType, target.path]);
 
-  const top = target.rect.top - initialScrollY;
-  const left = target.rect.left;
-  const width = Math.max(target.rect.width, 480);
+  const uploadFieldConfig: ClientUploadField | null =
+    target.fieldType === "upload" && target.relationTo
+      ? ({
+          type: "upload",
+          name: target.path.split(".").at(-1)!,
+          relationTo: target.relationTo as string,
+        } as ClientUploadField)
+      : null;
 
   const postSpacer = (height: number, active: boolean) => {
     iframeRef.current?.contentWindow?.postMessage(
@@ -102,6 +128,14 @@ function FloatingEditor({
     };
   }, [onClose]);
 
+  if (!editorComponent && target.fieldType !== "upload") return null;
+  if (target.fieldType === "upload" && !uploadFieldConfig) return null;
+
+  const iframeOffsetTop = iframeRef.current?.offsetTop ?? 0;
+  const top = target.rect.top - initialScrollY + iframeOffsetTop;
+  const left = target.rect.left;
+  const width = Math.max(target.rect.width, 480);
+
   return (
     <div
       ref={floatRef}
@@ -111,6 +145,7 @@ function FloatingEditor({
         top,
         left,
         width: Math.max(width, 480),
+        minHeight: target.rect.height || "8rem",
         zIndex: 1000,
         background: "transparent",
         color: "var(--theme-text)",
@@ -141,7 +176,11 @@ function FloatingEditor({
         .wysiwyg-floating-editor .ContentEditable__root * { color: #000; }
       `}</style>
       <FieldPathContext value={target.path}>
-        {editorComponent}
+        {target.fieldType === "upload" && uploadFieldConfig ? (
+          <UploadField field={uploadFieldConfig} path={target.path} schemaPath={target.path} />
+        ) : (
+          editorComponent
+        )}
       </FieldPathContext>
     </div>
   );
@@ -186,7 +225,7 @@ export function LivePreviewClient({
         setIframeReady(true);
       }
       if (event.data?.type === "wysiwyg-edit") {
-        setEditTarget({ path: event.data.path, rect: event.data.rect });
+        setEditTarget({ path: event.data.path, fieldType: event.data.fieldType, relationTo: event.data.relationTo, rect: event.data.rect });
       }
       if (event.data?.type === "wysiwyg-scroll") {
         iframeScrollYRef.current = event.data.scrollY;
