@@ -1,14 +1,22 @@
 "use client";
 
-import type { ClientBlock, ClientUploadField, SanitizedFieldPermissions } from "payload";
+import type { ClientBlock, SanitizedFieldPermissions, UploadFieldClient } from "payload";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { reduceFieldsToValues } from "payload/shared";
 import {
   BlocksDrawer,
   Button,
+  CheckboxField,
+  DateTimeField,
   DrawerToggler,
+  EmailField,
   FieldPathContext,
   fieldBaseClass,
+  NumberField,
+  RadioGroupField,
+  SelectField,
+  TextField,
+  TextareaField,
   useAllFormFields,
   useDocumentInfo,
   useDrawerSlug,
@@ -22,6 +30,7 @@ type EditTarget = {
   path: string;
   fieldType?: string;
   relationTo?: string | string[];
+  options?: { label: string; value: string }[];
   rect: { top: number; left: number; width: number; height: number };
 };
 
@@ -75,13 +84,13 @@ function FloatingEditor({
       });
   }, [uploadValue, target.fieldType, target.path]);
 
-  const uploadFieldConfig: ClientUploadField | null =
+  const uploadFieldConfig: UploadFieldClient | null =
     target.fieldType === "upload" && target.relationTo
       ? ({
           type: "upload",
           name: target.path.split(".").at(-1)!,
           relationTo: target.relationTo as string,
-        } as ClientUploadField)
+        } as UploadFieldClient)
       : null;
 
   const postSpacer = (height: number, active: boolean) => {
@@ -128,7 +137,10 @@ function FloatingEditor({
     };
   }, [onClose]);
 
-  if (!editorComponent && target.fieldType !== "upload") return null;
+  const SIMPLE_FIELD_TYPES = ["text", "textarea", "email", "number", "date", "checkbox", "select", "radio"];
+  const isSimpleField = SIMPLE_FIELD_TYPES.includes(target.fieldType ?? "");
+
+  if (!editorComponent && target.fieldType !== "upload" && !isSimpleField) return null;
   if (target.fieldType === "upload" && !uploadFieldConfig) return null;
 
   const iframeOffsetTop = iframeRef.current?.offsetTop ?? 0;
@@ -178,6 +190,20 @@ function FloatingEditor({
       <FieldPathContext value={target.path}>
         {target.fieldType === "upload" && uploadFieldConfig ? (
           <UploadField field={uploadFieldConfig} path={target.path} schemaPath={target.path} />
+        ) : target.fieldType === "text" || target.fieldType === "email" ? (
+          <TextField field={{ type: target.fieldType, name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+        ) : target.fieldType === "textarea" ? (
+          <TextareaField field={{ type: "textarea", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+        ) : target.fieldType === "number" ? (
+          <NumberField field={{ type: "number", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+        ) : target.fieldType === "date" ? (
+          <DateTimeField field={{ type: "date", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+        ) : target.fieldType === "checkbox" ? (
+          <CheckboxField field={{ type: "checkbox", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+        ) : target.fieldType === "select" ? (
+          <SelectField field={{ type: "select", name: target.path.split(".").at(-1)!, options: (target as any).options ?? [] } as any} path={target.path} schemaPath={target.path} />
+        ) : target.fieldType === "radio" ? (
+          <RadioGroupField field={{ type: "radio", name: target.path.split(".").at(-1)!, options: (target as any).options ?? [] } as any} path={target.path} schemaPath={target.path} />
         ) : (
           editorComponent
         )}
@@ -225,7 +251,7 @@ export function LivePreviewClient({
         setIframeReady(true);
       }
       if (event.data?.type === "wysiwyg-edit") {
-        setEditTarget({ path: event.data.path, fieldType: event.data.fieldType, relationTo: event.data.relationTo, rect: event.data.rect });
+        setEditTarget({ path: event.data.path, fieldType: event.data.fieldType, relationTo: event.data.relationTo, options: event.data.options, rect: event.data.rect });
       }
       if (event.data?.type === "wysiwyg-scroll") {
         iframeScrollYRef.current = event.data.scrollY;

@@ -29,6 +29,52 @@ if (typeof window !== "undefined") {
   });
 }
 
+const DASHED_BORDER_BG = {
+  backgroundImage: `linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px)`,
+  backgroundRepeat: "repeat-x, repeat-x, repeat-y, repeat-y" as const,
+  backgroundSize: "20px 2px, 20px 2px, 2px 20px, 2px 20px",
+  backgroundPosition: "0 0, 0 100%, 0 0, 100% 0",
+};
+
+function useSpacerOpacity(path: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type !== "wysiwyg-spacer" || e.data.path !== path) return;
+      const el = ref.current;
+      if (!el) return;
+      const active: boolean = e.data.active ?? false;
+      el.style.opacity = active ? "0" : "";
+      el.style.pointerEvents = active ? "none" : "";
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [path]);
+  return ref;
+}
+
+function postEditMessage(
+  el: HTMLElement,
+  path: string,
+  extra?: Record<string, unknown>,
+) {
+  const rect = el.getBoundingClientRect();
+  window.parent.postMessage(
+    {
+      type: "wysiwyg-edit",
+      path,
+      rect: {
+        top: rect.top + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+        height: rect.height,
+      },
+      ...extra,
+    },
+    "*",
+  );
+}
+
 function RichTextPreview({
   value,
   blockIndex,
@@ -40,8 +86,8 @@ function RichTextPreview({
   fieldName: string;
   contentPath: string;
 }) {
-  const divRef = useRef<HTMLDivElement>(null);
   const path = `${contentPath}.${blockIndex}.${fieldName}`;
+  const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -73,7 +119,6 @@ function RichTextPreview({
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const rect = el.getBoundingClientRect();
-    // The field wrapper div's previous sibling is the field above us in the same block
     const fieldWrapper = el.parentElement;
     const prevFieldWrapper = fieldWrapper?.previousElementSibling;
     const prevFieldLastChild = prevFieldWrapper?.lastElementChild;
@@ -165,10 +210,7 @@ function RichTextPreview({
         cursor: "pointer",
         minHeight: "2rem",
         overflow: "hidden",
-        backgroundImage: `linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px)`,
-        backgroundRepeat: "repeat-x, repeat-x, repeat-y, repeat-y",
-        backgroundSize: "20px 2px, 20px 2px, 2px 20px, 2px 20px",
-        backgroundPosition: "0 0, 0 100%, 0 0, 100% 0",
+        ...DASHED_BORDER_BG,
       }}
     >
       {html ? (
@@ -194,7 +236,7 @@ function UploadPreview({
   relationTo?: string | string[];
 }) {
   const path = `${contentPath}.${blockIndex}.${fieldName}`;
-  const divRef = useRef<HTMLDivElement>(null);
+  const divRef = useSpacerOpacity(path);
 
   const [mediaDoc, setMediaDoc] = useState<{
     url?: string;
@@ -202,19 +244,6 @@ function UploadPreview({
     width?: number;
     height?: number;
   } | null>(null);
-
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type !== "wysiwyg-spacer" || e.data.path !== path) return;
-      const el = divRef.current;
-      if (!el) return;
-      const active: boolean = e.data.active ?? false;
-      el.style.opacity = active ? "0" : "";
-      el.style.pointerEvents = active ? "none" : "";
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, [path]);
 
   useEffect(() => {
     if (!value) {
@@ -248,23 +277,7 @@ function UploadPreview({
   }, [path]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    const rect = el.getBoundingClientRect();
-    window.parent.postMessage(
-      {
-        type: "wysiwyg-edit",
-        fieldType: "upload",
-        relationTo,
-        path,
-        rect: {
-          top: rect.top + window.scrollY,
-          left: rect.left + window.scrollX,
-          width: rect.width,
-          height: rect.height,
-        },
-      },
-      "*",
-    );
+    postEditMessage(e.currentTarget, path, { fieldType: "upload", relationTo });
   };
 
   return (
@@ -276,11 +289,8 @@ function UploadPreview({
         minHeight: "8rem",
         width: "100%",
         position: "relative",
-        backgroundImage: `linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(90deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px), linear-gradient(0deg, #ccc 8px, transparent 8px)`,
-        backgroundRepeat: "repeat-x, repeat-x, repeat-y, repeat-y",
-        backgroundSize: "20px 2px, 20px 2px, 2px 20px, 2px 20px",
-        backgroundPosition: "0 0, 0 100%, 0 0, 100% 0",
         display: "block",
+        ...DASHED_BORDER_BG,
       }}
     >
       {mediaDoc?.url ? (
@@ -293,6 +303,56 @@ function UploadPreview({
         />
       ) : (
         <p style={{ margin: 0, position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", whiteSpace: "nowrap" }}>Click here to set image…</p>
+      )}
+    </div>
+  );
+}
+
+function FieldPreview({
+  value,
+  blockIndex,
+  fieldName,
+  contentPath,
+  fieldType,
+  placeholder,
+  renderValue,
+  options,
+}: {
+  value: unknown;
+  blockIndex: number;
+  fieldName: string;
+  contentPath: string;
+  fieldType: string;
+  placeholder: string;
+  renderValue?: (v: unknown) => string;
+  options?: { label: string; value: string }[];
+}) {
+  const path = `${contentPath}.${blockIndex}.${fieldName}`;
+  const divRef = useSpacerOpacity(path);
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    postEditMessage(e.currentTarget, path, { fieldType, ...(options ? { options } : {}) });
+  };
+
+  const display = value != null && value !== ""
+    ? (renderValue ? renderValue(value) : String(value))
+    : null;
+
+  return (
+    <div
+      ref={divRef}
+      onClick={handleClick}
+      style={{
+        cursor: "pointer",
+        minHeight: "2rem",
+        padding: "0.35rem 0.5rem",
+        ...DASHED_BORDER_BG,
+      }}
+    >
+      {display != null ? (
+        <span>{display}</span>
+      ) : (
+        <span style={{ opacity: 0.4 }}>{placeholder}</span>
       )}
     </div>
   );
@@ -338,13 +398,76 @@ function RenderField({
         />
       );
     case "text":
-    case "textarea":
     case "email":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType={field.type}
+          placeholder={`Click to edit ${field.name}…`}
+        />
+      );
+    case "textarea":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType="textarea"
+          placeholder={`Click to edit ${field.name}…`}
+        />
+      );
     case "number":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType="number"
+          placeholder="Click to set number…"
+        />
+      );
     case "date":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType="date"
+          placeholder="Click to set date…"
+          renderValue={(v) => new Date(v as string).toLocaleDateString()}
+        />
+      );
     case "checkbox":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType="checkbox"
+          placeholder="Click to set…"
+          renderValue={(v) => (v ? "✓ checked" : "✗ unchecked")}
+        />
+      );
     case "select":
     case "radio":
+      return (
+        <FieldPreview
+          value={value}
+          blockIndex={blockIndex}
+          fieldName={field.name}
+          contentPath={contentPath}
+          fieldType={field.type}
+          placeholder="Click to select…"
+          options={field.options as { label: string; value: string }[] | undefined}
+        />
+      );
     case "json":
     case "code":
     case "point":
