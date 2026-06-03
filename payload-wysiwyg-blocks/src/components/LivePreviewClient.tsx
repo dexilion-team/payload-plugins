@@ -93,18 +93,19 @@ function FloatingEditor({
         } as UploadFieldClient)
       : null;
 
-  const postSpacer = (height: number, active: boolean) => {
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: "wysiwyg-spacer", path: target.path, height, active },
-      "*",
-    );
-  };
-
   useEffect(() => {
     const el = floatRef.current;
     if (!el) return;
+    const path = target.path;
+    const previewHeight = target.rect.height;
+    const postSpacer = (height: number, active: boolean) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "wysiwyg-spacer", path, height, active },
+        "*",
+      );
+    };
     const ro = new ResizeObserver(() => {
-      const overflow = Math.max(0, el.offsetHeight - target.rect.height);
+      const overflow = Math.max(0, el.offsetHeight - previewHeight);
       postSpacer(overflow, true);
     });
     ro.observe(el);
