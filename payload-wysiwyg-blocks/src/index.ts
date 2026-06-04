@@ -6,7 +6,11 @@ interface PluginOptions {
   livePreview?: LivePreviewConfig;
 }
 
-const wysiwygBlocks = ({ enable, wysiwyg = false, livePreview }: PluginOptions = {}) => {
+const wysiwygBlocks = ({
+  enable,
+  wysiwyg = false,
+  livePreview,
+}: PluginOptions = {}) => {
   return (incomingConfig: Config): Config => {
     if (enable === false) {
       return incomingConfig;
@@ -18,7 +22,16 @@ const wysiwygBlocks = ({ enable, wysiwyg = false, livePreview }: PluginOptions =
       ...(config.collections || []),
       {
         slug: "pages",
-        ...(livePreview ? { admin: { livePreview } } : {}),
+        admin: {
+          useAsTitle: "title",
+          ...(livePreview ? { livePreview } : {}),
+        },
+        versions: {
+          drafts: {
+            autosave: true,
+          },
+          maxPerDoc: 10,
+        },
         fields: [
           {
             name: "title",

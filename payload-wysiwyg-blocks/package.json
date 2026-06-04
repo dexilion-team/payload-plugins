@@ -67,6 +67,7 @@
     "@payloadcms/eslint-config": "3.28.0",
     "@payloadcms/next": "3.82.1",
     "@payloadcms/richtext-lexical": "3.82.1",
+    "@payloadcms/live-preview-react": "3.82.1",
     "@payloadcms/ui": "3.82.1",
     "@playwright/test": "1.59.1",
     "@swc-node/register": "1.11.1",
