@@ -196,6 +196,7 @@ function FloatingUploadControls({
   onClear: () => void;
   pillRef: React.RefObject<HTMLDivElement | null>;
 }) {
+  const hasValue = useFormFields(([fields]) => Boolean(fields?.[target.path]?.value));
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -234,7 +235,7 @@ function FloatingUploadControls({
       <button onClick={onChange} title="Change image" style={UPLOAD_BTN_STYLE}>
         <span style={ICON_SIZE_STYLE}><SwapIcon /></span>
       </button>
-      <button onClick={onClear} title="Remove image" style={UPLOAD_BTN_STYLE}>
+      <button onClick={onClear} title="Remove image" style={{ ...UPLOAD_BTN_STYLE, opacity: hasValue ? 1 : 0.3, cursor: hasValue ? "pointer" : "default" }} disabled={!hasValue}>
         <span style={ICON_SIZE_STYLE}><XIcon /></span>
       </button>
     </div>
@@ -293,14 +294,24 @@ function UploadChangeHandler({
   onDone: () => void;
 }) {
   const { setValue } = useField({ path: fieldPath });
-  const [ListDrawer, , { openDrawer, closeDrawer }] = useListDrawer({
+  const [ListDrawer, , { openDrawer, closeDrawer, isDrawerOpen }] = useListDrawer({
     collectionSlugs: [relationTo],
     uploads: true,
   });
 
+  const wasOpenRef = useRef(false);
+
   useEffect(() => {
     openDrawer();
   }, []);
+
+  useEffect(() => {
+    if (isDrawerOpen) {
+      wasOpenRef.current = true;
+    } else if (wasOpenRef.current) {
+      onDone();
+    }
+  }, [isDrawerOpen]);
 
   const handleSelect = useCallback(
     ({ doc }: { doc: Record<string, unknown> }) => {
@@ -317,9 +328,8 @@ function UploadChangeHandler({
           }
         });
       closeDrawer();
-      onDone();
     },
-    [setValue, fieldPath, relationTo, iframeRef, closeDrawer, onDone],
+    [setValue, fieldPath, relationTo, iframeRef, closeDrawer],
   );
 
   return <ListDrawer onSelect={handleSelect} />;
