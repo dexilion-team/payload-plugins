@@ -23,9 +23,22 @@ if (typeof window !== "undefined") {
   );
 
   window.addEventListener("message", (e) => {
-    if (e.data?.type !== "wysiwyg-wheel") return;
-    const scroller = document.scrollingElement ?? document.documentElement;
-    scroller?.scrollBy({ top: e.data.deltaY, behavior: "instant" });
+    if (e.data?.type === "wysiwyg-wheel") {
+      const scroller = document.scrollingElement ?? document.documentElement;
+      scroller?.scrollBy({ top: e.data.deltaY, behavior: "instant" });
+    }
+    if (e.data?.type === "wysiwyg-request-rect") {
+      const el = document.querySelector(`[data-wysiwyg-path="${e.data.path}"]`);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      window.parent.postMessage({
+        type: "wysiwyg-edit",
+        path: e.data.path,
+        fieldType: (el as HTMLElement).dataset.wysiwygFieldType,
+        options: (el as HTMLElement).dataset.wysiwygOptions ? JSON.parse((el as HTMLElement).dataset.wysiwygOptions!) : undefined,
+        rect: { top: rect.top + window.scrollY, left: rect.left + window.scrollX, width: rect.width, height: rect.height },
+      }, "*");
+    }
   });
 }
 
@@ -379,6 +392,9 @@ function FieldPreview({
     <div
       ref={divRef}
       onClick={handleClick}
+      data-wysiwyg-path={path}
+      data-wysiwyg-field-type={fieldType}
+      {...(options ? { "data-wysiwyg-options": JSON.stringify(options) } : {})}
       style={{
         cursor: "pointer",
         minHeight: "2rem",

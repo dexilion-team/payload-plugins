@@ -168,25 +168,27 @@ function FloatingEditor({
         .wysiwyg-floating-editor .rs__placeholder { color: rgba(0,0,0,0.4); }
         .wysiwyg-floating-editor .rs__input-container, .wysiwyg-floating-editor .rs__input { color: #000 !important; }
       `}</style>
-      <FieldPathContext value={target.path}>
-        {target.fieldType === "text" || target.fieldType === "email" ? (
-          <TextField field={{ type: target.fieldType, name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
-        ) : target.fieldType === "textarea" ? (
-          <TextareaField field={{ type: "textarea", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
-        ) : target.fieldType === "number" ? (
-          <NumberField field={{ type: "number", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
-        ) : target.fieldType === "date" ? (
-          <DateTimeField field={{ type: "date", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
-        ) : target.fieldType === "checkbox" ? (
-          <CheckboxField field={{ type: "checkbox", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
-        ) : target.fieldType === "select" ? (
-          <SelectField field={{ type: "select", name: target.path.split(".").at(-1)!, options: (target as any).options ?? [] } as any} path={target.path} schemaPath={target.path} />
-        ) : target.fieldType === "radio" ? (
-          <RadioGroupField field={{ type: "radio", name: target.path.split(".").at(-1)!, options: (target as any).options ?? [] } as any} path={target.path} schemaPath={target.path} />
-        ) : (
-          editorComponent
-        )}
-      </FieldPathContext>
+      <div>
+        <FieldPathContext value={target.path}>
+          {target.fieldType === "text" || target.fieldType === "email" ? (
+            <TextField field={{ type: target.fieldType, name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+          ) : target.fieldType === "textarea" ? (
+            <TextareaField field={{ type: "textarea", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+          ) : target.fieldType === "number" ? (
+            <NumberField field={{ type: "number", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+          ) : target.fieldType === "date" ? (
+            <DateTimeField field={{ type: "date", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+          ) : target.fieldType === "checkbox" ? (
+            <CheckboxField field={{ type: "checkbox", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
+          ) : target.fieldType === "select" ? (
+            <SelectField field={{ type: "select", name: target.path.split(".").at(-1)!, options: (target as any).options ?? [] } as any} path={target.path} schemaPath={target.path} />
+          ) : target.fieldType === "radio" ? (
+            <RadioGroupField field={{ type: "radio", name: target.path.split(".").at(-1)!, options: (target as any).options ?? [] } as any} path={target.path} schemaPath={target.path} />
+          ) : (
+            editorComponent
+          )}
+        </FieldPathContext>
+      </div>
     </div>
   );
 }
@@ -361,6 +363,7 @@ export function LivePreviewClient({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeReady, setIframeReady] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+  const pendingEditTarget = useRef<EditTarget | null>(null);
   const [uploadHoverTarget, setUploadHoverTarget] = useState<UploadHoverTarget | null>(null);
   const [uploadTarget, setUploadTarget] = useState<{ path: string; relationTo: string } | null>(null);
   const iframeScrollYRef = useRef(0);
@@ -381,13 +384,31 @@ export function LivePreviewClient({
   );
 
   useEffect(() => {
+    if (editTarget !== null) return;
+    const pending = pendingEditTarget.current;
+    if (!pending) return;
+    pendingEditTarget.current = null;
+    const raf = requestAnimationFrame(() => {
+      iframeRef.current?.contentWindow?.postMessage({ type: "wysiwyg-request-rect", path: pending.path }, "*");
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [editTarget]);
+
+  useEffect(() => {
     if (!url) return;
     const handler = (event: MessageEvent) => {
       if (url.startsWith(event.origin) && event.data?.type === "payload-live-preview" && event.data?.ready) {
         setIframeReady(true);
       }
       if (event.data?.type === "wysiwyg-edit") {
-        setEditTarget({ path: event.data.path, fieldType: event.data.fieldType, relationTo: event.data.relationTo, options: event.data.options, rect: event.data.rect });
+        const next: EditTarget = { path: event.data.path, fieldType: event.data.fieldType, relationTo: event.data.relationTo, options: event.data.options, rect: event.data.rect };
+        setEditTarget((current) => {
+          if (current && current.path !== next.path) {
+            pendingEditTarget.current = next;
+            return null;
+          }
+          return next;
+        });
       }
       if (event.data?.type === "wysiwyg-upload-hover") {
         setUploadHoverTarget({ path: event.data.path, relationTo: event.data.relationTo, rect: event.data.rect });
