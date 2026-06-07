@@ -130,7 +130,7 @@ function FloatingEditor({
         minHeight: target.rect.height || "8rem",
         zIndex: 1000,
         background: "transparent",
-        color: "var(--theme-text)",
+        color: "#000",
         border: "2px dashed var(--theme-elevation-200, #333)",
         borderRadius: "6px",
         padding: "2.5rem 1rem 1rem",
@@ -148,7 +148,7 @@ function FloatingEditor({
           cursor: "pointer",
           fontSize: "1rem",
           lineHeight: 1,
-          color: "var(--theme-elevation-500, #888)",
+          color: "#000",
         }}
       >
         ✕
@@ -157,6 +157,16 @@ function FloatingEditor({
         .wysiwyg-floating-editor .field-label { display: none; }
         .wysiwyg-floating-editor .ContentEditable__root * { color: #000; }
         .wysiwyg-floating-editor .radio-input__label { color: #000; }
+        .wysiwyg-floating-editor input,
+        .wysiwyg-floating-editor textarea,
+        .wysiwyg-floating-editor select { background: transparent; color: #000; border: none; box-shadow: none; outline: none; }
+        .wysiwyg-floating-editor .rs__control { background: transparent; border: none; box-shadow: none; color: #000; }
+        .wysiwyg-floating-editor .rs__menu { background: #fff; color: #000; }
+        .wysiwyg-floating-editor .rs__option { color: #000; }
+        .wysiwyg-floating-editor .rs__option--is-focused, .wysiwyg-floating-editor .rs__option--is-selected { color: #fff; }
+        .wysiwyg-floating-editor .rs__single-value { color: #000; }
+        .wysiwyg-floating-editor .rs__placeholder { color: rgba(0,0,0,0.4); }
+        .wysiwyg-floating-editor .rs__input-container, .wysiwyg-floating-editor .rs__input { color: #000 !important; }
       `}</style>
       <FieldPathContext value={target.path}>
         {target.fieldType === "text" || target.fieldType === "email" ? (
