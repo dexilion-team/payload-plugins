@@ -1,57 +1,17 @@
-import { BlocksField, Config, Field, LivePreviewConfig } from "payload";
+import { BlocksField, Config, Field } from "payload";
 
 interface PluginOptions {
   enable?: boolean;
   wysiwyg?: boolean;
-  livePreview?: LivePreviewConfig;
 }
 
-const wysiwygBlocks = ({
-  enable,
-  wysiwyg = false,
-  livePreview,
-}: PluginOptions = {}) => {
+const wysiwygBlocks = ({ enable, wysiwyg = false }: PluginOptions = {}) => {
   return (incomingConfig: Config): Config => {
     if (enable === false) {
       return incomingConfig;
     }
 
     const config = { ...incomingConfig };
-
-    config.collections = [
-      ...(config.collections || []),
-      {
-        slug: "pages",
-        admin: {
-          useAsTitle: "title",
-          ...(livePreview ? { livePreview } : {}),
-        },
-        versions: {
-          drafts: {
-            autosave: true,
-          },
-          maxPerDoc: 10,
-        },
-        fields: [
-          {
-            name: "title",
-            type: "text",
-            required: true,
-          },
-          {
-            name: "content",
-            label: "Content",
-            labels: {
-              singular: "Content Block",
-              plural: "Content Blocks",
-            },
-            type: "blocks",
-            blocks: [],
-            custom: { dynamic: true },
-          },
-        ],
-      },
-    ];
 
     if (wysiwyg) {
       applyWysiwygRenderer(config);

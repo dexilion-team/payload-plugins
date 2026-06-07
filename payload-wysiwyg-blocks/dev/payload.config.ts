@@ -2,7 +2,7 @@ import { sqliteAdapter } from "@payloadcms/db-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 
 import path from "path";
-import { buildConfig, CollectionSlug } from "payload";
+import { buildConfig } from "payload";
 import dynamicBlocks from "@dexilion/payload-dynamic-blocks";
 import wysiwygBlocks from "../src";
 import sharp from "sharp";
@@ -47,6 +47,35 @@ export default buildConfig({
       },
       fields: [],
     },
+    {
+      slug: "pages",
+      admin: {
+        livePreview: {
+          url: ({ data, req }) => {
+            const base = req.headers.get("origin") ?? "http://localhost:3000";
+            return `${base}/admin/preview/${data.id}`;
+          },
+        },
+      },
+      fields: [
+        {
+          name: "title",
+          type: "text",
+          required: true,
+        },
+        {
+          name: "content",
+          label: "Content",
+          labels: {
+            singular: "Content Block",
+            plural: "Content Blocks",
+          },
+          type: "blocks",
+          blocks: [],
+          custom: { dynamic: true },
+        },
+      ],
+    },
   ],
   db: sqliteAdapter({
     client: {
@@ -61,15 +90,9 @@ export default buildConfig({
   plugins: [
     wysiwygBlocks({
       wysiwyg: true,
-      livePreview: {
-        url: ({ data, req }) => {
-          const base = req.headers.get("origin") ?? "http://localhost:3000";
-          return `${base}/admin/preview/${data.id}`;
-        },
-      },
     }),
     dynamicBlocks({
-      collections: ["pages" as CollectionSlug],
+      collections: ["pages"],
     }),
   ],
   secret: process.env.PAYLOAD_SECRET || "test-secret_key",
