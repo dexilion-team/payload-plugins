@@ -248,6 +248,7 @@ function UploadPreview({
 }) {
   const path = `${contentPath}.${blockIndex}.${fieldName}`;
   const divRef = useSpacerOpacity(path);
+  const col = typeof relationTo === "string" ? relationTo : "media";
 
   const [mediaDoc, setMediaDoc] = useState<{
     url?: string;
@@ -271,7 +272,7 @@ function UploadPreview({
       setMediaDoc(null);
       return;
     }
-    fetch(`/api/media/${id}?depth=0`)
+    fetch(`/api/${col}/${id}?depth=0`)
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null)
       .then(setMediaDoc);
@@ -281,27 +282,41 @@ function UploadPreview({
     const handler = (e: MessageEvent) => {
       if (e.data?.type !== "wysiwyg-upload-updated" || e.data.path !== path)
         return;
-      if (e.data.doc?.url) setMediaDoc(e.data.doc);
+      setMediaDoc(e.data.doc ?? null);
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [path]);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    postEditMessage(e.currentTarget, path, { fieldType: "upload", relationTo });
+  const postHover = (el: HTMLElement) => {
+    const rect = el.getBoundingClientRect();
+    window.parent.postMessage(
+      {
+        type: "wysiwyg-upload-hover",
+        path,
+        relationTo: col,
+        rect: {
+          top: rect.top + window.scrollY,
+          left: rect.left + window.scrollX,
+          width: rect.width,
+          height: rect.height,
+        },
+      },
+      "*",
+    );
   };
 
   return (
     <div
       ref={divRef}
-      onClick={handleClick}
+      onMouseEnter={(e) => postHover(e.currentTarget)}
+      onMouseLeave={() => window.parent.postMessage({ type: "wysiwyg-upload-hover-end", path }, "*")}
       style={{
-        cursor: "pointer",
         minHeight: "8rem",
         width: "100%",
         position: "relative",
         display: "block",
-        ...DASHED_BORDER_BG,
+        ...(!mediaDoc?.url ? DASHED_BORDER_BG : {}),
       }}
     >
       {mediaDoc?.url ? (
@@ -313,7 +328,18 @@ function UploadPreview({
           style={{ display: "block", maxWidth: "100%" }}
         />
       ) : (
-        <p style={{ margin: 0, position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", whiteSpace: "nowrap" }}>Click here to upload an image…</p>
+        <p
+          style={{
+            margin: 0,
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Click here to upload an image…
+        </p>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ClientBlock, SanitizedFieldPermissions, UploadFieldClient } from "payload";
+import type { ClientBlock, SanitizedFieldPermissions } from "payload";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { reduceFieldsToValues } from "payload/shared";
 import {
@@ -9,7 +9,6 @@ import {
   CheckboxField,
   DateTimeField,
   DrawerToggler,
-  EmailField,
   FieldPathContext,
   fieldBaseClass,
   NumberField,
@@ -23,7 +22,9 @@ import {
   useField,
   useForm,
   useFormFields,
-  UploadField,
+  useListDrawer,
+  SwapIcon,
+  XIcon,
 } from "@payloadcms/ui";
 
 type EditTarget = {
@@ -31,6 +32,12 @@ type EditTarget = {
   fieldType?: string;
   relationTo?: string | string[];
   options?: { label: string; value: string }[];
+  rect: { top: number; left: number; width: number; height: number };
+};
+
+type UploadHoverTarget = {
+  path: string;
+  relationTo: string;
   rect: { top: number; left: number; width: number; height: number };
 };
 
@@ -48,9 +55,6 @@ function FloatingEditor({
   const editorComponent = useFormFields(
     ([fields]) => fields?.[target.path]?.customComponents?.Field ?? null,
   );
-  const uploadValue = useFormFields(
-    ([fields]) => target.fieldType === "upload" ? fields?.[target.path]?.value : undefined,
-  );
   const floatRef = useRef<HTMLDivElement>(null);
   const scrollYRef = useRef(initialScrollY);
 
@@ -66,32 +70,6 @@ function FloatingEditor({
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [target.rect.top]);
-
-  useEffect(() => {
-    if (target.fieldType !== "upload" || !uploadValue) return;
-    const id = typeof uploadValue === "number" || typeof uploadValue === "string" ? uploadValue : null;
-    if (!id) return;
-    fetch(`/api/media/${id}?depth=0`)
-      .then((r) => (r.ok ? r.json() : null))
-      .catch(() => null)
-      .then((doc) => {
-        if (doc) {
-          iframeRef.current?.contentWindow?.postMessage(
-            { type: "wysiwyg-upload-updated", path: target.path, doc },
-            "*",
-          );
-        }
-      });
-  }, [uploadValue, target.fieldType, target.path]);
-
-  const uploadFieldConfig: UploadFieldClient | null =
-    target.fieldType === "upload" && target.relationTo
-      ? ({
-          type: "upload",
-          name: target.path.split(".").at(-1)!,
-          relationTo: target.relationTo as string,
-        } as UploadFieldClient)
-      : null;
 
   useEffect(() => {
     const el = floatRef.current;
@@ -133,8 +111,7 @@ function FloatingEditor({
   const SIMPLE_FIELD_TYPES = ["text", "textarea", "email", "number", "date", "checkbox", "select", "radio"];
   const isSimpleField = SIMPLE_FIELD_TYPES.includes(target.fieldType ?? "");
 
-  if (!editorComponent && target.fieldType !== "upload" && !isSimpleField) return null;
-  if (target.fieldType === "upload" && !uploadFieldConfig) return null;
+  if (!editorComponent && !isSimpleField) return null;
 
   const iframeOffsetTop = iframeRef.current?.offsetTop ?? 0;
   const top = target.rect.top - initialScrollY + iframeOffsetTop;
@@ -182,9 +159,7 @@ function FloatingEditor({
         .wysiwyg-floating-editor .radio-input__label { color: #000; }
       `}</style>
       <FieldPathContext value={target.path}>
-        {target.fieldType === "upload" && uploadFieldConfig ? (
-          <UploadField field={uploadFieldConfig} path={target.path} schemaPath={target.path} />
-        ) : target.fieldType === "text" || target.fieldType === "email" ? (
+        {target.fieldType === "text" || target.fieldType === "email" ? (
           <TextField field={{ type: target.fieldType, name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
         ) : target.fieldType === "textarea" ? (
           <TextareaField field={{ type: "textarea", name: target.path.split(".").at(-1)! } as any} path={target.path} schemaPath={target.path} />
@@ -206,6 +181,150 @@ function FloatingEditor({
   );
 }
 
+function FloatingUploadControls({
+  target,
+  iframeRef,
+  initialScrollY,
+  onChange,
+  onClear,
+  pillRef,
+}: {
+  target: UploadHoverTarget;
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  initialScrollY: number;
+  onChange: () => void;
+  onClear: () => void;
+  pillRef: React.RefObject<HTMLDivElement | null>;
+}) {
+
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type !== "wysiwyg-scroll") return;
+      if (pillRef.current) {
+        const iframeTop = iframeRef.current?.offsetTop ?? 0;
+        pillRef.current.style.top = `${target.rect.top - e.data.scrollY + iframeTop}px`;
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [target.rect.top]);
+
+  const iframeOffsetTop = iframeRef.current?.offsetTop ?? 0;
+  const iframeOffsetLeft = iframeRef.current?.offsetLeft ?? 0;
+  const top = target.rect.top - initialScrollY + iframeOffsetTop;
+  const left = target.rect.left + target.rect.width + iframeOffsetLeft;
+
+  return (
+    <div
+      ref={pillRef}
+      style={{
+        position: "absolute",
+        top,
+        left,
+        transform: "translateX(-100%)",
+        display: "flex",
+        gap: "0.375rem",
+        background: "rgb(34,34,34)",
+        borderRadius: "8px",
+        padding: "0.375rem 0.6rem",
+        zIndex: 1000,
+        pointerEvents: "auto",
+      }}
+    >
+      <button onClick={onChange} title="Change image" style={UPLOAD_BTN_STYLE}>
+        <span style={ICON_SIZE_STYLE}><SwapIcon /></span>
+      </button>
+      <button onClick={onClear} title="Remove image" style={UPLOAD_BTN_STYLE}>
+        <span style={ICON_SIZE_STYLE}><XIcon /></span>
+      </button>
+    </div>
+  );
+}
+
+const UPLOAD_BTN_STYLE: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 0,
+};
+
+const ICON_SIZE_STYLE: React.CSSProperties = {
+  display: "flex",
+  width: "18px",
+  height: "18px",
+};
+
+function UploadClearHandler({
+  fieldPath,
+  iframeRef,
+  onDone,
+}: {
+  fieldPath: string;
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  onDone: () => void;
+}) {
+  const { setValue } = useField({ path: fieldPath });
+
+  useEffect(() => {
+    setValue(null);
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "wysiwyg-upload-updated", path: fieldPath, doc: null },
+      "*",
+    );
+    onDone();
+  }, []);
+
+  return null;
+}
+
+function UploadChangeHandler({
+  fieldPath,
+  relationTo,
+  iframeRef,
+  onDone,
+}: {
+  fieldPath: string;
+  relationTo: string;
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  onDone: () => void;
+}) {
+  const { setValue } = useField({ path: fieldPath });
+  const [ListDrawer, , { openDrawer, closeDrawer }] = useListDrawer({
+    collectionSlugs: [relationTo],
+    uploads: true,
+  });
+
+  useEffect(() => {
+    openDrawer();
+  }, []);
+
+  const handleSelect = useCallback(
+    ({ doc }: { doc: Record<string, unknown> }) => {
+      setValue(doc.id);
+      fetch(`/api/${relationTo}/${doc.id}?depth=0`)
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null)
+        .then((fetched) => {
+          if (fetched) {
+            iframeRef.current?.contentWindow?.postMessage(
+              { type: "wysiwyg-upload-updated", path: fieldPath, doc: fetched },
+              "*",
+            );
+          }
+        });
+      closeDrawer();
+      onDone();
+    },
+    [setValue, fieldPath, relationTo, iframeRef, closeDrawer, onDone],
+  );
+
+  return <ListDrawer onSelect={handleSelect} />;
+}
+
 export function LivePreviewClient({
   url,
   blocks,
@@ -222,7 +341,10 @@ export function LivePreviewClient({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeReady, setIframeReady] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+  const [uploadHoverTarget, setUploadHoverTarget] = useState<UploadHoverTarget | null>(null);
+  const [uploadTarget, setUploadTarget] = useState<{ path: string; relationTo: string } | null>(null);
   const iframeScrollYRef = useRef(0);
+  const uploadPillRef = useRef<HTMLDivElement>(null);
   const [formState] = useAllFormFields();
   const { id, collectionSlug } = useDocumentInfo();
   const drawerSlug = useDrawerSlug("blocks-drawer");
@@ -246,6 +368,13 @@ export function LivePreviewClient({
       }
       if (event.data?.type === "wysiwyg-edit") {
         setEditTarget({ path: event.data.path, fieldType: event.data.fieldType, relationTo: event.data.relationTo, options: event.data.options, rect: event.data.rect });
+      }
+      if (event.data?.type === "wysiwyg-upload-hover") {
+        setUploadHoverTarget({ path: event.data.path, relationTo: event.data.relationTo, rect: event.data.rect });
+      }
+      if (event.data?.type === "wysiwyg-upload-hover-end") {
+        if (uploadPillRef.current?.matches(":hover")) return;
+        setUploadHoverTarget((prev) => (prev?.path === event.data.path ? null : prev));
       }
       if (event.data?.type === "wysiwyg-scroll") {
         iframeScrollYRef.current = event.data.scrollY;
@@ -286,6 +415,32 @@ export function LivePreviewClient({
               iframeRef={iframeRef}
               initialScrollY={iframeScrollYRef.current}
               onClose={() => setEditTarget(null)}
+            />
+          )}
+          {uploadHoverTarget && !uploadTarget && (
+            <FloatingUploadControls
+              target={uploadHoverTarget}
+              iframeRef={iframeRef}
+              initialScrollY={iframeScrollYRef.current}
+              onChange={() => setUploadTarget({ path: uploadHoverTarget.path, relationTo: uploadHoverTarget.relationTo })}
+              onClear={() => setUploadTarget({ path: uploadHoverTarget.path, relationTo: "__clear__" })}
+              pillRef={uploadPillRef}
+            />
+          )}
+          {uploadTarget && uploadTarget.relationTo !== "__clear__" && (
+            <UploadChangeHandler
+              key={uploadTarget.path}
+              fieldPath={uploadTarget.path}
+              relationTo={uploadTarget.relationTo}
+              iframeRef={iframeRef}
+              onDone={() => { setUploadTarget(null); setUploadHoverTarget(null); }}
+            />
+          )}
+          {uploadTarget && uploadTarget.relationTo === "__clear__" && (
+            <UploadClearHandler
+              fieldPath={uploadTarget.path}
+              iframeRef={iframeRef}
+              onDone={() => { setUploadTarget(null); setUploadHoverTarget(null); }}
             />
           )}
         </div>
