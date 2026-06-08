@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Editor, Frame, Element } from "@craftjs/core";
+import { craftjsStateToJsx } from "./craftjsToJsx";
 import {
   TextField, EmailField, TextareaField, NumberField,
   CheckboxField, SelectField, RadioField, RichTextField,
@@ -78,18 +79,22 @@ function EditorInner({ initialJson, onSave }: { initialJson?: string; onSave: (j
 
   useEffect(() => {
     if (initialJson) {
-      try {
-        actions.deserialize(initialJson);
-      } catch {
-        // ignore malformed state
-      }
+      try { actions.deserialize(initialJson); } catch { /* ignore */ }
     }
+
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type !== "craftjs-load") return;
+      try { actions.deserialize(e.data.json); } catch { /* ignore */ }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
   }, []);
 
   const handleSave = () => {
     const json = query.serialize();
     onSave(json);
-    window.parent.postMessage({ type: "craftjs-save", json }, "*");
+    const jsx = craftjsStateToJsx(json);
+    window.parent.postMessage({ type: "craftjs-save", json, jsx }, "*");
   };
 
   return (

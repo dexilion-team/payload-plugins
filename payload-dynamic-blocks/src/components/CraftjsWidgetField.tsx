@@ -6,21 +6,31 @@ import { useField } from "@payloadcms/ui";
 export default function CraftjsWidgetField({ path }: { path: string }) {
   const { value, setValue } = useField<string>({ path });
   const [mode, setMode] = useState<"code" | "visual">("code");
-  const [craftJson, setCraftJson] = useState<string | undefined>(undefined);
+  const craftJsonRef = useRef<string | undefined>(undefined);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeLoadedRef = useRef(false);
 
-  // Listen for save messages from the craft.js iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.type !== "craftjs-save") return;
-      setCraftJson(e.data.json);
+      craftJsonRef.current = e.data.json;
+      if (e.data.jsx) {
+        setValue(e.data.jsx);
+      }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, []);
+  }, [setValue]);
 
-  // When switching to visual mode, pass existing craftJson into the iframe via URL param
-  const iframeSrc = `/craftjs-editor${craftJson ? `?state=${encodeURIComponent(craftJson)}` : ""}`;
+  const handleIframeLoad = () => {
+    iframeLoadedRef.current = true;
+    if (craftJsonRef.current) {
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "craftjs-load", json: craftJsonRef.current },
+        "*",
+      );
+    }
+  };
 
   return (
     <div>
@@ -46,7 +56,7 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
         ))}
       </div>
 
-      {/* Code editor (Payload's default CodeField, shown/hidden via display) */}
+      {/* Code editor */}
       <div style={{ display: mode === "code" ? "block" : "none" }}>
         <textarea
           value={value ?? ""}
@@ -64,23 +74,28 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
         />
       </div>
 
-      {/* Visual editor iframe */}
-      {mode === "visual" && (
-        <div style={{ border: "1px solid #e0e0e0", borderRadius: 6, overflow: "hidden" }}>
-          <iframe
-            ref={iframeRef}
-            src={iframeSrc}
-            style={{ width: "100%", height: 600, border: "none", display: "block" }}
-          />
-        </div>
-      )}
-
-      {/* Show saved craft.js state summary */}
-      {craftJson && mode === "code" && (
-        <div style={{ marginTop: 6, fontSize: 11, color: "#888" }}>
-          ✓ Visual editor state saved ({craftJson.length} chars)
-        </div>
-      )}
+      {/*
+        Visual editor iframe.
+        Uses visibility+overflow hidden instead of display:none or conditional
+        rendering so React never unmounts/remounts the iframe element.
+      */}
+      <div
+        style={{
+          border: mode === "visual" ? "1px solid #e0e0e0" : "none",
+          borderRadius: 6,
+          overflow: "hidden",
+          visibility: mode === "visual" ? "visible" : "hidden",
+          height: mode === "visual" ? "auto" : 0,
+        }}
+      >
+        <iframe
+          key="craftjs-iframe"
+          ref={iframeRef}
+          src="/craftjs-editor"
+          onLoad={handleIframeLoad}
+          style={{ width: "100%", height: 600, border: "none", display: "block" }}
+        />
+      </div>
     </div>
   );
 }
