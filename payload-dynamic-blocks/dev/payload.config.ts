@@ -76,6 +76,7 @@ export default buildConfig({
   plugins: [
     dynamicBlocks({
       collections: ["posts"],
+      craftjs: true,
     }),
   ],
   secret: process.env.PAYLOAD_SECRET || "test-secret_key",

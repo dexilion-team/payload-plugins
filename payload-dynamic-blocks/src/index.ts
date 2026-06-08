@@ -13,12 +13,13 @@ import { richTextFeature } from "./features/richText";
 interface PluginOptions {
   collections: CollectionSlug[];
   enable?: boolean;
+  craftjs?: boolean;
   features?: {
     richText?: boolean;
   };
 }
 
-const dynamicBlocks = ({ collections, enable, features }: PluginOptions) => {
+const dynamicBlocks = ({ collections, enable, craftjs, features }: PluginOptions) => {
   return async (incomingConfig: Config): Promise<Config> => {
     if (enable === false) {
       return incomingConfig;
@@ -31,10 +32,10 @@ const dynamicBlocks = ({ collections, enable, features }: PluginOptions) => {
       richTextFeature(config);
     }
 
-    // Inject the Widgets collection
+    // Inject the Widgets collection (with craft.js visual editor if enabled)
     config.collections = [
       ...(config.collections || []),
-      createWidgetCollection(),
+      createWidgetCollection({ craftjs: craftjs ?? false }),
     ];
 
     // Finally resolve the dynamic blocks fields

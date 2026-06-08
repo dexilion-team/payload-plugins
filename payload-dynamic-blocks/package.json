@@ -20,6 +20,21 @@
       "types": "./src/components/WidgetCell.tsx",
       "import": "./src/components/WidgetCell.tsx",
       "default": "./src/components/WidgetCell.tsx"
+    },
+    "./parseWidgetFields": {
+      "types": "./src/utils/parseWidgetFields.ts",
+      "import": "./src/utils/parseWidgetFields.ts",
+      "default": "./src/utils/parseWidgetFields.ts"
+    },
+    "./constants": {
+      "types": "./src/constants.ts",
+      "import": "./src/constants.ts",
+      "default": "./src/constants.ts"
+    },
+    "./CraftjsWidgetField": {
+      "types": "./src/components/CraftjsWidgetField.tsx",
+      "import": "./src/components/CraftjsWidgetField.tsx",
+      "default": "./src/components/CraftjsWidgetField.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -38,7 +53,8 @@
     "pnpm": "^9 || ^10"
   },
   "dependencies": {
-    "@babel/parser": "^7.29.2"
+    "@babel/parser": "^7.29.2",
+    "@craftjs/core": "^0.2.12"
   },
   "devDependencies": {
     "@babel/types": "^7.29.0",
@@ -105,14 +121,29 @@
         "default": "./dist/index.js"
       },
       "./WidgetField": {
-        "types": "./src/components/WidgetField.js",
-        "import": "./src/components/WidgetField.js",
-        "default": "./src/components/WidgetField.js"
+        "types": "./dist/components/WidgetField.d.ts",
+        "import": "./dist/components/WidgetField.js",
+        "default": "./dist/components/WidgetField.js"
       },
       "./WidgetCell": {
-        "types": "./src/components/WidgetCell.js",
-        "import": "./src/components/WidgetCell.js",
-        "default": "./src/components/WidgetCell.js"
+        "types": "./dist/components/WidgetCell.d.ts",
+        "import": "./dist/components/WidgetCell.js",
+        "default": "./dist/components/WidgetCell.js"
+      },
+      "./parseWidgetFields": {
+        "types": "./dist/utils/parseWidgetFields.d.ts",
+        "import": "./dist/utils/parseWidgetFields.js",
+        "default": "./dist/utils/parseWidgetFields.js"
+      },
+      "./constants": {
+        "types": "./dist/constants.d.ts",
+        "import": "./dist/constants.js",
+        "default": "./dist/constants.js"
+      },
+      "./CraftjsWidgetField": {
+        "types": "./dist/components/CraftjsWidgetField.d.ts",
+        "import": "./dist/components/CraftjsWidgetField.js",
+        "default": "./dist/components/CraftjsWidgetField.js"
       }
     },
     "main": "./dist/index.js",

@@ -1,5 +1,6 @@
 import { default as default_999cd08053feb769e1049e5d52da524a } from '@dexilion/payload-dynamic-blocks/WidgetCell'
 import { default as default_ee35e5d27415686a32b8e933adf1dda2 } from '@dexilion/payload-dynamic-blocks/WidgetField'
+import { default as default_54c9fcba316fc9aca29779dea3b4a1fc } from '@dexilion/payload-dynamic-blocks/CraftjsWidgetField'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -25,9 +26,11 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 
+/** @type import('payload').ImportMap */
 export const importMap = {
   "@dexilion/payload-dynamic-blocks/WidgetCell#default": default_999cd08053feb769e1049e5d52da524a,
   "@dexilion/payload-dynamic-blocks/WidgetField#default": default_ee35e5d27415686a32b8e933adf1dda2,
+  "@dexilion/payload-dynamic-blocks/CraftjsWidgetField#default": default_54c9fcba316fc9aca29779dea3b4a1fc,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
