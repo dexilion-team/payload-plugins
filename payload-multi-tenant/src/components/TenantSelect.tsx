@@ -20,10 +20,12 @@ const TenantSelect = async ({
       req,
     })
     .then((res) => {
-      return res.docs.map((tenant) => ({
-        id: String(tenant.id),
-        value: String(tenant[tenantLabelFieldName as keyof typeof tenant]),
-      }));
+      return res.docs
+        .filter((tenant) => tenant.hidden !== true)
+        .map((tenant) => ({
+          id: String(tenant.id),
+          value: String(tenant[tenantLabelFieldName as keyof typeof tenant]),
+        }));
     });
 
   if (tenants.length === 0) {
