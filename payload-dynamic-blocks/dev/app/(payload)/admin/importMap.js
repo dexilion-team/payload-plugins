@@ -25,6 +25,7 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 
+/** @type import('payload').ImportMap */
 export const importMap = {
   "@dexilion/payload-dynamic-blocks/WidgetCell#default": default_999cd08053feb769e1049e5d52da524a,
   "@dexilion/payload-dynamic-blocks/WidgetField#default": default_ee35e5d27415686a32b8e933adf1dda2,

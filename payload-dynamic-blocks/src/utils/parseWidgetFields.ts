@@ -4,9 +4,9 @@ import type { Field } from "payload";
 
 /**
  * Maps JSX component names used in the widget code field to Payload field types.
- * `Blocks` is intentionally omitted — it is not supported as a dynamic block field.
  */
 const COMPONENT_TO_FIELD_TYPE: Record<string, string> = {
+  Blocks: "blocks",
   Array: "array",
   Checkbox: "checkbox",
   Code: "code",
@@ -104,9 +104,6 @@ function parseJSXChildren(
     if (opening.name.type !== "JSXIdentifier") continue;
     const componentName = opening.name.name;
 
-    // Explicitly block nested blocks
-    if (componentName === "Blocks") continue;
-
     // HTML tags (lowercase) are transparent wrappers — recurse and flatten children
     if (componentName.charAt(0) === componentName.charAt(0).toLowerCase()) {
       fields.push(...parseJSXChildren((child as JSXElement).children));
@@ -146,6 +143,13 @@ function parseJSXChildren(
       }
     }
 
+    // Nested dynamic blocks: <Blocks name="cards" />
+    // All available widgets are injected at render time by WidgetField.
+    if (fieldType === "blocks") {
+      fieldConfig.blocks = [{ slug: "__unused__", fields: [] }];
+      fieldConfig.custom = { dynamic: true };
+    }
+
     fields.push(fieldConfig as unknown as Omit<Field, "editor">);
   }
 
@@ -160,8 +164,7 @@ function parseJSXChildren(
  * `<Text name="title" />` → `{ type: "text", name: "title" }`
  * `<RichText name="body" required />` → `{ type: "richText", name: "body", required: true }`
  * `<Group name="meta"><Text name="title" /></Group>` → `{ type: "group", name: "meta", fields: [{ type: "text", name: "title" }] }`
- *
- * The `Blocks` component is explicitly disallowed and will be ignored.
+ * `<Blocks name="items" />` → nested dynamic blocks field (all widgets available as block types)
  */
 export function parseWidgetFields(widgetCode: string): Omit<Field, "editor">[] {
   // Wrap in a JSX fragment so multiple sibling elements are valid

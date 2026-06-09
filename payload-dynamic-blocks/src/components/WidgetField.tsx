@@ -95,6 +95,38 @@ function addBlockFieldsToSchemaMap(
   }
 }
 
+/**
+ * Recursively injects all available blocks into any nested blocks fields
+ * that have `custom: { dynamic: true }`.
+ */
+function injectNestedDynamicBlocks(fields: Field[], allBlocks: Block[]): Field[] {
+  return fields.map((field): Field => {
+    if ("fields" in field && Array.isArray(field.fields)) {
+      return {
+        ...field,
+        fields: injectNestedDynamicBlocks(field.fields as Field[], allBlocks),
+      } as Field;
+    }
+
+    if (field.type !== "blocks") return field;
+
+    const custom = (field as any).custom as Record<string, unknown> | undefined;
+    if (!custom?.dynamic) return field;
+
+    return {
+      ...field,
+      blocks: allBlocks,
+      admin: {
+        ...(field as any).admin,
+        components: {
+          ...((field as any).admin?.components ?? {}),
+          Field: { path: "@dexilion/payload-dynamic-blocks/WidgetField" },
+        },
+      },
+    } as Field;
+  });
+}
+
 const WidgetField: BlocksFieldServerComponent = async (props) => {
   const {
     payload,
@@ -124,26 +156,27 @@ const WidgetField: BlocksFieldServerComponent = async (props) => {
     return null; // No widget definitions, render nothing
   }
 
+  // First pass: parse all widgets into blocks without nested resolution
   let blocks: Block[] = widgets.docs.map((doc: any): Block => {
     const parsedFields = parseWidgetFields(doc.widget ?? "");
-
-    // Inject the editor config for all richText fields
     const fields: Field[] = parsedFields.map((f) =>
       f.type === "richText"
         ? ({ ...f, editor: payload.config.editor, admin: {} } as Field)
         : (f as Field),
     );
-
     return {
       slug: doc.name,
-      labels: {
-        singular: doc.name,
-        plural: doc.name,
-      },
-      dbName: doc.name, // Needed but unused
+      labels: { singular: doc.name, plural: doc.name },
+      dbName: doc.name,
       fields,
     };
   });
+
+  // Second pass: inject the full blocks list into any nested dynamic blocks fields
+  blocks = blocks.map((block) => ({
+    ...block,
+    fields: injectNestedDynamicBlocks(block.fields as Field[], blocks),
+  }));
 
   // Apply filterOptions if defined on the field
   const filterOptions = (field as BlocksField).filterOptions;
