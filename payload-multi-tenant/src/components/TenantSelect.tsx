@@ -21,7 +21,9 @@ const TenantSelect = async ({
     })
     .then((res) => {
       return res.docs
-        .filter((tenant) => tenant.hidden !== true)
+        .filter(
+          (tenant) => Boolean(tenant["hidden" as keyof typeof tenant]) !== true,
+        )
         .map((tenant) => ({
           id: String(tenant.id),
           value: String(tenant[tenantLabelFieldName as keyof typeof tenant]),
