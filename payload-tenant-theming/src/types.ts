@@ -19,6 +19,7 @@ export type Blog = {
 export interface Theme {
   name: string;
   label: string;
+  enabled?: boolean;
   Layout: Layout[];
   Widgets: Widget[];
   Blog?: Blog;
