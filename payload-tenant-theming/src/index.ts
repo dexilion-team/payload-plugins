@@ -1,10 +1,4 @@
-import {
-  Config,
-  SanitizedConfig,
-  Plugin,
-  PayloadRequest,
-  CollectionSlug,
-} from "payload";
+import { Config, Plugin } from "payload";
 
 import translationEn from "../translations/en.json";
 import { Theme } from "./types";
@@ -83,6 +77,16 @@ export const tenantTheming =
         required: true,
       });
     }
+
+    // Allow hiding a tenant if it's deprecated
+    tenantsCollection.fields.push({
+      name: "hidden",
+      label: ({ t }) =>
+        // @ts-ignore
+        t("plugin-tenant-theming:hiddenFieldLabel"),
+      type: "checkbox",
+      required: false,
+    });
 
     // Verify if the domain field is already configured
     const existingDomainField = tenantsCollection.fields.find(
