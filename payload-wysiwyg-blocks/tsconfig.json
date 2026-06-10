@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx"
+  ],
+  "compilerOptions": {
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "jsx": "react-jsx",
+    "paths": {
+      "@dexilion/payload-pms/RichText": ["../payload-pms/src/components/RichText/index.tsx"],
+      "@dexilion/payload-dynamic-blocks/parseWidgetFields": ["../payload-dynamic-blocks/src/utils/parseWidgetFields.ts"],
+      "@dexilion/payload-dynamic-blocks/constants": ["../payload-dynamic-blocks/src/constants.ts"],
+      "payload/shared": ["../node_modules/payload/dist/exports/shared.d.ts"]
+    }
+  }
+}
