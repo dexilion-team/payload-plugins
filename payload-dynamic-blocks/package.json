@@ -41,6 +41,7 @@
   "types": "./src/index.ts",
   "sideEffects": false,
   "peerDependencies": {
+    "@dexilion/payload-pms": "workspace:*",
     "@faceless-ui/modal": "3.0.0",
     "@payloadcms/translations": "3.84.1",
     "@payloadcms/ui": "3.84.1",
