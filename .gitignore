@@ -4,4 +4,3 @@ tsconfig.tsbuildinfo
 pnpm-lock.yaml
 .env
 dev.db
-dev/

@@ -1,35 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useField } from "@payloadcms/ui";
+import dynamic from "next/dynamic";
+
+const CraftjsEditorPage = dynamic(
+  () => import("./craftjs/CraftjsEditorPage"),
+  { ssr: false },
+);
 
 export default function CraftjsWidgetField({ path }: { path: string }) {
-  const { value, setValue } = useField<string>({ path });
+  const { value: jsxValue, setValue: setJsxValue } = useField<string>({ path });
+  const { value: craftjsState, setValue: setCraftjsState } = useField<string>({ path: path.replace(/\.widget$/, ".craftjsState") });
   const [mode, setMode] = useState<"code" | "visual">("code");
-  const craftJsonRef = useRef<string | undefined>(undefined);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const iframeLoadedRef = useRef(false);
 
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type !== "craftjs-save") return;
-      craftJsonRef.current = e.data.json;
-      if (e.data.jsx) {
-        setValue(e.data.jsx);
-      }
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, [setValue]);
-
-  const handleIframeLoad = () => {
-    iframeLoadedRef.current = true;
-    if (craftJsonRef.current) {
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: "craftjs-load", json: craftJsonRef.current },
-        "*",
-      );
-    }
+  const handleSave = (json: string, jsx: string) => {
+    setCraftjsState(json);
+    setJsxValue(jsx);
   };
 
   return (
@@ -46,7 +33,7 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
               fontSize: 12,
               border: "none",
               background: mode === m ? "#4f46e5" : "transparent",
-              color: mode === m ? "#fff" : "#555",
+              color: "#fff",
               cursor: "pointer",
               fontWeight: mode === m ? 600 : 400,
             }}
@@ -57,10 +44,10 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
       </div>
 
       {/* Code editor */}
-      <div style={{ display: mode === "code" ? "block" : "none" }}>
+      {mode === "code" && (
         <textarea
-          value={value ?? ""}
-          onChange={(e) => setValue(e.target.value)}
+          value={jsxValue ?? ""}
+          onChange={(e) => setJsxValue(e.target.value)}
           rows={12}
           style={{
             width: "100%",
@@ -72,30 +59,17 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
             resize: "vertical",
           }}
         />
-      </div>
+      )}
 
-      {/*
-        Visual editor iframe.
-        Uses visibility+overflow hidden instead of display:none or conditional
-        rendering so React never unmounts/remounts the iframe element.
-      */}
-      <div
-        style={{
-          border: mode === "visual" ? "1px solid #e0e0e0" : "none",
-          borderRadius: 6,
-          overflow: "hidden",
-          visibility: mode === "visual" ? "visible" : "hidden",
-          height: mode === "visual" ? "auto" : 0,
-        }}
-      >
-        <iframe
-          key="craftjs-iframe"
-          ref={iframeRef}
-          src="/craftjs-editor"
-          onLoad={handleIframeLoad}
-          style={{ width: "100%", height: 600, border: "none", display: "block" }}
-        />
-      </div>
+      {/* Visual editor */}
+      {mode === "visual" && (
+        <div style={{ border: "1px solid #e0e0e0", borderRadius: 6, overflow: "hidden" }}>
+          <CraftjsEditorPage
+            initialJson={craftjsState ?? undefined}
+            onSave={handleSave}
+          />
+        </div>
+      )}
     </div>
   );
 }

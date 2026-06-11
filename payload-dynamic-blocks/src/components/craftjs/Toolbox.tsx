@@ -48,6 +48,7 @@ export function Toolbox() {
                 fontSize: 13,
                 cursor: "grab",
                 border: "1px solid #e8e8e8",
+                color: "#333",
                 userSelect: "none",
                 display: "flex",
                 alignItems: "center",

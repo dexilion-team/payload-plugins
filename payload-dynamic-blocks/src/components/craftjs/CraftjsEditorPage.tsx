@@ -66,11 +66,12 @@ function btnStyle(disabled: boolean): React.CSSProperties {
   };
 }
 
-function EditorInner({ initialJson, onSave }: { initialJson?: string; onSave: (json: string) => void }) {
+function EditorInner({ initialJson, onSave }: {
+  initialJson?: string;
+  onSave: (json: string, jsx: string) => void;
+}) {
   const [rightTab, setRightTab] = useState<"settings" | "layers">("settings");
 
-  // Inner component needs access to editor — dynamically import useEditor
-  // to avoid SSR issues; this whole file is "use client" so it's fine.
   const { useEditor } = require("@craftjs/core");
   const { actions, query, canUndo, canRedo } = useEditor((state: any, q: any) => ({
     canUndo: q.history.canUndo(),
@@ -81,24 +82,16 @@ function EditorInner({ initialJson, onSave }: { initialJson?: string; onSave: (j
     if (initialJson) {
       try { actions.deserialize(initialJson); } catch { /* ignore */ }
     }
-
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type !== "craftjs-load") return;
-      try { actions.deserialize(e.data.json); } catch { /* ignore */ }
-    };
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
   }, []);
 
   const handleSave = () => {
     const json = query.serialize();
-    onSave(json);
     const jsx = craftjsStateToJsx(json);
-    window.parent.postMessage({ type: "craftjs-save", json, jsx }, "*");
+    onSave(json, jsx);
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "system-ui, sans-serif" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: 600, fontFamily: "system-ui, sans-serif", background: "#fff", color: "#333" }}>
       <Topbar
         onSave={handleSave}
         onUndo={() => actions.history.undo()}
@@ -154,12 +147,13 @@ function EditorInner({ initialJson, onSave }: { initialJson?: string; onSave: (j
   );
 }
 
-export default function CraftjsEditorPage({ initialJson }: { initialJson?: string }) {
-  const [savedJson, setSavedJson] = useState<string | undefined>(initialJson);
-
+export default function CraftjsEditorPage({ initialJson, onSave }: {
+  initialJson?: string;
+  onSave: (json: string, jsx: string) => void;
+}) {
   return (
     <Editor resolver={RESOLVER}>
-      <EditorInner initialJson={savedJson} onSave={setSavedJson} />
+      <EditorInner initialJson={initialJson} onSave={onSave} />
     </Editor>
   );
 }
