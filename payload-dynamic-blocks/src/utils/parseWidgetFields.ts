@@ -85,6 +85,31 @@ function extractValue(node: Node | null | undefined): unknown {
 const CONTAINER_FIELD_TYPES = new Set(["array", "collapsible", "group", "row"]);
 
 /**
+ * Field types that require a `name` prop to be valid Payload fields.
+ * Layout-only types (row, collapsible) are excluded — Payload allows them nameless.
+ */
+const NAMED_FIELD_TYPES = new Set([
+  "array",
+  "blocks",
+  "checkbox",
+  "code",
+  "date",
+  "email",
+  "group",
+  "join",
+  "json",
+  "number",
+  "point",
+  "radio",
+  "relationship",
+  "richText",
+  "select",
+  "text",
+  "textarea",
+  "upload",
+]);
+
+/**
  * Parses a list of JSX children nodes into an array of Payload field configs.
  * Called recursively for container fields whose JSX children become `fields`.
  */
@@ -133,6 +158,14 @@ function parseJSXChildren(
           fieldConfig[propName] = extractValue(jsxAttr.value.expression);
         }
       }
+    }
+
+    // Drop fields that require a name but don't have one
+    if (NAMED_FIELD_TYPES.has(fieldType) && !fieldConfig.name) {
+      console.warn(
+        `[parseWidgetFields] <${componentName}> is missing a required "name" prop — skipped`,
+      );
+      continue;
     }
 
     // Recurse into children for container field types
