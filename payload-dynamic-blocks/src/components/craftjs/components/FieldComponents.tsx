@@ -46,15 +46,18 @@ function FieldWrapper({
   style,
   children,
   selected,
+  connectRef,
 }: {
   label?: string;
   required?: boolean;
   style: CSSProperties;
   children: React.ReactNode;
   selected: boolean;
+  connectRef: (r: HTMLDivElement | null) => void;
 }) {
   return (
     <div
+      ref={connectRef}
       style={{
         ...style,
         border: selected ? "2px solid #4f46e5" : "1px dashed #ccc",
@@ -63,15 +66,16 @@ function FieldWrapper({
         marginBottom: style.marginBottom ?? "8px",
         cursor: "pointer",
         position: "relative",
+        pointerEvents: "all",
       }}
     >
       {label && (
-        <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 2 }}>
+        <label style={{ fontSize: 11, color: "#888", display: "block", marginBottom: 2, pointerEvents: "none" }}>
           {label}
           {required && <span style={{ color: "red", marginLeft: 2 }}>*</span>}
         </label>
       )}
-      {children}
+      <div style={{ pointerEvents: "none" }}>{children}</div>
     </div>
   );
 }
@@ -80,11 +84,9 @@ function FieldWrapper({
 export function TextField(props: FieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <input type="text" placeholder={props.placeholder ?? props.label ?? "Text"} disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }} />
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <input type="text" placeholder={props.placeholder ?? props.label ?? "Text"} disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }} />
+    </FieldWrapper>
   );
 }
 TextField.craft = { displayName: "Text", props: { name: "field", label: "Text Field" } };
@@ -93,11 +95,9 @@ TextField.craft = { displayName: "Text", props: { name: "field", label: "Text Fi
 export function EmailField(props: FieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <input type="email" placeholder={props.placeholder ?? props.label ?? "Email"} disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }} />
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <input type="email" placeholder={props.placeholder ?? props.label ?? "Email"} disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }} />
+    </FieldWrapper>
   );
 }
 EmailField.craft = { displayName: "Email", props: { name: "field", label: "Email Field" } };
@@ -106,11 +106,9 @@ EmailField.craft = { displayName: "Email", props: { name: "field", label: "Email
 export function TextareaField(props: FieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <textarea placeholder={props.placeholder ?? props.label ?? "Textarea"} disabled rows={3} style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14, resize: "none" }} />
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <textarea placeholder={props.placeholder ?? props.label ?? "Textarea"} disabled rows={3} style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14, resize: "none" }} />
+    </FieldWrapper>
   );
 }
 TextareaField.craft = { displayName: "Textarea", props: { name: "field", label: "Textarea Field" } };
@@ -119,11 +117,9 @@ TextareaField.craft = { displayName: "Textarea", props: { name: "field", label: 
 export function NumberField(props: FieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <input type="number" placeholder={props.placeholder ?? props.label ?? "0"} disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }} />
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <input type="number" placeholder={props.placeholder ?? props.label ?? "0"} disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }} />
+    </FieldWrapper>
   );
 }
 NumberField.craft = { displayName: "Number", props: { name: "field", label: "Number Field" } };
@@ -132,15 +128,13 @@ NumberField.craft = { displayName: "Number", props: { name: "field", label: "Num
 export function CheckboxField(props: FieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={undefined} required={props.required} style={buildStyle(props)} selected={selected}>
-        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, cursor: "pointer" }}>
-          <input type="checkbox" disabled />
-          {props.label ?? "Checkbox"}
-          {props.required && <span style={{ color: "red" }}>*</span>}
-        </label>
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={undefined} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14 }}>
+        <input type="checkbox" disabled />
+        {props.label ?? "Checkbox"}
+        {props.required && <span style={{ color: "red" }}>*</span>}
+      </label>
+    </FieldWrapper>
   );
 }
 CheckboxField.craft = { displayName: "Checkbox", props: { name: "field", label: "Checkbox Field" } };
@@ -150,14 +144,12 @@ export type SelectFieldProps = FieldProps & { options?: { label: string; value: 
 export function SelectField(props: SelectFieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <select disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }}>
-          <option value="">Select…</option>
-          {(props.options ?? []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <select disabled style={{ width: "100%", border: "none", background: "transparent", outline: "none", fontSize: 14 }}>
+        <option value="">Select…</option>
+        {(props.options ?? []).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </FieldWrapper>
   );
 }
 SelectField.craft = { displayName: "Select", props: { name: "field", label: "Select Field", options: [] } };
@@ -167,18 +159,16 @@ export type RadioFieldProps = FieldProps & { options?: { label: string; value: s
 export function RadioField(props: RadioFieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {(props.options ?? [{ label: "Option 1", value: "opt1" }, { label: "Option 2", value: "opt2" }]).map((o) => (
-            <label key={o.value} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14 }}>
-              <input type="radio" disabled />
-              {o.label}
-            </label>
-          ))}
-        </div>
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {(props.options ?? [{ label: "Option 1", value: "opt1" }, { label: "Option 2", value: "opt2" }]).map((o) => (
+          <label key={o.value} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14 }}>
+            <input type="radio" disabled />
+            {o.label}
+          </label>
+        ))}
+      </div>
+    </FieldWrapper>
   );
 }
 RadioField.craft = { displayName: "Radio", props: { name: "field", label: "Radio Field", options: [{ label: "Option 1", value: "opt1" }] } };
@@ -187,13 +177,11 @@ RadioField.craft = { displayName: "Radio", props: { name: "field", label: "Radio
 export function RichTextField(props: FieldProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <div style={{ minHeight: 60, background: "#f9f9f9", borderRadius: 2, padding: "4px 6px", fontSize: 14, color: "#aaa" }}>
-          Rich text editor…
-        </div>
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <div style={{ minHeight: 60, background: "#f9f9f9", borderRadius: 2, padding: "4px 6px", fontSize: 14, color: "#aaa" }}>
+        Rich text editor…
+      </div>
+    </FieldWrapper>
   );
 }
 RichTextField.craft = { displayName: "RichText", props: { name: "field", label: "Rich Text Field" } };
@@ -202,13 +190,11 @@ RichTextField.craft = { displayName: "RichText", props: { name: "field", label: 
 export function RelationshipField(props: FieldProps & { relationTo?: string }) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
-    <div ref={(r) => r && connect(drag(r))}>
-      <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected}>
-        <div style={{ minHeight: 36, background: "#f0f0f0", borderRadius: 2, padding: "4px 6px", fontSize: 14, color: "#aaa" }}>
-          {props.relationTo ? `Relationship → ${props.relationTo}` : "Relationship…"}
-        </div>
-      </FieldWrapper>
-    </div>
+    <FieldWrapper label={props.label} required={props.required} style={buildStyle(props)} selected={selected} connectRef={(r) => r && connect(drag(r))}>
+      <div style={{ minHeight: 36, background: "#f0f0f0", borderRadius: 2, padding: "4px 6px", fontSize: 14, color: "#aaa" }}>
+        {props.relationTo ? `Relationship → ${props.relationTo}` : "Relationship…"}
+      </div>
+    </FieldWrapper>
   );
 }
 RelationshipField.craft = { displayName: "Relationship", props: { name: "field", label: "Relationship Field", relationTo: "media" } };
@@ -219,7 +205,7 @@ export function GroupField(props: GroupProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
     <div
-      ref={(r) => r && connect(drag(r))}
+      ref={(r: HTMLDivElement | null) => { if (r) connect(drag(r)); }}
       style={{
         ...buildStyle(props),
         border: selected ? "2px solid #4f46e5" : "1px dashed #aaa",
@@ -249,7 +235,7 @@ export function TabField(props: TabProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
     <div
-      ref={(r) => r && connect(drag(r))}
+      ref={(r: HTMLDivElement | null) => { if (r) connect(drag(r)); }}
       style={{
         ...buildStyle(props),
         border: selected ? "2px solid #4f46e5" : "1px dashed #aaa",
@@ -278,7 +264,7 @@ export function TabsContainer(props: TabsProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
     <div
-      ref={(r) => r && connect(drag(r))}
+      ref={(r: HTMLDivElement | null) => { if (r) connect(drag(r)); }}
       style={{
         ...buildStyle(props),
         border: selected ? "2px solid #4f46e5" : "1px dashed #aaa",
@@ -309,7 +295,7 @@ export function DivContainer(props: DivProps) {
   const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
   return (
     <div
-      ref={(r) => r && connect(drag(r))}
+      ref={(r: HTMLDivElement | null) => { if (r) connect(drag(r)); }}
       style={{
         ...buildStyle(props),
         border: selected ? "2px solid #4f46e5" : "1px dashed #aaa",
