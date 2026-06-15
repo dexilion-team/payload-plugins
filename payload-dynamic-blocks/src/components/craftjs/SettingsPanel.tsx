@@ -10,7 +10,7 @@ function ColorInput({ label, value, onChange }: { label: string; value?: string;
         <input type="color" value={value || "#000000"} onChange={(e) => onChange(e.target.value)}
           style={{ width: 28, height: 28, padding: 0, border: "1px solid #ddd", borderRadius: 4, cursor: "pointer" }} />
         <input type="text" value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder="e.g. #fff or transparent"
-          style={{ flex: 1, fontSize: 12, padding: "3px 6px", border: "1px solid #ddd", borderRadius: 4 }} />
+          style={{ flex: 1, fontSize: 12, padding: "3px 6px", border: "1px solid #ddd", borderRadius: 4, background: "#f9f9f9", color: "#333" }} />
       </div>
     </div>
   );
@@ -21,7 +21,7 @@ function SpacingInput({ label, value, onChange }: { label: string; value?: strin
     <div style={{ marginBottom: 6 }}>
       <label style={{ fontSize: 11, color: "#666", display: "block", marginBottom: 2 }}>{label}</label>
       <input type="text" value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder="e.g. 8px or 1rem"
-        style={{ width: "100%", fontSize: 12, padding: "3px 6px", border: "1px solid #ddd", borderRadius: 4 }} />
+        style={{ width: "100%", fontSize: 12, padding: "3px 6px", border: "1px solid #ddd", borderRadius: 4, background: "#f9f9f9", color: "#333" }} />
     </div>
   );
 }
@@ -31,7 +31,7 @@ function TextInput({ label, value, onChange }: { label: string; value?: string; 
     <div style={{ marginBottom: 6 }}>
       <label style={{ fontSize: 11, color: "#666", display: "block", marginBottom: 2 }}>{label}</label>
       <input type="text" value={value || ""} onChange={(e) => onChange(e.target.value)}
-        style={{ width: "100%", fontSize: 12, padding: "3px 6px", border: "1px solid #ddd", borderRadius: 4 }} />
+        style={{ width: "100%", fontSize: 12, padding: "3px 6px", border: "1px solid #ddd", borderRadius: 4, background: "#f9f9f9", color: "#333" }} />
     </div>
   );
 }
