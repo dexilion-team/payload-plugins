@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useField } from "@payloadcms/ui";
 import dynamic from "next/dynamic";
 import { jsxToCraftjsState } from "./craftjs/jsxToCraftjs";
@@ -15,12 +15,21 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
   const craftjsStatePath = path.replace(/(^|\.)widget$/, (_, prefix) => `${prefix}craftjsState`);
   const { value: craftjsState, setValue: setCraftjsState } = useField<string>({ path: craftjsStatePath });
   const [mode, setMode] = useState<"code" | "visual">("code");
+  const [visualKey, setVisualKey] = useState(0);
+  const [visualJson, setVisualJson] = useState<string | null>(null);
 
-  const resolvedCraftjsState = useMemo(() => {
-    if (craftjsState) return craftjsState;
-    if (jsxValue) return jsxToCraftjsState(jsxValue);
-    return null;
-  }, [craftjsState, jsxValue]);
+  const switchMode = (next: "code" | "visual") => {
+    if (next === "visual") {
+      // Always re-derive from JSX when coming from code editor so manual
+      // edits to the code field are always reflected in the visual editor.
+      const json = mode === "code"
+        ? (jsxValue ? jsxToCraftjsState(jsxValue) : null)
+        : craftjsState || (jsxValue ? jsxToCraftjsState(jsxValue) : null);
+      setVisualJson(json);
+      setVisualKey((k) => k + 1);
+    }
+    setMode(next);
+  };
 
   const handleSave = (json: string, jsx: string) => {
     setCraftjsState(json);
@@ -35,7 +44,7 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
           <button
             key={m}
             type="button"
-            onClick={() => setMode(m)}
+            onClick={() => switchMode(m)}
             style={{
               padding: "5px 16px",
               fontSize: 12,
@@ -73,7 +82,8 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
       {mode === "visual" && (
         <div style={{ border: "1px solid #e0e0e0", borderRadius: 6, overflow: "hidden" }}>
           <CraftjsEditorPage
-            initialJson={resolvedCraftjsState ?? undefined}
+            key={visualKey}
+            initialJson={visualJson ?? undefined}
             onSave={handleSave}
           />
         </div>
