@@ -46,6 +46,7 @@ export const createWidgetCollection = ({ craftjs = false }: { craftjs?: boolean 
             type: "text" as const,
             admin: {
               hidden: true,
+              disableListColumn: true,
             },
           },
         ]

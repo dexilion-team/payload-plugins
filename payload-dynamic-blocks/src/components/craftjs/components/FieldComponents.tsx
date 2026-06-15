@@ -213,6 +213,66 @@ export function RelationshipField(props: FieldProps & { relationTo?: string }) {
 }
 RelationshipField.craft = { displayName: "Relationship", props: { name: "field", label: "Relationship Field", relationTo: "media" } };
 
+// --- Tab (container inside Tabs) ---
+export type TabProps = StyleProps & { name?: string; label?: string; children?: React.ReactNode };
+export function TabField(props: TabProps) {
+  const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
+  return (
+    <div
+      ref={(r) => r && connect(drag(r))}
+      style={{
+        ...buildStyle(props),
+        border: selected ? "2px solid #4f46e5" : "1px dashed #aaa",
+        borderRadius: 4,
+        minHeight: 48,
+        padding: "8px",
+        marginBottom: "4px",
+        cursor: "pointer",
+      }}
+    >
+      <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>{props.label ?? props.name ?? "Tab"}</div>
+      {props.children ?? <span style={{ color: "#ccc", fontSize: 12 }}>Drop fields here…</span>}
+    </div>
+  );
+}
+TabField.craft = {
+  displayName: "Tab",
+  isCanvas: true,
+  props: { name: "tab", label: "Tab" },
+  rules: { canDrop: () => true },
+};
+
+// --- Tabs (container of Tab children) ---
+export type TabsProps = StyleProps & { children?: React.ReactNode };
+export function TabsContainer(props: TabsProps) {
+  const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
+  return (
+    <div
+      ref={(r) => r && connect(drag(r))}
+      style={{
+        ...buildStyle(props),
+        border: selected ? "2px solid #4f46e5" : "1px dashed #aaa",
+        borderRadius: 4,
+        padding: "8px",
+        marginBottom: "8px",
+        cursor: "pointer",
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 4 }}>Tabs</div>
+      {props.children ?? <span style={{ color: "#ccc", fontSize: 12 }}>Drop Tab components here…</span>}
+    </div>
+  );
+}
+TabsContainer.craft = {
+  displayName: "Tabs",
+  isCanvas: true,
+  props: {},
+  rules: {
+    canDrop: () => true,
+    canMoveIn: (incoming: any[]) => incoming.every((n) => n.data?.displayName === "Tab"),
+  },
+};
+
 // --- Div (container) ---
 export type DivProps = StyleProps & { children?: React.ReactNode };
 export function DivContainer(props: DivProps) {
@@ -236,6 +296,7 @@ export function DivContainer(props: DivProps) {
 }
 DivContainer.craft = {
   displayName: "Div",
+  isCanvas: true,
   props: {},
   rules: { canDrop: () => true },
 };

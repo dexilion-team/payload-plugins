@@ -17,6 +17,8 @@ const DISPLAY_NAME_TO_JSX: Record<string, string> = {
   RadioField: "Radio",
   RichTextField: "RichText",
   RelationshipField: "Relationship",
+  TabsContainer: "Tabs",
+  TabField: "Tab",
   DivContainer: "div",
 };
 
@@ -59,8 +61,9 @@ function nodeToJsx(nodeId: string, state: CraftState, indent: number): string {
     .join(" ");
 
   const children = node.nodes ?? [];
+  const isContainer = ["Tabs", "Tab", "div"].includes(tag);
 
-  if (children.length === 0) {
+  if (children.length === 0 && !isContainer) {
     return `${pad}<${tag}${attrs ? " " + attrs : ""} />`;
   }
 

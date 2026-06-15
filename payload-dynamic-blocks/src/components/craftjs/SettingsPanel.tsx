@@ -48,12 +48,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function SettingsPanel() {
-  const { selected, actions } = useEditor((state) => {
+  const { selected, actions } = useEditor((state, query) => {
     const selectedIds = [...state.events.selected];
     const id = selectedIds[0];
     if (!id) return { selected: null };
     const node = state.nodes[id];
-    return { selected: { id, props: node.data.props, name: node.data.displayName } };
+    return { selected: { id, props: node.data.props, name: node.data.displayName, deletable: query.node(id).isDeletable() } };
   });
 
   if (!selected) {
@@ -74,8 +74,17 @@ export function SettingsPanel() {
 
   return (
     <div style={{ padding: 12, overflowY: "auto", height: "100%" }}>
-      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: "#333" }}>
-        {selected.name}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#333" }}>{selected.name}</div>
+        {selected.deletable && (
+          <button
+            type="button"
+            onClick={() => actions.delete(selected.id)}
+            style={{ fontSize: 11, padding: "3px 8px", border: "1px solid #f87171", borderRadius: 4, background: "transparent", color: "#ef4444", cursor: "pointer" }}
+          >
+            Delete
+          </button>
+        )}
       </div>
 
       {"name" in p && (

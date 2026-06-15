@@ -11,6 +11,8 @@ const JSX_NAME_TO_CRAFTJS: Record<string, string> = {
   Richtext: "RichTextField",
   Relationship: "RelationshipField",
   Upload: "RelationshipField",
+  Tabs: "TabsContainer",
+  Tab: "TabField",
   div: "DivContainer",
 };
 
@@ -150,7 +152,7 @@ function elementsToNodes(
     const resolvedName = JSX_NAME_TO_CRAFTJS[el.name];
     if (!resolvedName) continue;
     const id = uid();
-    const isContainer = resolvedName === "DivContainer";
+    const isContainer = resolvedName === "DivContainer" || resolvedName === "TabsContainer" || resolvedName === "TabField";
     const childIds = isContainer ? elementsToNodes(el.children, id, nodes) : [];
     nodes[id] = {
       type: { resolvedName },
