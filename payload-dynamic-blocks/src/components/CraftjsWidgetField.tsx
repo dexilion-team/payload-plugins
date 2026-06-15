@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useField } from "@payloadcms/ui";
 import dynamic from "next/dynamic";
+import { jsxToCraftjsState } from "./craftjs/jsxToCraftjs";
 
 const CraftjsEditorPage = dynamic(
   () => import("./craftjs/CraftjsEditorPage"),
@@ -11,8 +12,15 @@ const CraftjsEditorPage = dynamic(
 
 export default function CraftjsWidgetField({ path }: { path: string }) {
   const { value: jsxValue, setValue: setJsxValue } = useField<string>({ path });
-  const { value: craftjsState, setValue: setCraftjsState } = useField<string>({ path: path.replace(/\.widget$/, ".craftjsState") });
+  const craftjsStatePath = path.replace(/(^|\.)widget$/, (_, prefix) => `${prefix}craftjsState`);
+  const { value: craftjsState, setValue: setCraftjsState } = useField<string>({ path: craftjsStatePath });
   const [mode, setMode] = useState<"code" | "visual">("code");
+
+  const resolvedCraftjsState = useMemo(() => {
+    if (craftjsState) return craftjsState;
+    if (jsxValue) return jsxToCraftjsState(jsxValue);
+    return null;
+  }, [craftjsState, jsxValue]);
 
   const handleSave = (json: string, jsx: string) => {
     setCraftjsState(json);
@@ -65,7 +73,7 @@ export default function CraftjsWidgetField({ path }: { path: string }) {
       {mode === "visual" && (
         <div style={{ border: "1px solid #e0e0e0", borderRadius: 6, overflow: "hidden" }}>
           <CraftjsEditorPage
-            initialJson={craftjsState ?? undefined}
+            initialJson={resolvedCraftjsState ?? undefined}
             onSave={handleSave}
           />
         </div>

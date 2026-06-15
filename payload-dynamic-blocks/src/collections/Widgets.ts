@@ -43,7 +43,7 @@ export const createWidgetCollection = ({ craftjs = false }: { craftjs?: boolean 
       ? [
           {
             name: "craftjsState",
-            type: "json" as const,
+            type: "text" as const,
             admin: {
               hidden: true,
             },

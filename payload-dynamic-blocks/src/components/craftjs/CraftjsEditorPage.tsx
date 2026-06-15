@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Editor, Frame, Element } from "@craftjs/core";
 import { craftjsStateToJsx } from "./craftjsToJsx";
 import {
@@ -44,9 +44,9 @@ function Topbar({ onSave, onUndo, onRedo, canUndo, canRedo }: {
     }}>
       <span style={{ color: "#a0a0c0", fontSize: 13, fontWeight: 600 }}>Widget Builder</span>
       <div style={{ display: "flex", gap: 8 }}>
-        <button onClick={onUndo} disabled={!canUndo} style={btnStyle(!canUndo)}>Undo</button>
-        <button onClick={onRedo} disabled={!canRedo} style={btnStyle(!canRedo)}>Redo</button>
-        <button onClick={onSave} style={{ ...btnStyle(false), background: "#4f46e5", color: "#fff", borderColor: "#4f46e5" }}>
+        <button type="button" onClick={onUndo} disabled={!canUndo} style={btnStyle(!canUndo)}>Undo</button>
+        <button type="button" onClick={onRedo} disabled={!canRedo} style={btnStyle(!canRedo)}>Redo</button>
+        <button type="button" onClick={onSave} style={{ ...btnStyle(false), background: "#4f46e5", color: "#fff", borderColor: "#4f46e5" }}>
           Save
         </button>
       </div>
@@ -78,12 +78,6 @@ function EditorInner({ initialJson, onSave }: {
     canRedo: q.history.canRedo(),
   }));
 
-  useEffect(() => {
-    if (initialJson) {
-      try { actions.deserialize(initialJson); } catch { /* ignore */ }
-    }
-  }, []);
-
   const handleSave = () => {
     const json = query.serialize();
     const jsx = craftjsStateToJsx(json);
@@ -108,9 +102,13 @@ function EditorInner({ initialJson, onSave }: {
         {/* Center — Canvas */}
         <div style={{ flex: 1, overflowY: "auto", background: "#f8f8f8", padding: 24 }}>
           <div style={{ maxWidth: 640, margin: "0 auto", background: "#fff", borderRadius: 8, boxShadow: "0 1px 4px rgba(0,0,0,0.08)", padding: 24, minHeight: 400 }}>
-            <Frame>
-              <Element is={DivContainer} canvas id="root-canvas" />
-            </Frame>
+            {initialJson ? (
+              <Frame data={initialJson} />
+            ) : (
+              <Frame>
+                <Element is={DivContainer} canvas id="root-canvas" />
+              </Frame>
+            )}
           </div>
         </div>
 
@@ -120,6 +118,7 @@ function EditorInner({ initialJson, onSave }: {
             {(["settings", "layers"] as const).map((tab) => (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setRightTab(tab)}
                 style={{
                   flex: 1,
