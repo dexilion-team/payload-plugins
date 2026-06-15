@@ -4,7 +4,7 @@ import { useEditor } from "@craftjs/core";
 import {
   TextField, EmailField, TextareaField, NumberField,
   CheckboxField, SelectField, RadioField, RichTextField,
-  RelationshipField, TabsContainer, TabField, DivContainer,
+  RelationshipField, GroupField, TabsContainer, TabField, DivContainer,
 } from "./components/FieldComponents";
 
 type ComponentEntry = {
@@ -23,6 +23,7 @@ const COMPONENTS: ComponentEntry[] = [
   { label: "Radio", component: RadioField, defaultProps: { name: "layout", label: "Layout", options: [{ label: "Full", value: "full" }, { label: "Sidebar", value: "sidebar" }] } },
   { label: "RichText", component: RichTextField, defaultProps: { name: "content", label: "Content" } },
   { label: "Relationship", component: RelationshipField, defaultProps: { name: "image", label: "Image", relationTo: "media" } },
+  { label: "Group", component: GroupField, defaultProps: { name: "group", label: "Group" } },
   { label: "Tabs", component: TabsContainer, defaultProps: {} },
   { label: "Tab", component: TabField, defaultProps: { name: "content", label: "Content" } },
   { label: "Div", component: DivContainer, defaultProps: {} },

@@ -213,6 +213,36 @@ export function RelationshipField(props: FieldProps & { relationTo?: string }) {
 }
 RelationshipField.craft = { displayName: "Relationship", props: { name: "field", label: "Relationship Field", relationTo: "media" } };
 
+// --- Group (named object container) ---
+export type GroupProps = StyleProps & { name?: string; label?: string; children?: React.ReactNode };
+export function GroupField(props: GroupProps) {
+  const { connectors: { connect, drag }, selected } = useNode((n) => ({ selected: n.events.selected }));
+  return (
+    <div
+      ref={(r) => r && connect(drag(r))}
+      style={{
+        ...buildStyle(props),
+        border: selected ? "2px solid #4f46e5" : "1px dashed #aaa",
+        borderRadius: 4,
+        padding: "8px",
+        marginBottom: "8px",
+        cursor: "pointer",
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 600, color: "#888", marginBottom: 4 }}>
+        Group: <span style={{ fontWeight: 400 }}>{props.name ?? "group"}</span>
+      </div>
+      {props.children ?? <span style={{ color: "#ccc", fontSize: 12 }}>Drop fields here…</span>}
+    </div>
+  );
+}
+GroupField.craft = {
+  displayName: "Group",
+  isCanvas: true,
+  props: { name: "group", label: "Group" },
+  rules: { canDrop: () => true },
+};
+
 // --- Tab (container inside Tabs) ---
 export type TabProps = StyleProps & { name?: string; label?: string; children?: React.ReactNode };
 export function TabField(props: TabProps) {

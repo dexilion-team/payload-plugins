@@ -6,7 +6,7 @@ import { craftjsStateToJsx } from "./craftjsToJsx";
 import {
   TextField, EmailField, TextareaField, NumberField,
   CheckboxField, SelectField, RadioField, RichTextField,
-  RelationshipField, TabsContainer, TabField, DivContainer,
+  RelationshipField, GroupField, TabsContainer, TabField, DivContainer,
 } from "./components/FieldComponents";
 import { Toolbox } from "./Toolbox";
 import { SettingsPanel } from "./SettingsPanel";
@@ -22,6 +22,7 @@ const RESOLVER = {
   RadioField,
   RichTextField,
   RelationshipField,
+  GroupField,
   TabsContainer,
   TabField,
   DivContainer,
