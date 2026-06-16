@@ -2,7 +2,7 @@ import { type CollectionConfig } from "payload";
 import { WIDGET_COLLECTION_NAME } from "../constants";
 import { parseWidgetFields } from "../utils/parseWidgetFields";
 
-export const createWidgetCollection = (): CollectionConfig => ({
+export const createWidgetCollection = ({ craftjs = false }: { craftjs?: boolean } = {}): CollectionConfig => ({
   slug: WIDGET_COLLECTION_NAME,
   fields: [
     {
@@ -27,8 +27,29 @@ export const createWidgetCollection = (): CollectionConfig => ({
       },
       admin: {
         language: "html",
+        ...(craftjs
+          ? {
+              components: {
+                Field: {
+                  path: "@dexilion/payload-dynamic-blocks/CraftjsWidgetField",
+                },
+              },
+            }
+          : {}),
       },
       required: true,
     },
+    ...(craftjs
+      ? [
+          {
+            name: "craftjsState",
+            type: "text" as const,
+            admin: {
+              hidden: true,
+              disableListColumn: true,
+            },
+          },
+        ]
+      : []),
   ],
 });

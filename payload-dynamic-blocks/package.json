@@ -30,6 +30,11 @@
       "types": "./src/constants.ts",
       "import": "./src/constants.ts",
       "default": "./src/constants.ts"
+    },
+    "./CraftjsWidgetField": {
+      "types": "./src/components/CraftjsWidgetField.tsx",
+      "import": "./src/components/CraftjsWidgetField.tsx",
+      "default": "./src/components/CraftjsWidgetField.tsx"
     }
   },
   "main": "./src/index.ts",
@@ -49,7 +54,8 @@
     "pnpm": "^9 || ^10"
   },
   "dependencies": {
-    "@babel/parser": "^7.29.2"
+    "@babel/parser": "^7.29.2",
+    "@craftjs/core": "^0.2.12"
   },
   "devDependencies": {
     "@babel/types": "^7.29.0",
@@ -134,6 +140,11 @@
         "types": "./dist/constants.d.ts",
         "import": "./dist/constants.js",
         "default": "./dist/constants.js"
+      },
+      "./CraftjsWidgetField": {
+        "types": "./dist/components/CraftjsWidgetField.d.ts",
+        "import": "./dist/components/CraftjsWidgetField.js",
+        "default": "./dist/components/CraftjsWidgetField.js"
       }
     },
     "main": "./dist/index.js",

@@ -4,7 +4,6 @@ import type { Field } from "payload";
 
 /**
  * Maps JSX component names used in the widget code field to Payload field types.
- * `Blocks` is intentionally omitted — it is not supported as a dynamic block field.
  */
 const COMPONENT_TO_FIELD_TYPE: Record<string, string> = {
   Array: "array",
@@ -25,6 +24,8 @@ const COMPONENT_TO_FIELD_TYPE: Record<string, string> = {
   Richtext: "richText",
   Row: "row",
   Select: "select",
+  Tab: "tab",
+  Tabs: "tabs",
   Text: "text",
   Textarea: "textarea",
   TextArea: "textarea",
@@ -82,7 +83,7 @@ function extractValue(node: Node | null | undefined): unknown {
 /**
  * Field types that collect their JSX children as a `fields` array.
  */
-const CONTAINER_FIELD_TYPES = new Set(["array", "collapsible", "group", "row"]);
+const CONTAINER_FIELD_TYPES = new Set(["array", "collapsible", "group", "row", "tab"]);
 
 /**
  * Parses a list of JSX children nodes into an array of Payload field configs.
@@ -103,9 +104,6 @@ function parseJSXChildren(
     const opening = (child as JSXElement).openingElement;
     if (opening.name.type !== "JSXIdentifier") continue;
     const componentName = opening.name.name;
-
-    // Explicitly block nested blocks
-    if (componentName === "Blocks") continue;
 
     // HTML tags (lowercase) are transparent wrappers — recurse and flatten children
     if (componentName.charAt(0) === componentName.charAt(0).toLowerCase()) {
@@ -138,8 +136,10 @@ function parseJSXChildren(
       }
     }
 
-    // Recurse into children for container field types
-    if (CONTAINER_FIELD_TYPES.has(fieldType)) {
+    if (fieldType === "tabs") {
+      // Children must be <Tab> elements; collect them as the `tabs` array
+      fieldConfig.tabs = parseJSXChildren((child as JSXElement).children);
+    } else if (CONTAINER_FIELD_TYPES.has(fieldType)) {
       const nestedChildren = (child as JSXElement).children;
       if (nestedChildren.length > 0) {
         fieldConfig.fields = parseJSXChildren(nestedChildren);
@@ -161,7 +161,7 @@ function parseJSXChildren(
  * `<RichText name="body" required />` → `{ type: "richText", name: "body", required: true }`
  * `<Group name="meta"><Text name="title" /></Group>` → `{ type: "group", name: "meta", fields: [{ type: "text", name: "title" }] }`
  *
- * The `Blocks` component is explicitly disallowed and will be ignored.
+ * `<Tabs><Tab name="content" label="Content"><Text name="title" /></Tab></Tabs>` → `{ type: "tabs", tabs: [{ type: "tab", name: "content", label: "Content", fields: [...] }] }`
  */
 export function parseWidgetFields(widgetCode: string): Omit<Field, "editor">[] {
   // Wrap in a JSX fragment so multiple sibling elements are valid
