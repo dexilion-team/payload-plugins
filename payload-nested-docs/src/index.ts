@@ -9,6 +9,33 @@ import {
 import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import translationEn from "../translations/en.json";
 
+const TENANT_COOKIE_NAME = "payload-tenant-id";
+
+function parseCookie(
+  cookieHeader: string | null | undefined,
+  name: string,
+): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(
+    new RegExp("(?:^|;)\\s*" + name + "\\s*=\\s*([^;]+)"),
+  );
+  return match ? match[1].trim() : null;
+}
+
+function getTenantIdFromCookie(req: PayloadRequest): string | null {
+  const cookieValue = parseCookie(
+    req.headers?.get("cookie"),
+    TENANT_COOKIE_NAME,
+  );
+  if (cookieValue) {
+    const parsed = Number(cookieValue);
+    if (Number.isFinite(parsed)) {
+      return String(parsed);
+    }
+  }
+  return null;
+}
+
 export type PayloadNextedDocsPluginOptions = {
   /**
    * Collection slugs that should have nested docs functionality.
@@ -155,17 +182,26 @@ export function createParentField(
         // Find the home page within the same tenant
         let tenant = recursivelySearchForDataByName(data, "tenant");
         if (!tenant) {
-          if (!req.user) {
-            return undefined;
+          // Client-authoritative: check cookie first
+          const cookieTenant = getTenantIdFromCookie(req);
+          if (cookieTenant) {
+            tenant = cookieTenant;
           }
 
-          const preference = await getPreferences<string>(
-            "admin-tenant-select",
-            req.payload,
-            req.user.id,
-            "users",
-          );
-          tenant = preference?.value;
+          // Fallback to DB preference
+          if (!tenant && req.user) {
+            const preference = await getPreferences<string>(
+              "admin-tenant-select",
+              req.payload,
+              req.user.id,
+              "users",
+            );
+            tenant = preference?.value;
+          }
+
+          if (!tenant) {
+            return undefined;
+          }
         }
 
         const query: Record<string, any> = {
@@ -197,19 +233,25 @@ export function createParentField(
         return undefined;
       },
       filterOptions: async ({ req, data, siblingData }: FilterOptionsProps) => {
-        const preference = req.user
-          ? await getPreferences<string>(
-              "admin-tenant-select",
-              req.payload,
-              req.user.id,
-              "users",
-            )
-          : null;
+        // Client-authoritative: check cookie first
+        let tenant: string | null = getTenantIdFromCookie(req);
+
+        // Fallback to DB preference
+        if (!tenant && req.user) {
+          const preference = await getPreferences<string>(
+            "admin-tenant-select",
+            req.payload,
+            req.user.id,
+            "users",
+          );
+          tenant = preference?.value ?? null;
+        }
+
         const siblingDataRecord = siblingData as Record<string, unknown>;
-        const tenant =
+        tenant =
           recursivelySearchForDataByName(siblingDataRecord, "tenant") ??
           recursivelySearchForDataByName(data, "tenant") ??
-          preference?.value;
+          tenant;
 
         const filter: Record<string, any> = data.id
           ? { id: { not_equals: data.id } }

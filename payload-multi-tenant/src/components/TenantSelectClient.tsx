@@ -1,8 +1,24 @@
 "use client";
 
-import { usePreferences } from "@payloadcms/ui";
 import { ReactSelect, type Option } from "@payloadcms/ui/elements/ReactSelect";
 import React, { useCallback, useEffect, useState } from "react";
+
+const TENANT_COOKIE_NAME = "payload-tenant-id";
+
+function getCookieValue(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(
+    new RegExp("(?:^|;)\\s*" + name + "\\s*=\\s*([^;]+)"),
+  );
+  return match ? match[1].trim() : null;
+}
+
+function setCookieValue(name: string, value: string): void {
+  if (typeof document === "undefined") return;
+  const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+    .toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Lax`;
+}
 
 export default function TenantSelectClient({
   tenants,
@@ -11,7 +27,6 @@ export default function TenantSelectClient({
   tenants: Option<string>[];
   placeholder?: string;
 }) {
-  const { getPreference, setPreference } = usePreferences();
   const [selected, _setSelected] = useState<Option<string> | null>(null);
   const [reload, triggerReload] = useState(false);
 
@@ -26,27 +41,24 @@ export default function TenantSelectClient({
     }
   }, [reload, selected]);
 
-  // Load the saved preference
+  // Load the saved preference from cookie (client-authoritative)
   useEffect(() => {
-    (async function () {
-      const saved = await getPreference<number | undefined>(
-        "admin-tenant-select",
-      );
-      const option =
-        tenants.find((t) => Number(t.id) == saved) || tenants[0] || null;
-      _setSelected(option);
-    })();
-  }, [getPreference, tenants]);
+    const saved = getCookieValue(TENANT_COOKIE_NAME);
+    const option =
+      (saved
+        ? tenants.find((t) => Number(t.id) == Number(saved))
+        : null) || tenants[0] || null;
+    _setSelected(option);
+  }, [tenants]);
 
   // Callback to set selected tenant
   const setSelected = useCallback(
     (option: Option<string>) => {
       _setSelected(option);
-      setPreference("admin-tenant-select", Number(option.id)).then(() => {
-        triggerReload(true);
-      });
+      setCookieValue(TENANT_COOKIE_NAME, String(option.id));
+      triggerReload(true);
     },
-    [setPreference],
+    [],
   );
 
   // Handle loading state

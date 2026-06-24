@@ -3,16 +3,19 @@ import {
   getRelationshipID,
   getUserTenantIDsFromReq,
   tenantWhereForReq,
+  getActiveTenantIDFromReq,
 } from "../utils";
-import { getPreference, isWhere } from "@dexilion/payload-utils";
+import { isWhere } from "@dexilion/payload-utils";
 
 export const swizzleTenantFilteringInAccessControl = ({
   access,
   tenantFieldName,
+  tenantsSlug = "tenants",
   debug,
 }: {
   access: CollectionConfig["access"];
   tenantFieldName: string;
+  tenantsSlug?: CollectionSlug;
   debug?: boolean;
 }): CollectionConfig["access"] => {
   const originalAccess = access ?? {};
@@ -47,17 +50,18 @@ export const swizzleTenantFilteringInAccessControl = ({
           };
         }
 
-        // Use the user preference to filter reads in the admin interface
-        const preference = await getPreference<number | undefined>({
-          req: args.req,
-          key: "admin-tenant-select",
-        });
-        if (preference != null) {
+        // Use client-authoritative tenant ID (cookie > DB preference > fallback)
+        const activeTenantID = await getActiveTenantIDFromReq(
+          args.req,
+          tenantFieldName,
+          tenantsSlug,
+        );
+        if (activeTenantID != null) {
           return {
             result: mergeWhere(base, {
-              [tenantFieldName]: { equals: preference },
+              [tenantFieldName]: { equals: activeTenantID },
             }),
-            reason: "Narrowing by the user selected tenant preference.",
+            reason: "Narrowing by the user selected tenant.",
           };
         }
 
