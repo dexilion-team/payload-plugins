@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-schedule",
-  "version": "3.84.1",
+  "version": "3.85.1",
   "description": "Plugin to schedule documents for automatic publication in Payload CMS",
   "private": false,
   "author": "Dexilion",
@@ -20,8 +20,8 @@
     "*.css"
   ],
   "peerDependencies": {
-    "payload": "3.84.1",
-    "@payloadcms/ui": "3.84.1"
+    "payload": "3.85.1",
+    "@payloadcms/ui": "3.85.1"
   },
   "engines": {
     "node": "^25.9.0 || ^24.14.1 || ^22.22.2 ",
@@ -30,12 +30,12 @@
   "devDependencies": {
     "@dexilion/payload-blog": "workspace:*",
     "@eslint/eslintrc": "^3.3.5",
-    "@payloadcms/db-postgres": "3.84.1",
-    "@payloadcms/db-sqlite": "3.84.1",
+    "@payloadcms/db-postgres": "3.85.1",
+    "@payloadcms/db-sqlite": "3.85.1",
     "@payloadcms/eslint-config": "3.28.0",
-    "@payloadcms/next": "3.84.1",
-    "@payloadcms/richtext-lexical": "3.84.1",
-    "@payloadcms/ui": "3.84.1",
+    "@payloadcms/next": "3.85.1",
+    "@payloadcms/richtext-lexical": "3.85.1",
+    "@payloadcms/ui": "3.85.1",
     "@swc-node/register": "1.11.1",
     "@swc/cli": "0.8.1",
     "@types/node": "24.1.0",
@@ -48,7 +48,7 @@
     "monaco-editor": ">= 0.25.0 < 1",
     "next": "^16.2.6",
     "npm-run-all2": "^8",
-    "payload": "3.84.1",
+    "payload": "3.85.1",
     "prettier": "^3.8.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",

@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-multi-tenant",
-  "version": "3.84.1",
+  "version": "3.85.1",
   "description": "A Payload CMS plugin to enable multi-tenant functionality.",
   "author": "Dexilion",
   "license": "MIT",
@@ -39,10 +39,10 @@
     "next": "^16",
     "payload": "3",
     "@payloadcms/ui": "3",
-    "@dexilion/payload-utils": "3.84.1"
+    "@dexilion/payload-utils": "3.85.1"
   },
   "devDependencies": {
-    "@payloadcms/db-sqlite": "3.84.1",
+    "@payloadcms/db-sqlite": "3.85.1",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",

@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-plugins",
-  "version": "3.84.1",
+  "version": "3.85.1",
   "private": true,
   "scripts": {
     "build": "pnpm -r run build",
@@ -11,18 +11,18 @@
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
     "@faceless-ui/modal": "3.0.0",
-    "@payloadcms/db-sqlite": "3.84.1",
-    "@payloadcms/next": "3.84.1",
-    "@payloadcms/richtext-lexical": "3.84.1",
-    "@payloadcms/translations": "3.84.1",
-    "@payloadcms/ui": "3.84.1",
+    "@payloadcms/db-sqlite": "3.85.1",
+    "@payloadcms/next": "3.85.1",
+    "@payloadcms/richtext-lexical": "3.85.1",
+    "@payloadcms/translations": "3.85.1",
+    "@payloadcms/ui": "3.85.1",
     "@types/react": "^19.2.14",
     "cross-env": "10.1.0",
     "dotenv": "17.4.2",
     "next": "^16.2",
     "node-addon-api": "^8.7.0",
     "node-gyp": "^12.2.0",
-    "payload": "3.84.1",
+    "payload": "3.85.1",
     "sharp": "^0.34.5",
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "^4.1.4"
