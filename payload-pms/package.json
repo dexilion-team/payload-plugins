@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-pms",
-  "version": "3.85.1",
+  "version": "3.85.2",
   "description": "A payload page management system plugin.",
   "author": "Dexilion",
   "license": "MIT",
@@ -36,10 +36,10 @@
     "sharp": "^0.34.5",
     "@payloadcms/ui": "3",
     "@payloadcms/richtext-lexical": "3",
-    "@dexilion/payload-utils": "3.85.1"
+    "@dexilion/payload-utils": "3.85.2"
   },
   "devDependencies": {
-    "@payloadcms/db-sqlite": "3.85.1",
+    "@payloadcms/db-sqlite": "3.85.2",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
