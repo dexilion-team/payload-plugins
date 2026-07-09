@@ -141,6 +141,32 @@ export const getActiveTenantIDFromReq = async (
   return tenantMatch.docs[0]?.id ?? null;
 };
 
+export const resolveDefaultTenantID = async (
+  req: PayloadRequest | undefined,
+  tenantFieldName: string,
+  tenantsSlug: CollectionSlug = "tenants",
+): Promise<RelationshipID | null> => {
+  const activeTenantID = await getActiveTenantIDFromReq(
+    req,
+    tenantFieldName,
+    tenantsSlug,
+  );
+  if (activeTenantID != null) {
+    return activeTenantID;
+  }
+
+  const userTenantIDs = getUserTenantIDsFromReq(req, tenantFieldName);
+  return userTenantIDs[0] ?? null;
+};
+
+export const isUserTenant = (
+  userTenantIDs: RelationshipID[],
+  tenantID: RelationshipID | null | undefined,
+): boolean => {
+  if (tenantID == null) return false;
+  return userTenantIDs.some((id) => String(id) === String(tenantID));
+};
+
 export const getActiveTenantIDFromUser = async ({
   payload,
   tenantFieldName,

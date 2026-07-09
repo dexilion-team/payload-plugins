@@ -1,7 +1,7 @@
 import { CollectionConfig, CollectionSlug } from "payload";
 import { hasNamedField } from "../utils";
 import { swizzleTenantFilteringInAccessControl } from "../access/swizzleTenantFilteringInAccessControl";
-import { getActiveTenantIDFromReq } from "../utils";
+import { resolveDefaultTenantID } from "../utils";
 
 export const scopeCollectionToTenant = (
   collection: CollectionConfig,
@@ -28,23 +28,8 @@ export const scopeCollectionToTenant = (
         allowCreate: true,
         hidden: true,
       },
-      defaultValue: async ({ req }) => {
-        const activeTenantID = await getActiveTenantIDFromReq(
-          req,
-          tenantFieldName,
-          tenantsSlug,
-        );
-
-        if (activeTenantID != null) {
-          return activeTenantID;
-        }
-
-        const tenants = req.user?.[
-          tenantFieldName as keyof typeof req.user
-        ] as any;
-
-        return tenants?.[0]?.id;
-      },
+      defaultValue: async ({ req }) =>
+        resolveDefaultTenantID(req, tenantFieldName, tenantsSlug),
     });
   } else {
     // TODO: Disabled temporarily due to a HMR error

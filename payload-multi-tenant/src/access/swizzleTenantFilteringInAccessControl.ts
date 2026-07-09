@@ -3,8 +3,10 @@ import {
   getRelationshipID,
   getUserTenantIDsFromReq,
   isValidRelationshipID,
+  isUserTenant,
   tenantWhereForReq,
   getActiveTenantIDFromReq,
+  resolveDefaultTenantID,
 } from "../utils";
 import { isWhere } from "@dexilion/payload-utils";
 
@@ -100,20 +102,36 @@ export const swizzleTenantFilteringInAccessControl = ({
           };
         }
 
-        // Only restrict create if the tenant field is being set
-        // Handles admin list view
-        if (!args.data?.hasOwnProperty(tenantFieldName)) {
-          return {
-            result: base,
-            reason: "Tenant field not set, fallback to user provided access.",
-          };
-        }
-
-        // If the user has no tenant associations, fall back to base access
         const userTenantIDs = getUserTenantIDsFromReq(
           args.req,
           tenantFieldName,
         );
+
+        if (!args.data?.hasOwnProperty(tenantFieldName)) {
+          const resolvedTenantID = await resolveDefaultTenantID(
+            args.req,
+            tenantFieldName,
+            tenantsSlug,
+          );
+
+          if (resolvedTenantID == null) {
+            return {
+              result: base,
+              reason:
+                "No default tenant resolved, fallback to user provided access.",
+            };
+          }
+
+          return {
+            result: isUserTenant(userTenantIDs, resolvedTenantID)
+              ? base
+              : false,
+            reason:
+              "Tenant field not set; checking the defaulted tenant is one of the user's tenants.",
+          };
+        }
+
+        // If the user has no tenant associations, fall back to base access
         if (userTenantIDs.length === 0) {
           return {
             result: base,
@@ -136,7 +154,7 @@ export const swizzleTenantFilteringInAccessControl = ({
 
         // Finally, check that the document tenant ID is in the user's tenant IDs
         return {
-          result: userTenantIDs.includes(docTenantID),
+          result: isUserTenant(userTenantIDs, docTenantID),
           reason: "Checking document tenant ID is in user's tenant IDs.",
         };
       })();
