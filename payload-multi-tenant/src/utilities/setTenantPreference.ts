@@ -1,22 +1,8 @@
 import { FieldHook } from "payload";
-import { getPreference, setPreference } from "@dexilion/payload-utils";
 
-export const setTenantPreference: FieldHook<any, any, any> = async ({
-  req,
-  operation,
-}) => {
-  if (operation === "create") {
-    const existingPreference = await getPreference<number | undefined>({
-      req,
-      key: "admin-tenant-select",
-    });
-
-    if (existingPreference == null) {
-      await setPreference({
-        req,
-        key: "admin-tenant-select",
-        value: 1,
-      });
-    }
-  }
+export const setTenantPreference: FieldHook<any, any, any> = async () => {
+  // No-op: tenant selection is now client-authoritative via cookie.
+  // The TenantSelectClient component sets the "payload-tenant-id" cookie
+  // on the browser, which is sent with every request and read by the
+  // server-side getActiveTenantIDFromReq function.
 };
