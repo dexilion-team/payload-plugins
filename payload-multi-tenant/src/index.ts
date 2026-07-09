@@ -1,7 +1,6 @@
 import type { CollectionSlug, Config, Where } from "payload";
 import translationEn from "../translations/en.json";
 import { scopeCollectionToTenant } from "./utilities/scopeCollectionToTenant";
-import { setTenantPreference } from "./utilities/setTenantPreference";
 import { createDefaultTenantsCollection } from "./collections/Tenant";
 import { transformTenantScopedGlobals } from "./utilities/transformTenantScopedGlobals";
 
@@ -115,9 +114,6 @@ export const multiTenantPlugin =
         required: false,
         admin: {
           disableListColumn: true,
-        },
-        hooks: {
-          afterChange: [setTenantPreference],
         },
       });
     }
