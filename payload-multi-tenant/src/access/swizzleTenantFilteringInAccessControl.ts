@@ -53,13 +53,16 @@ export const swizzleTenantFilteringInAccessControl = ({
           };
         }
 
-        // Use client-authoritative tenant ID (cookie > DB preference > fallback)
+        // Use client-authoritative tenant ID (cookie > DB preference > fallback).
         const activeTenantID = await getActiveTenantIDFromReq(
           args.req,
           tenantFieldName,
           tenantsSlug,
         );
-        if (isValidRelationshipID(activeTenantID)) {
+        if (
+          isValidRelationshipID(activeTenantID) &&
+          isUserTenant(userTenantIDs, activeTenantID)
+        ) {
           return {
             result: mergeWhere(base, {
               [tenantFieldName]: { equals: activeTenantID },
@@ -68,7 +71,7 @@ export const swizzleTenantFilteringInAccessControl = ({
           };
         }
 
-        // Fallback to filtering by all user tenants
+        // Fallback to filtering by all user tenants.
         return {
           result: mergeWhere(base, {
             [tenantFieldName]: { in: userTenantIDs },
