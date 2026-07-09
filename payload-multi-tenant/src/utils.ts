@@ -9,6 +9,14 @@ import { getPreference, isObject, isWhere } from "@dexilion/payload-utils";
 
 type RelationshipID = number | string;
 
+export const isValidRelationshipID = (
+  value: unknown,
+): value is RelationshipID => {
+  if (typeof value === "number") return Number.isFinite(value);
+  if (typeof value === "string") return value.trim().length > 0;
+  return false;
+};
+
 export const getRelationshipID = (value: unknown): RelationshipID | null => {
   if (typeof value === "number" || typeof value === "string") return value;
   if (!isObject(value)) return null;
@@ -75,7 +83,7 @@ export const getActiveTenantIDFromReq = async (
     key: "admin-tenant-select",
   });
 
-  if (preference != null) {
+  if (isValidRelationshipID(preference)) {
     return preference;
   }
 
@@ -136,7 +144,7 @@ export const getActiveTenantIDFromUser = async ({
 
   const preference = preferenceResult.docs[0] as any;
   const preferenceValue = getRelationshipID(preference?.value);
-  if (preferenceValue != null) {
+  if (isValidRelationshipID(preferenceValue)) {
     return preferenceValue;
   }
 

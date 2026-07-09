@@ -2,6 +2,7 @@ import { CollectionConfig, CollectionSlug, Where } from "payload";
 import {
   getRelationshipID,
   getUserTenantIDsFromReq,
+  isValidRelationshipID,
   tenantWhereForReq,
 } from "../utils";
 import { getPreference, isWhere } from "@dexilion/payload-utils";
@@ -47,12 +48,12 @@ export const swizzleTenantFilteringInAccessControl = ({
           };
         }
 
-        // Use the user preference to filter reads in the admin interface
+        // Use the user preference to filter reads in the admin interface.
         const preference = await getPreference<number | undefined>({
           req: args.req,
           key: "admin-tenant-select",
         });
-        if (preference != null) {
+        if (isValidRelationshipID(preference)) {
           return {
             result: mergeWhere(base, {
               [tenantFieldName]: { equals: preference },

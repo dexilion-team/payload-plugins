@@ -1,4 +1,4 @@
-import type { CollectionSlug, Config } from "payload";
+import type { CollectionSlug, Config, Where } from "payload";
 import translationEn from "../translations/en.json";
 import { scopeCollectionToTenant } from "./utilities/scopeCollectionToTenant";
 import { setTenantPreference } from "./utilities/setTenantPreference";
@@ -129,11 +129,23 @@ export const multiTenantPlugin =
           req.headers.get("x-forwarded-host") ?? req.headers.get("host");
         const user = req.user;
 
-        if (!host && !user) {
-          return false;
+        // Authenticated: scope to every tenant the user belongs to.
+        if (user?.id != null) {
+          return { [tenantFieldName]: { contains: user.id } };
         }
 
-        return { [tenantFieldName]: { contains: user?.id } };
+        // Anonymous request from a known host: scope to that host's tenant.
+        if (host) {
+          const hostWhere: Where = {
+            or: [
+              { domain: { equals: host } },
+              { "aliases.domain": { equals: host } },
+            ],
+          };
+          return hostWhere;
+        }
+
+        return false;
       },
     };
 
