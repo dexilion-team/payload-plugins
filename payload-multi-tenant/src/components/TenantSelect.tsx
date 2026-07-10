@@ -23,7 +23,7 @@ const TenantSelect = async ({
       tenantsSlug: tenantSlug,
       user: req.user,
     })
-  ).map((tenant) => ({
+  ).map((tenant: any) => ({
     id: String(tenant.id),
     value: String(tenant[tenantLabelFieldName]),
   }));

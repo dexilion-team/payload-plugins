@@ -7,7 +7,6 @@ import type {
 } from "payload";
 import { isObject } from "@dexilion/payload-utils";
 
-type TenantDoc = Record<string, unknown> & { id: RelationshipID };
 type RelationshipID = number | string;
 
 export const isValidRelationshipID = (
@@ -105,7 +104,7 @@ export const findUserTenants = async ({
   tenantFieldName: string;
   tenantsSlug: CollectionSlug;
   user: PayloadRequest["user"] | null | undefined;
-}): Promise<TenantDoc[]> => {
+}): Promise<{ id: RelationshipID }[]> => {
   if (!user?.id) {
     return [];
   }
@@ -122,9 +121,7 @@ export const findUserTenants = async ({
     },
   });
 
-  return (result.docs as TenantDoc[]).filter(
-    (tenant) => Boolean(tenant.hidden) !== true,
-  );
+  return result.docs.filter((tenant: any) => Boolean(tenant.hidden) !== true);
 };
 
 export const getActiveTenantIDFromReq = async (
