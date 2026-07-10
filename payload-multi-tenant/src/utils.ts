@@ -16,6 +16,29 @@ export const isValidRelationshipID = (
   if (typeof value === "string") return value.trim().length > 0;
   return false;
 };
+export const TENANT_COOKIE_NAME = "payload-tenant-id";
+
+export function parseCookie(
+  cookieHeader: string | null | undefined,
+  name: string,
+): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(
+    new RegExp("(?:^|;)\\s*" + name + "\\s*=\\s*([^;]+)"),
+  );
+  return match ? (match[1]?.trim() ?? null) : null;
+}
+
+export function getTenantIdFromHeaders(
+  headers: Headers | undefined,
+): RelationshipID | null {
+  if (!headers) return null;
+  const cookieHeader = headers.get("cookie");
+  const value = parseCookie(cookieHeader, TENANT_COOKIE_NAME);
+  if (value == null) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 export const getRelationshipID = (value: unknown): RelationshipID | null => {
   if (typeof value === "number" || typeof value === "string") return value;
@@ -78,6 +101,12 @@ export const getActiveTenantIDFromReq = async (
     return null;
   }
 
+  // Client-authoritative: check cookie first (per-browser, no cross-tab conflict)
+  const cookieTenant = getTenantIdFromHeaders(req.headers);
+  if (cookieTenant != null) {
+    return cookieTenant;
+  }
+
   const preference = await getPreference<number | undefined>({
     req,
     key: "admin-tenant-select",
@@ -112,19 +141,52 @@ export const getActiveTenantIDFromReq = async (
   return tenantMatch.docs[0]?.id ?? null;
 };
 
+export const resolveDefaultTenantID = async (
+  req: PayloadRequest | undefined,
+  tenantFieldName: string,
+  tenantsSlug: CollectionSlug = "tenants",
+): Promise<RelationshipID | null> => {
+  const activeTenantID = await getActiveTenantIDFromReq(
+    req,
+    tenantFieldName,
+    tenantsSlug,
+  );
+  if (activeTenantID != null) {
+    return activeTenantID;
+  }
+
+  const userTenantIDs = getUserTenantIDsFromReq(req, tenantFieldName);
+  return userTenantIDs[0] ?? null;
+};
+
+export const isUserTenant = (
+  userTenantIDs: RelationshipID[],
+  tenantID: RelationshipID | null | undefined,
+): boolean => {
+  if (tenantID == null) return false;
+  return userTenantIDs.some((id) => String(id) === String(tenantID));
+};
+
 export const getActiveTenantIDFromUser = async ({
   payload,
   tenantFieldName,
   tenantsSlug,
   user,
+  cookieTenantId,
 }: {
   payload: Payload;
   tenantFieldName: string;
   tenantsSlug: CollectionSlug;
   user: PayloadRequest["user"] | undefined;
+  cookieTenantId?: RelationshipID | null;
 }): Promise<RelationshipID | null> => {
   if (!user?.id) {
     return null;
+  }
+
+  // Client-authoritative: cookie tenant ID takes precedence
+  if (cookieTenantId != null) {
+    return cookieTenantId;
   }
 
   const userSlug = payload.config.admin.user;

@@ -1,7 +1,7 @@
 import { CollectionConfig, CollectionSlug } from "payload";
-import { getPreference } from "@dexilion/payload-utils";
 import { hasNamedField } from "../utils";
 import { swizzleTenantFilteringInAccessControl } from "../access/swizzleTenantFilteringInAccessControl";
+import { resolveDefaultTenantID } from "../utils";
 
 export const scopeCollectionToTenant = (
   collection: CollectionConfig,
@@ -28,18 +28,8 @@ export const scopeCollectionToTenant = (
         allowCreate: true,
         hidden: true,
       },
-      defaultValue: async ({ req }) => {
-        const preference = await getPreference<number | undefined>({
-          req,
-          key: "admin-tenant-select",
-        });
-
-        const tenants = req.user?.[
-          tenantFieldName as keyof typeof req.user
-        ] as any;
-
-        return preference ?? tenants?.[0]?.id;
-      },
+      defaultValue: async ({ req }) =>
+        resolveDefaultTenantID(req, tenantFieldName, tenantsSlug),
     });
   } else {
     // TODO: Disabled temporarily due to a HMR error
@@ -71,6 +61,7 @@ export const scopeCollectionToTenant = (
   collection.access = swizzleTenantFilteringInAccessControl({
     access: originalAccess,
     tenantFieldName,
+    tenantsSlug,
     debug,
   });
 };

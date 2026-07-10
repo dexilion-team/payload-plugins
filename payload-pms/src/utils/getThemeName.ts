@@ -1,6 +1,19 @@
 import { getPreferences } from "@payloadcms/ui/utilities/upsertPreferences";
 import { PayloadRequest } from "payload";
 
+const TENANT_COOKIE_NAME = "payload-tenant-id";
+
+function parseCookie(
+  cookieHeader: string | null | undefined,
+  name: string,
+): string | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(
+    new RegExp("(?:^|;)\\s*" + name + "\\s*=\\s*([^;]+)"),
+  );
+  return match ? match[1].trim() : null;
+}
+
 type TenantOrID = number | { id: number };
 type UserWithTenants = {
   id: string | number;
@@ -16,7 +29,8 @@ type UserWithTenants = {
  * Get the theme name for the current tenant.
  *
  * Pass `tenantId` to resolve via the document's own tenant (preferred).
- * Falls back to the `admin-tenant-select` user preference when not provided.
+ * Falls back to the client-authoritative cookie, then the `admin-tenant-select`
+ * user preference when not provided.
  */
 const getThemeName = async ({
   req,
@@ -40,6 +54,26 @@ const getThemeName = async ({
     if (tenant) {
       const themeName = "theme" in tenant && (tenant.theme as string);
       if (themeName) return themeName;
+    }
+  }
+
+  // Client-authoritative: check cookie first
+  const cookieValue = parseCookie(
+    req.headers?.get("cookie"),
+    TENANT_COOKIE_NAME,
+  );
+  if (cookieValue) {
+    const parsed = Number(cookieValue);
+    if (Number.isFinite(parsed)) {
+      const tenant = await req.payload.findByID({
+        collection: "tenants",
+        id: parsed,
+        disableErrors: true,
+      });
+      if (tenant) {
+        const themeName = "theme" in tenant && (tenant.theme as string);
+        if (themeName) return themeName;
+      }
     }
   }
 

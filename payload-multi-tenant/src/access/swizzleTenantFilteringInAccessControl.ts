@@ -3,17 +3,22 @@ import {
   getRelationshipID,
   getUserTenantIDsFromReq,
   isValidRelationshipID,
+  isUserTenant,
   tenantWhereForReq,
+  getActiveTenantIDFromReq,
+  resolveDefaultTenantID,
 } from "../utils";
-import { getPreference, isWhere } from "@dexilion/payload-utils";
+import { isWhere } from "@dexilion/payload-utils";
 
 export const swizzleTenantFilteringInAccessControl = ({
   access,
   tenantFieldName,
+  tenantsSlug = "tenants",
   debug,
 }: {
   access: CollectionConfig["access"];
   tenantFieldName: string;
+  tenantsSlug?: CollectionSlug;
   debug?: boolean;
 }): CollectionConfig["access"] => {
   const originalAccess = access ?? {};
@@ -48,21 +53,25 @@ export const swizzleTenantFilteringInAccessControl = ({
           };
         }
 
-        // Use the user preference to filter reads in the admin interface.
-        const preference = await getPreference<number | undefined>({
-          req: args.req,
-          key: "admin-tenant-select",
-        });
-        if (isValidRelationshipID(preference)) {
+        // Use client-authoritative tenant ID (cookie > DB preference > fallback).
+        const activeTenantID = await getActiveTenantIDFromReq(
+          args.req,
+          tenantFieldName,
+          tenantsSlug,
+        );
+        if (
+          isValidRelationshipID(activeTenantID) &&
+          isUserTenant(userTenantIDs, activeTenantID)
+        ) {
           return {
             result: mergeWhere(base, {
-              [tenantFieldName]: { equals: preference },
+              [tenantFieldName]: { equals: activeTenantID },
             }),
-            reason: "Narrowing by the user selected tenant preference.",
+            reason: "Narrowing by the user selected tenant.",
           };
         }
 
-        // Fallback to filtering by all user tenants
+        // Fallback to filtering by all user tenants.
         return {
           result: mergeWhere(base, {
             [tenantFieldName]: { in: userTenantIDs },
@@ -96,20 +105,36 @@ export const swizzleTenantFilteringInAccessControl = ({
           };
         }
 
-        // Only restrict create if the tenant field is being set
-        // Handles admin list view
-        if (!args.data?.hasOwnProperty(tenantFieldName)) {
-          return {
-            result: base,
-            reason: "Tenant field not set, fallback to user provided access.",
-          };
-        }
-
-        // If the user has no tenant associations, fall back to base access
         const userTenantIDs = getUserTenantIDsFromReq(
           args.req,
           tenantFieldName,
         );
+
+        if (!args.data?.hasOwnProperty(tenantFieldName)) {
+          const resolvedTenantID = await resolveDefaultTenantID(
+            args.req,
+            tenantFieldName,
+            tenantsSlug,
+          );
+
+          if (resolvedTenantID == null) {
+            return {
+              result: base,
+              reason:
+                "No default tenant resolved, fallback to user provided access.",
+            };
+          }
+
+          return {
+            result: isUserTenant(userTenantIDs, resolvedTenantID)
+              ? base
+              : false,
+            reason:
+              "Tenant field not set; checking the defaulted tenant is one of the user's tenants.",
+          };
+        }
+
+        // If the user has no tenant associations, fall back to base access
         if (userTenantIDs.length === 0) {
           return {
             result: base,
@@ -132,7 +157,7 @@ export const swizzleTenantFilteringInAccessControl = ({
 
         // Finally, check that the document tenant ID is in the user's tenant IDs
         return {
-          result: userTenantIDs.includes(docTenantID),
+          result: isUserTenant(userTenantIDs, docTenantID),
           reason: "Checking document tenant ID is in user's tenant IDs.",
         };
       })();
