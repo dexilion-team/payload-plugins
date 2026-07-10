@@ -5,8 +5,9 @@ import type {
   PayloadRequest,
   Where,
 } from "payload";
-import { getPreference, isObject, isWhere } from "@dexilion/payload-utils";
+import { isObject } from "@dexilion/payload-utils";
 
+type TenantDoc = Record<string, unknown> & { id: RelationshipID };
 type RelationshipID = number | string;
 
 export const isValidRelationshipID = (
@@ -92,6 +93,40 @@ export const getUserTenantIDsFromReq = (
   return getRelationshipIDs(tenantField?.docs);
 };
 
+export const findUserTenants = async ({
+  payload,
+  req,
+  tenantFieldName,
+  tenantsSlug,
+  user,
+}: {
+  payload: Payload;
+  req?: PayloadRequest;
+  tenantFieldName: string;
+  tenantsSlug: CollectionSlug;
+  user: PayloadRequest["user"] | null | undefined;
+}): Promise<TenantDoc[]> => {
+  if (!user?.id) {
+    return [];
+  }
+
+  const result = await payload.find({
+    collection: tenantsSlug,
+    pagination: false,
+    overrideAccess: true,
+    req,
+    where: {
+      [tenantFieldName]: {
+        contains: user.id,
+      },
+    },
+  });
+
+  return (result.docs as TenantDoc[]).filter(
+    (tenant) => Boolean(tenant.hidden) !== true,
+  );
+};
+
 export const getActiveTenantIDFromReq = async (
   req: PayloadRequest | undefined,
   tenantFieldName: string,
@@ -101,44 +136,29 @@ export const getActiveTenantIDFromReq = async (
     return null;
   }
 
-  // Client-authoritative: check cookie first (per-browser, no cross-tab conflict)
+  // Client-authoritative fast path: trust the cookie
   const cookieTenant = getTenantIdFromHeaders(req.headers);
-  if (cookieTenant != null) {
+  if (
+    cookieTenant != null &&
+    (!req.user ||
+      isUserTenant(getUserTenantIDsFromReq(req, tenantFieldName), cookieTenant))
+  ) {
     return cookieTenant;
   }
 
-  const preference = await getPreference<number | undefined>({
+  const tenants = await findUserTenants({
+    payload: req.payload,
     req,
-    key: "admin-tenant-select",
+    tenantFieldName,
+    tenantsSlug,
+    user: req.user,
   });
+  const cookieMatch =
+    cookieTenant == null
+      ? undefined
+      : tenants.find((tenant) => String(tenant.id) === String(cookieTenant));
 
-  if (isValidRelationshipID(preference)) {
-    return preference;
-  }
-
-  const userTenantIDs = getUserTenantIDsFromReq(req, tenantFieldName);
-  if (userTenantIDs.length > 0) {
-    return userTenantIDs[0] ?? null;
-  }
-
-  if (!req.user?.id) {
-    return null;
-  }
-
-  const tenantMatch = await req.payload.find({
-    collection: tenantsSlug,
-    limit: 1,
-    pagination: false,
-    overrideAccess: true,
-    req,
-    where: {
-      [tenantFieldName]: {
-        contains: req.user.id,
-      },
-    },
-  });
-
-  return tenantMatch.docs[0]?.id ?? null;
+  return (cookieMatch ?? tenants[0])?.id ?? null;
 };
 
 export const resolveDefaultTenantID = async (
@@ -184,45 +204,20 @@ export const getActiveTenantIDFromUser = async ({
     return null;
   }
 
-  // Client-authoritative: cookie tenant ID takes precedence
-  if (cookieTenantId != null) {
-    return cookieTenantId;
-  }
-
-  const userSlug = payload.config.admin.user;
-  const preferenceResult = await payload.find({
-    collection: "payload-preferences" as CollectionSlug,
-    limit: 1,
-    pagination: false,
-    overrideAccess: true,
-    where: {
-      and: [
-        { key: { equals: "admin-tenant-select" } },
-        { "user.value": { equals: user.id } },
-        { "user.relationTo": { equals: userSlug } },
-      ],
-    },
+  // Client-authoritative: the cookie tenant when the user has access to it,
+  // otherwise the first tenant the selector dropdown would show.
+  const tenants = await findUserTenants({
+    payload,
+    tenantFieldName,
+    tenantsSlug,
+    user,
   });
+  const cookieMatch =
+    cookieTenantId == null
+      ? undefined
+      : tenants.find((tenant) => String(tenant.id) === String(cookieTenantId));
 
-  const preference = preferenceResult.docs[0] as any;
-  const preferenceValue = getRelationshipID(preference?.value);
-  if (isValidRelationshipID(preferenceValue)) {
-    return preferenceValue;
-  }
-
-  const tenantMatch = await payload.find({
-    collection: tenantsSlug,
-    limit: 1,
-    pagination: false,
-    overrideAccess: true,
-    where: {
-      [tenantFieldName]: {
-        contains: user.id,
-      },
-    },
-  });
-
-  return tenantMatch.docs[0]?.id ?? null;
+  return (cookieMatch ?? tenants[0])?.id ?? null;
 };
 
 export const tenantWhereForReq = (

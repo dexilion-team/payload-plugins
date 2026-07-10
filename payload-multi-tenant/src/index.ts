@@ -189,6 +189,7 @@ export const multiTenantPlugin =
       path: "@dexilion/payload-multi-tenant/TenantSelect",
       clientProps: {
         tenantSlug: tenantsSlug,
+        tenantFieldName,
         tenantLabelFieldName: options.tenantLabelFieldName ?? "name",
       },
     });

@@ -10,7 +10,7 @@ function getCookieValue(name: string): string | null {
   const match = document.cookie.match(
     new RegExp("(?:^|;)\\s*" + name + "\\s*=\\s*([^;]+)"),
   );
-  return match ? match[1].trim() : null;
+  return match ? (match[1]?.trim() ?? null) : null;
 }
 
 function setCookieValue(name: string, value: string): void {
