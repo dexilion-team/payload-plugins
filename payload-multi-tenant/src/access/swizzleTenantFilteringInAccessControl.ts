@@ -60,8 +60,8 @@ export const swizzleTenantFilteringInAccessControl = ({
           tenantsSlug,
         );
         if (
-          isValidRelationshipID(activeTenantID) &&
-          isUserTenant(userTenantIDs, activeTenantID)
+          isValidRelationshipID(activeTenantID)
+          //&& isUserTenant(userTenantIDs, activeTenantID)
         ) {
           return {
             result: mergeWhere(base, {
