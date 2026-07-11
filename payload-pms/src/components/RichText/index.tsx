@@ -71,6 +71,10 @@ export const RichText = ({
                 : "";
               return `<div${wrap}><a class="EditorCtaButton" href="${url}">${label}</a></div>`;
             },
+            // Raw HTML block: rendered as-is by design.
+            html: async ({ node }) => {
+              return node.html ?? "";
+            },
           };
         },
       });
