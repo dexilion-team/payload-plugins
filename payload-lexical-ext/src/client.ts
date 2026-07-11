@@ -5,3 +5,4 @@ export { TextColorFeatureClient } from "./color/features/textColor/feature.clien
 export { HighlightColorFeatureClient } from "./color/features/highlightColor/feature.client";
 export { YoutubeFeatureClient } from "./embed/features/youtube/feature.client";
 export { VimeoFeatureClient } from "./embed/features/vimeo/feature.client";
+export { CtaFeatureClient } from "./cta/features/feature.client";

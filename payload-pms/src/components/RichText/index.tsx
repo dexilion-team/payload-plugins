@@ -55,6 +55,22 @@ export const RichText = ({
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               ></iframe></div>`;
             },
+            cta: async ({ node }) => {
+              const url = escapeHTML(node.url ?? "");
+              const label = escapeHTML(node.label ?? "");
+              const justify =
+                node.format === "center"
+                  ? "center"
+                  : node.format === "right"
+                    ? "flex-end"
+                    : node.format === "left"
+                      ? "flex-start"
+                      : null;
+              const wrap = justify
+                ? ` style="display:flex;justify-content:${justify}"`
+                : "";
+              return `<div${wrap}><a class="EditorCtaButton" href="${url}">${label}</a></div>`;
+            },
           };
         },
       });
@@ -73,6 +89,14 @@ export const RichText = ({
     )
   );
 };
+
+const escapeHTML = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const convertTextNode = ({ node }: any) => {
   let text = node.text;
