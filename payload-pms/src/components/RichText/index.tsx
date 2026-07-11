@@ -11,7 +11,7 @@ import {
   NodeFormat,
 } from "@payloadcms/richtext-lexical/client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { uploadConverter } from "./uploadConverter";
 
 export const RichText = ({
@@ -21,6 +21,7 @@ export const RichText = ({
   content: SerializedEditorState;
 }) => {
   const [html, setHTML] = useState<null | string>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     async function convert() {
       const html = await convertLexicalToHTMLAsync({
@@ -86,14 +87,42 @@ export const RichText = ({
     void convert();
   }, [content]);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!html || !container) {
+      return;
+    }
+    activateScripts(container);
+  }, [html]);
+
   return (
     html && (
       <div
+        ref={containerRef}
         dangerouslySetInnerHTML={{ __html: html }}
         suppressHydrationWarning
       />
     )
   );
+};
+
+const activateScripts = (container: HTMLElement): void => {
+  const scripts = Array.from(
+    container.querySelectorAll<HTMLScriptElement>(
+      "script:not([data-rt-activated])",
+    ),
+  );
+  for (const oldScript of scripts) {
+    const newScript = document.createElement("script");
+
+    for (const attr of Array.from(oldScript.attributes)) {
+      newScript.setAttribute(attr.name, attr.value);
+    }
+    newScript.setAttribute("data-rt-activated", "true");
+    newScript.text = oldScript.textContent ?? "";
+
+    oldScript.parentNode?.replaceChild(newScript, oldScript);
+  }
 };
 
 const internalDocToHref = async ({
