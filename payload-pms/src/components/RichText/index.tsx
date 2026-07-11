@@ -4,6 +4,7 @@ import type { SerializedEditorState } from "@payloadcms/richtext-lexical/lexical
 import {
   convertLexicalToHTMLAsync,
   HTMLConvertersAsync,
+  LinkHTMLConverterAsync,
 } from "@payloadcms/richtext-lexical/html-async";
 import {
   getRestPopulateFn,
@@ -30,6 +31,7 @@ export const RichText = ({
         converters: ({ defaultConverters }) => {
           return {
             ...defaultConverters,
+            ...LinkHTMLConverterAsync({ internalDocToHref }),
             upload: uploadConverter,
             text: convertTextNode,
             "custom-paragraph": defaultConverters.paragraph,
@@ -92,6 +94,52 @@ export const RichText = ({
       />
     )
   );
+};
+
+const internalDocToHref = async ({
+  linkNode,
+  populate,
+}: {
+  linkNode: any;
+  populate?: (args: {
+    collectionSlug: string;
+    id: number | string;
+  }) => Promise<any>;
+}): Promise<string> => {
+  const doc = linkNode?.fields?.doc;
+  if (!doc) {
+    return "#";
+  }
+
+  const { relationTo, value } = doc as {
+    relationTo: string;
+    value: unknown;
+  };
+
+  // `value` is either an already-populated document or a bare id/ref.
+  let data: any = value;
+  if (value != null && typeof value !== "object" && populate) {
+    data = await populate({
+      collectionSlug: relationTo,
+      id: value as number | string,
+    });
+  }
+
+  if (!data || typeof data !== "object") {
+    return "#";
+  }
+
+  const path = data.generalTab?.path;
+  if (typeof path === "string" && path.length > 0) {
+    return path;
+  }
+
+  const slug = data.generalTab?.slug ?? data.slug;
+  if (typeof slug === "string" && slug.length > 0) {
+    return `/${slug}`;
+  }
+
+  return "#";
 };
 
 const escapeHTML = (value: string): string =>
