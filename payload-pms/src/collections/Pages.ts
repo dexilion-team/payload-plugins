@@ -11,7 +11,6 @@ import type {
   Tab,
 } from "payload";
 import pageRead from "../access/pageRead";
-import setDefaultUserPreferences from "../utils/setDefaultUserPreferences";
 import getThemeName from "../utils/getThemeName";
 import { stripSnapshot } from "../utils/stripSnapshot";
 import { getLivePreviewUrl } from "../utils/getLivePreviewUrl";
@@ -38,6 +37,7 @@ export const createPagesCollection = ({
   admin: {
     livePreview: {
       url: getLivePreviewUrl({ livePreviewBasePath, tenantDomainFieldKey }),
+      openByDefault: true,
       breakpoints: [
         {
           label: "Mobile",
@@ -83,7 +83,6 @@ export const createPagesCollection = ({
         return args;
       },
     ],
-    afterOperation: [setDefaultUserPreferences],
   },
   fields: [
     {
