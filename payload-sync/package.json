@@ -34,7 +34,7 @@
     "@payloadcms/ui": "3"
   },
   "devDependencies": {
-    "@payloadcms/db-sqlite": "3.85.2",
+    "@payloadcms/db-sqlite": "3.86.0",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",

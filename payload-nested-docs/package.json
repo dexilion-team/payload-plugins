@@ -1,6 +1,6 @@
 {
   "name": "@dexilion/payload-nested-docs",
-  "version": "3.85.2",
+  "version": "3.86.0",
   "description": "A Payload CMS plugin to manage nested documents within collections.",
   "author": "Dexilion",
   "license": "MIT",
@@ -24,10 +24,10 @@
     "next": "^16",
     "payload": "3",
     "@payloadcms/ui": "3",
-    "@dexilion/payload-utils": "3.85.2"
+    "@dexilion/payload-utils": "3.86.0"
   },
   "devDependencies": {
-    "@payloadcms/db-sqlite": "3.85.2",
+    "@payloadcms/db-sqlite": "3.86.0",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/react": "19.2.2",
