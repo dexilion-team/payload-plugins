@@ -92,7 +92,7 @@ export const RichText = ({
     if (!html || !container) {
       return;
     }
-    activateScripts(container);
+    void activateScripts(container);
   }, [html]);
 
   return (
@@ -106,22 +106,40 @@ export const RichText = ({
   );
 };
 
-const activateScripts = (container: HTMLElement): void => {
+const activateScripts = async (container: HTMLElement): Promise<void> => {
   const scripts = Array.from(
     container.querySelectorAll<HTMLScriptElement>(
       "script:not([data-rt-activated])",
     ),
   );
   for (const oldScript of scripts) {
+    // The container may have been unmounted while awaiting a previous script.
+    if (!oldScript.isConnected) {
+      continue;
+    }
+
     const newScript = document.createElement("script");
 
     for (const attr of Array.from(oldScript.attributes)) {
       newScript.setAttribute(attr.name, attr.value);
     }
     newScript.setAttribute("data-rt-activated", "true");
-    newScript.text = oldScript.textContent ?? "";
 
-    oldScript.parentNode?.replaceChild(newScript, oldScript);
+    if (oldScript.src && !oldScript.hasAttribute("async")) {
+      // Injected scripts default to async, so later inline scripts would run
+      // before the libraries they depend on. Emulate parser order by waiting
+      // for each non-async external script before executing the next one.
+      newScript.async = false;
+      const loaded = new Promise<void>((resolve) => {
+        newScript.onload = () => resolve();
+        newScript.onerror = () => resolve();
+      });
+      oldScript.parentNode?.replaceChild(newScript, oldScript);
+      await loaded;
+    } else {
+      newScript.text = oldScript.textContent ?? "";
+      oldScript.parentNode?.replaceChild(newScript, oldScript);
+    }
   }
 };
 
