@@ -6,11 +6,13 @@ export function sitemapGenerator({
   collection,
   basePath = "post",
   domain,
+  dateFieldName = "date",
 }: {
   config: SanitizedConfig | Promise<SanitizedConfig>;
   collection?: CollectionSlug;
   basePath?: string;
   domain?: string;
+  dateFieldName?: string;
 }) {
   return async () => {
     const payload = await getPayload({ config });
@@ -19,7 +21,7 @@ export function sitemapGenerator({
     const pages = await payload.find({
       collection: collection ?? "posts",
       where: {
-        date: {
+        [dateFieldName]: {
           less_than_equal: new Date(
             new Date().setHours(23, 59, 59, 999),
           ).toISOString(),
