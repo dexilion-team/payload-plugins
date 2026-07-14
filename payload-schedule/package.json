@@ -24,8 +24,8 @@
     "@payloadcms/ui": "3.85.2"
   },
   "engines": {
-    "node": "^25.9.0 || ^24.14.1 || ^22.22.2 ",
-    "pnpm": "^9 || ^10"
+    "node": "^26 || ^25.9.0 || ^24.14.1 || ^22.22.2 ",
+    "pnpm": "^9 || ^10 || ^11"
   },
   "devDependencies": {
     "@dexilion/payload-blog": "workspace:*",
