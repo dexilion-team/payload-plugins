@@ -11,7 +11,7 @@ function parseCookie(
   const match = cookieHeader.match(
     new RegExp("(?:^|;)\\s*" + name + "\\s*=\\s*([^;]+)"),
   );
-  return match ? match[1].trim() : null;
+  return match?.[1] ? match[1].trim() : null;
 }
 
 export const getLivePreviewUrl =
