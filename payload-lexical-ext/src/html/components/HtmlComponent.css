@@ -1,0 +1,54 @@
+:root {
+	--html-block-border: #ddd;
+	--html-block-bg: #f6f8fa;
+	--html-block-label: #57606a;
+}
+
+[data-theme='dark'] {
+	--html-block-border: #444;
+	--html-block-bg: #1c1c1c;
+	--html-block-label: #8b949e;
+}
+
+.EditorHtmlBlock {
+	width: 100%;
+	border: 1px solid var(--html-block-border);
+	border-radius: 6px;
+	background-color: var(--html-block-bg);
+	overflow: hidden;
+	margin: 1em 0;
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+.EditorHtmlBlock__label {
+	padding: 6px 12px;
+	border-bottom: 1px solid var(--html-block-border);
+	font-family: monospace;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--html-block-label);
+}
+
+.EditorHtmlBlock__source {
+	margin: 0;
+	padding: 12px;
+	max-height: 240px;
+	overflow: auto;
+	font-family: monospace;
+	font-size: 13px;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	word-break: break-word;
+	color: inherit;
+	/* Text selection inside the block would compete with lexical's own
+	   selection handling for the decorator node. */
+	user-select: none;
+}
+
+.EditorHtmlBlock__source:empty::after {
+	content: "<!-- empty -->";
+	color: var(--html-block-label);
+}
