@@ -3,13 +3,13 @@
 import { useLexicalComposerContext } from "@payloadcms/richtext-lexical/lexical/react/LexicalComposerContext";
 import {
   COMMAND_PRIORITY_EDITOR,
-  $insertNodes,
   $getSelection,
   $isRangeSelection,
   $getRoot,
   $getNodeByKey,
   $createParagraphNode,
 } from "@payloadcms/richtext-lexical/lexical";
+import { $insertNodeToNearestRoot } from "@payloadcms/richtext-lexical/lexical/utils";
 import {
   FieldsDrawer,
   useEditorConfigContext,
@@ -75,8 +75,11 @@ export const createPlugin = ({ title }: CreatePluginProps) => {
             selection = $getSelection();
           }
 
+          // `useLexicalDrawer` re-applies the selection it captured before the
+          // drawer opened, so the inserted node must not consume the node that
+          // selection points at.
           if ($isRangeSelection(selection)) {
-            $insertNodes([htmlNode]);
+            $insertNodeToNearestRoot(htmlNode);
           }
 
           // Keep editor state structurally valid.
