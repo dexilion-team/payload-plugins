@@ -1,4 +1,5 @@
 import type { CollectionConfig, CollectionSlug } from "payload";
+import { richTextToSearchableText } from "../utils/richTextToSearchableText";
 
 export const createPostsCollection = ({
   mediaSlug,
@@ -73,6 +74,23 @@ export const createPostsCollection = ({
       name: "content",
       type: "richText",
       required: true,
+    },
+    {
+      name: "searchableContent",
+      type: "text",
+      admin: {
+        hidden: true,
+      },
+      hooks: {
+        beforeChange: [
+          ({ siblingData }: any) =>
+            siblingData.title.toLowerCase() +
+            "\n\n" +
+            siblingData.excerpt.toLowerCase() +
+            "\n\n" +
+            richTextToSearchableText(siblingData.content),
+        ],
+      },
     },
   ],
 });
