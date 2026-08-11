@@ -16,7 +16,7 @@ export const robotsGenerator =
         rules: [
           {
             userAgent: "*",
-            disallow: ["/admin", "/api"],
+            disallow: ["/admin"],
           },
         ],
       };
@@ -26,7 +26,7 @@ export const robotsGenerator =
       rules: [
         {
           userAgent: "*",
-          disallow: ["/admin", "/api"],
+          disallow: ["/admin"],
         },
       ],
       sitemap: `https://${domainName}/sitemap.xml`,
